@@ -1,0 +1,255 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" xml:lang="en">
+<head>
+<meta content="594388572" name="dtb:uid"/>
+<meta content="1" name="dtb:depth"/>
+<meta content="mobiunpack.py" name="dtb:generator"/>
+<meta content="0" name="dtb:totalPageCount"/>
+<meta content="0" name="dtb:maxPageNumber"/>
+</head>
+<docTitle>
+<text>The Final Empire</text>
+</docTitle>
+<navMap>
+    <navPoint id="np_1" playOrder="1">
+    <navLabel>
+    <text>PROLOGUE</text>
+    </navLabel>
+    <content src="book.html#filepos12261"/>
+    </navPoint>
+    <navPoint id="np_2" playOrder="2">
+    <navLabel>
+    <text>1</text>
+    </navLabel>
+    <content src="book.html#filepos49493"/>
+    </navPoint>
+    <navPoint id="np_3" playOrder="3">
+    <navLabel>
+    <text>2</text>
+    </navLabel>
+    <content src="book.html#filepos71613"/>
+    </navPoint>
+    <navPoint id="np_4" playOrder="4">
+    <navLabel>
+    <text>3</text>
+    </navLabel>
+    <content src="book.html#filepos112943"/>
+    </navPoint>
+    <navPoint id="np_5" playOrder="5">
+    <navLabel>
+    <text>4</text>
+    </navLabel>
+    <content src="book.html#filepos159141"/>
+    </navPoint>
+    <navPoint id="np_6" playOrder="6">
+    <navLabel>
+    <text>5</text>
+    </navLabel>
+    <content src="book.html#filepos218324"/>
+    </navPoint>
+    <navPoint id="np_7" playOrder="7">
+    <navLabel>
+    <text>6</text>
+    </navLabel>
+    <content src="book.html#filepos268585"/>
+    </navPoint>
+    <navPoint id="np_8" playOrder="8">
+    <navLabel>
+    <text>7</text>
+    </navLabel>
+    <content src="book.html#filepos333808"/>
+    </navPoint>
+    <navPoint id="np_9" playOrder="9">
+    <navLabel>
+    <text>8</text>
+    </navLabel>
+    <content src="book.html#filepos381459"/>
+    </navPoint>
+    <navPoint id="np_10" playOrder="10">
+    <navLabel>
+    <text>9</text>
+    </navLabel>
+    <content src="book.html#filepos439530"/>
+    </navPoint>
+    <navPoint id="np_11" playOrder="11">
+    <navLabel>
+    <text>10</text>
+    </navLabel>
+    <content src="book.html#filepos474561"/>
+    </navPoint>
+    <navPoint id="np_12" playOrder="12">
+    <navLabel>
+    <text>11</text>
+    </navLabel>
+    <content src="book.html#filepos523262"/>
+    </navPoint>
+    <navPoint id="np_13" playOrder="13">
+    <navLabel>
+    <text>12</text>
+    </navLabel>
+    <content src="book.html#filepos547318"/>
+    </navPoint>
+    <navPoint id="np_14" playOrder="14">
+    <navLabel>
+    <text>13</text>
+    </navLabel>
+    <content src="book.html#filepos595793"/>
+    </navPoint>
+    <navPoint id="np_15" playOrder="15">
+    <navLabel>
+    <text>14</text>
+    </navLabel>
+    <content src="book.html#filepos627986"/>
+    </navPoint>
+    <navPoint id="np_16" playOrder="16">
+    <navLabel>
+    <text>15</text>
+    </navLabel>
+    <content src="book.html#filepos657880"/>
+    </navPoint>
+    <navPoint id="np_17" playOrder="17">
+    <navLabel>
+    <text>16</text>
+    </navLabel>
+    <content src="book.html#filepos673091"/>
+    </navPoint>
+    <navPoint id="np_18" playOrder="18">
+    <navLabel>
+    <text>17</text>
+    </navLabel>
+    <content src="book.html#filepos700462"/>
+    </navPoint>
+    <navPoint id="np_19" playOrder="19">
+    <navLabel>
+    <text>18</text>
+    </navLabel>
+    <content src="book.html#filepos731193"/>
+    </navPoint>
+    <navPoint id="np_20" playOrder="20">
+    <navLabel>
+    <text>19</text>
+    </navLabel>
+    <content src="book.html#filepos789797"/>
+    </navPoint>
+    <navPoint id="np_21" playOrder="21">
+    <navLabel>
+    <text>20</text>
+    </navLabel>
+    <content src="book.html#filepos830462"/>
+    </navPoint>
+    <navPoint id="np_22" playOrder="22">
+    <navLabel>
+    <text>21</text>
+    </navLabel>
+    <content src="book.html#filepos871720"/>
+    </navPoint>
+    <navPoint id="np_23" playOrder="23">
+    <navLabel>
+    <text>22</text>
+    </navLabel>
+    <content src="book.html#filepos926828"/>
+    </navPoint>
+    <navPoint id="np_24" playOrder="24">
+    <navLabel>
+    <text>23</text>
+    </navLabel>
+    <content src="book.html#filepos962163"/>
+    </navPoint>
+    <navPoint id="np_25" playOrder="25">
+    <navLabel>
+    <text>24</text>
+    </navLabel>
+    <content src="book.html#filepos1011362"/>
+    </navPoint>
+    <navPoint id="np_26" playOrder="26">
+    <navLabel>
+    <text>25</text>
+    </navLabel>
+    <content src="book.html#filepos1048261"/>
+    </navPoint>
+    <navPoint id="np_27" playOrder="27">
+    <navLabel>
+    <text>26</text>
+    </navLabel>
+    <content src="book.html#filepos1086389"/>
+    </navPoint>
+    <navPoint id="np_28" playOrder="28">
+    <navLabel>
+    <text>27</text>
+    </navLabel>
+    <content src="book.html#filepos1121471"/>
+    </navPoint>
+    <navPoint id="np_29" playOrder="29">
+    <navLabel>
+    <text>28</text>
+    </navLabel>
+    <content src="book.html#filepos1164760"/>
+    </navPoint>
+    <navPoint id="np_30" playOrder="30">
+    <navLabel>
+    <text>29</text>
+    </navLabel>
+    <content src="book.html#filepos1220189"/>
+    </navPoint>
+    <navPoint id="np_31" playOrder="31">
+    <navLabel>
+    <text>30</text>
+    </navLabel>
+    <content src="book.html#filepos1265249"/>
+    </navPoint>
+    <navPoint id="np_32" playOrder="32">
+    <navLabel>
+    <text>31</text>
+    </navLabel>
+    <content src="book.html#filepos1311807"/>
+    </navPoint>
+    <navPoint id="np_33" playOrder="33">
+    <navLabel>
+    <text>32</text>
+    </navLabel>
+    <content src="book.html#filepos1360972"/>
+    </navPoint>
+    <navPoint id="np_34" playOrder="34">
+    <navLabel>
+    <text>33</text>
+    </navLabel>
+    <content src="book.html#filepos1399732"/>
+    </navPoint>
+    <navPoint id="np_35" playOrder="35">
+    <navLabel>
+    <text>34</text>
+    </navLabel>
+    <content src="book.html#filepos1434819"/>
+    </navPoint>
+    <navPoint id="np_36" playOrder="36">
+    <navLabel>
+    <text>35</text>
+    </navLabel>
+    <content src="book.html#filepos1469242"/>
+    </navPoint>
+    <navPoint id="np_37" playOrder="37">
+    <navLabel>
+    <text>36</text>
+    </navLabel>
+    <content src="book.html#filepos1500246"/>
+    </navPoint>
+    <navPoint id="np_38" playOrder="38">
+    <navLabel>
+    <text>37</text>
+    </navLabel>
+    <content src="book.html#filepos1544121"/>
+    </navPoint>
+    <navPoint id="np_39" playOrder="39">
+    <navLabel>
+    <text>38</text>
+    </navLabel>
+    <content src="book.html#filepos1577463"/>
+    </navPoint>
+    <navPoint id="np_40" playOrder="40">
+    <navLabel>
+    <text>EPILOGUE</text>
+    </navLabel>
+    <content src="book.html#filepos1614077"/>
+    </navPoint>
+  </navMap>
+</ncx>

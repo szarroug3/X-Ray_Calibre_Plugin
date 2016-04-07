@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package version="2.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="uid">
+<metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+<dc:title>The Hero of Ages</dc:title>
+<dc:language>en</dc:language>
+<dc:identifier id="uid">2940507208</dc:identifier>
+<dc:creator>Brandon Sanderson</dc:creator>
+<dc:contributor>calibre (2.39.0) [http://calibre-ebook.com]</dc:contributor>
+<dc:publisher>Macmillan</dc:publisher>
+<dc:source>calibre:1973cf33-507e-4cf2-8c52-28e1e480f7f8</dc:source>
+<dc:identifier opf:scheme="ISBN">9781429960304</dc:identifier>
+<dc:subject>Fantasy; General</dc:subject>
+<dc:description>&lt;p&gt;Who is the Hero of Ages?&lt;/p&gt;&lt;p&gt;To end the Final Empire and restore freedom, Vin killed the Lord Ruler. But as a result, the Deepness---the lethal form of the ubiquitous mists---is back, along with increasingly heavy ashfalls and ever more powerful earthquakes. Humanity appears to be doomed.&lt;/p&gt;&lt;p&gt;Having escaped death at the climax of &lt;em&gt;The Well of Ascension&lt;/em&gt; only by becoming a Mistborn himself, Emperor Elend Venture hopes to find clues left behind by the Lord Ruler that will allow him to save the world. Vin is consumed with guilt at having been tricked into releasing the mystic force known as Ruin from the Well. Ruin wants to end the world, and its near omniscience and ability to warp reality make stopping it seem impossible. She can't even discuss it with Elend lest Ruin learn their plans!&lt;/p&gt;&lt;p&gt;The conclusion of the Mistborn trilogy fulfills all the promise of the first two books. Revelations abound, connections rooted in early chapters of the series click into place, and surprises, as satisfying as they are stunning, blossom like fireworks to dazzle and delight. It all leads up to a finale unmatched for originality and audacity that will leave readers rubbing their eyes in wonder, as if awaking from an amazing dream.&lt;/p&gt;&lt;p&gt;**&lt;/p&gt;</dc:description>
+<dc:date opf:event="publication">2008-10-14 00:00:00+00:00</dc:date>
+<meta name="cover" content="cover_img" />
+<meta name="output encoding" content="utf-8" />
+<!-- BEGIN INFORMATION ONLY 
+<meta name="Cover ThumbNail Image" content="Images/image00443.jpeg" />
+<meta name="ASIN" content="&apos;B002GYI9C3&apos;" />
+<meta name="Creator Software" content="201" />
+<meta name="Creator Major Version" content="1" />
+<meta name="Creator Minor Version" content="2" />
+<meta name="Creator Build Number" content="33307" />
+<meta name="K8(129)_Masthead/Cover_Image" content="kindle:embed:0003" />
+<meta name="Language_524" content="en" />
+<meta name="StartOffset" content="109" />
+<meta name="Has Fake Cover" content="0" />
+<meta name="Updated_Title" content="The Hero of Ages" />
+<meta name="cdeType" content="EBOK" />
+<meta name="K8(131)_Unidentified_Count" content="0" />
+END INFORMATION ONLY -->
+</metadata>
+<manifest>
+<item id="item0" media-type="text/html" href="book.html" />
+<item id="item1" media-type="image/jpeg" href="Images/image00440.jpeg" />
+<item id="item2" media-type="image/jpeg" href="Images/image00441.jpeg" />
+<item id="cover_img" media-type="image/jpeg" href="Images/cover00442.jpeg" />
+<item id="item4" media-type="image/jpeg" href="Images/image00444.jpeg" />
+<item id="item5" media-type="image/jpeg" href="Images/image00445.jpeg" />
+<item id="item6" media-type="image/jpeg" href="Images/image00446.jpeg" />
+<item id="item7" media-type="image/jpeg" href="Images/image00447.jpeg" />
+<item id="item8" media-type="image/jpeg" href="Images/image00448.jpeg" />
+<item id="item9" media-type="image/jpeg" href="Images/image00449.jpeg" />
+<item id="item10" media-type="image/jpeg" href="Images/image00450.jpeg" />
+<item id="item11" media-type="image/jpeg" href="Images/image00451.jpeg" />
+<item id="item12" media-type="image/jpeg" href="Images/image00452.jpeg" />
+<item id="item13" media-type="image/jpeg" href="Images/image00453.jpeg" />
+<item id="item14" media-type="image/jpeg" href="Images/image00454.jpeg" />
+<item id="item15" media-type="image/jpeg" href="Images/image00455.jpeg" />
+<item id="item16" media-type="image/jpeg" href="Images/image00456.jpeg" />
+<item id="item17" media-type="image/jpeg" href="Images/image00457.jpeg" />
+<item id="item18" media-type="image/jpeg" href="Images/image00458.jpeg" />
+<item id="item19" media-type="image/jpeg" href="Images/image00459.jpeg" />
+<item id="item20" media-type="image/jpeg" href="Images/image00460.jpeg" />
+<item id="ncx" media-type="application/x-dtbncx+xml" href="toc.ncx" />
+</manifest>
+<spine toc="ncx">
+<itemref idref="item0"/>
+</spine>
+<tours>
+</tours>
+<guide>
+<reference type="toc" title="Table of Contents" href="book.html#filepos1777322" />
+<reference type="text" href="book.html#filepos109" />
+</guide>
+</package>

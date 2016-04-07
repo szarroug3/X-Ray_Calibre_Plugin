@@ -1,0 +1,17 @@
+MBP file reader
+v0.5.c (idleloop@yahoo.com, 201311)
+http://www.angelfire.com/ego2/idleloop/
+
+
+MBP file: Final Empire, The - Brandon Sanderson.mbp
+
+number of marks: 1
+
+
+--
+
+T{"contentGuid":"61a81c55","asin":"B002GYI9C4","cdeType":"EBOK","fileRevisionId":"1"}
+
+--
+
+ {"asin":"B002GYI9C4","pageMap":"(1,a,1)"}

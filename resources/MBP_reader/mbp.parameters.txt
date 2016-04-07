@@ -1,0 +1,13 @@
+# --- MBP_reader parameters file --- 
+# v0.5.b
+# Uncomment desired values (that is, delete first "#" character on that line),
+#
+# BKMK_PAGE_FACTOR: used to calculate page locations: 
+# 	the greater the value, the lesser the page.
+# if you find a value that fits to your device, send me it and 
+#	I'll include it here! (idleloop@yahoo.com)
+# SHOW_MARK_TYPE: if 0, does not show "[MARK]" before marks...
+#
+# for Kindle devices ("David Friedman" <david.kit.friedman@gmail.com>) :
+#BKMK_PAGE_FACTOR=150 
+#SHOW_MARK_TYPE=0
