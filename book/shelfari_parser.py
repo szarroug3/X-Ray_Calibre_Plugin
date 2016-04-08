@@ -28,23 +28,8 @@ class ShelfariParser(object):
     @property
     def quotes(self):
         return self._quotes
-    
-    def _get_characters(self):
-        '''get characters from sheflari page'''
-        self._characters = self._get_data_from_ul('//div[@id="WikiModule_Characters"]//ul[@class="li_6"]')
-        
-
-    def _get_terms(self):
-        '''get terms from shelfari page'''
-        self._terms = self._get_data_from_ul('//div[@id="WikiModule_Settings"]//ul[@class="li_6"]')
-
-    def _get_quotes(self):
-        '''get quotes from shelfari page'''
-        quoteList = self._html_source.xpath('//div[@id="WikiModule_Quotations"]//li//blockquote/text()')
-        self._quotes = [quote[1:-1] for quote in quoteList]
 
     def _get_data_from_ul(self, xpath):
-        '''get data from a ul and put it into a dictionary'''
         results = {}
         ul = self._html_source.xpath(xpath)
         for li in ul[0]:
@@ -54,3 +39,14 @@ class ShelfariParser(object):
             desc = descSearch.group(1) if descSearch else None
             results[label] = desc
         return results
+    
+    def _get_characters(self):
+        self._characters = self._get_data_from_ul('//div[@id="WikiModule_Characters"]//ul[@class="li_6"]')
+        
+
+    def _get_terms(self):
+        self._terms = self._get_data_from_ul('//div[@id="WikiModule_Settings"]//ul[@class="li_6"]')
+
+    def _get_quotes(self):
+        quoteList = self._html_source.xpath('//div[@id="WikiModule_Quotations"]//li//blockquote/text()')
+        self._quotes = [quote[1:-1] for quote in quoteList]
