@@ -1,0 +1,6 @@
+The X-Ray Creator Plugin
+===========================
+
+Created by szarroug3 & dresendez
+
+Requires calibre >= 0.7.53
