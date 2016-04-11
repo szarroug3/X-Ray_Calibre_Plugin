@@ -339,6 +339,7 @@ class FixCheck(BaseCheck):
 
                 with open(file_src, 'r+b') as stream:
                     mu = MinimalMobiUpdater(stream)
+                    print ('asin: ', asin, repr(asin))
                     mu.update(asin, b'EBOK')
                     stream.seek(0)
 

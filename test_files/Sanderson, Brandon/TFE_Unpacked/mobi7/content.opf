@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package version="2.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="uid">
+<metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+<dc:title>The Final Empire</dc:title>
+<dc:language>en</dc:language>
+<dc:identifier id="uid">594388572</dc:identifier>
+<dc:creator>Brandon Sanderson</dc:creator>
+<dc:contributor>calibre (2.39.0) [http://calibre-ebook.com]</dc:contributor>
+<dc:publisher>Tor Books</dc:publisher>
+<dc:source>calibre:5283c3a5-e445-4da0-8ae4-1375544a35d3</dc:source>
+<dc:identifier opf:scheme="ISBN">9780765350381</dc:identifier>
+<dc:subject>Fantasy; General</dc:subject>
+<dc:description>Brandon Sanderson, fantasy's newest master tale spinner, author of the acclaimed debut ELANTRIS, dares to turn a genre on its head by asking a simple question: What if the hero of prophecy fails? What kind of world results when the Dark Lord is in charge? The answer will be found in the Mistborn Trilogy, a saga of surprises and magical martial-arts action that begins in MISTBORN. 
+ For a thousand years the ash fell and no flowers bloomed. For a thousand years the Skaa slaved in misery and lived in fear. For a thousand years the Lord Ruler, the SLIVER OF INFINITY, reigned with absolute power and ultimate terror, divinely invincible. Then, when hope was so long lost that not even its memory remained, a terribly scarred, heart-broken half-Skaa rediscovered it in the depths of the Lord Ruler's most hellish prison. Kelsier “snapped” and found in himself the powers of a Mistborn. A brilliant thief and natural leader, he turned his talents to the ultimate caper, with the Lord Ruler himself as the mark. 
+ Kelsier recruited the underworld's elite, the smartest and most trustworthy allomancers, each of whom shares one of his many powers, and all of whom relish a high-stakes challenge. Only then does he reveal his ultimate dream, not just the greatest heist in history, but the downfall of the divine despot. 
+ But even with the best criminal crew ever assembled, Kel's plan looks more like the ultimate long shot, until luck brings a ragged girl named Vin into his life. Like him, she's a half-Skaa orphan, but she's lived a much harsher life. Vin has learned to expect betrayal from everyone she meets, and gotten it. She will have to learn to trust, if Kel is to help her master powers of which she never dreamed. 
+ Readers of ELANTRIS thought they'd discovered someone special in Brandon Sanderson. MISTBORN proves they were right.</dc:description>
+<dc:date opf:event="publication">2007-01-02 00:00:00+00:00</dc:date>
+<meta name="cover" content="cover_img" />
+<meta name="output encoding" content="utf-8" />
+<!-- BEGIN INFORMATION ONLY 
+<meta name="Cover ThumbNail Image" content="Images/image00438.jpeg" />
+<meta name="ASIN" content="B002GYI9C4" />
+<meta name="Creator Software" content="201" />
+<meta name="Creator Major Version" content="1" />
+<meta name="Creator Minor Version" content="2" />
+<meta name="Creator Build Number" content="33307" />
+<meta name="Has Fake Cover" content="0" />
+<meta name="Updated_Title" content="The Final Empire" />
+<meta name="Language_524" content="en" />
+<meta name="K8(131)_Unidentified_Count" content="0" />
+<meta name="StartOffset" content="109" />
+<meta name="cdeType" content="EBOK" />
+<meta name="K8(129)_Masthead/Cover_Image" content="kindle:embed:000P" />
+END INFORMATION ONLY -->
+</metadata>
+<manifest>
+<item id="item0" media-type="text/html" href="book.html" />
+<item id="item1" media-type="image/jpeg" href="Images/image00413.jpeg" />
+<item id="item2" media-type="image/jpeg" href="Images/image00414.jpeg" />
+<item id="item3" media-type="image/jpeg" href="Images/image00415.jpeg" />
+<item id="item4" media-type="image/jpeg" href="Images/image00416.jpeg" />
+<item id="item5" media-type="image/jpeg" href="Images/image00417.jpeg" />
+<item id="item6" media-type="image/jpeg" href="Images/image00418.jpeg" />
+<item id="item7" media-type="image/jpeg" href="Images/image00419.jpeg" />
+<item id="item8" media-type="image/jpeg" href="Images/image00420.jpeg" />
+<item id="item9" media-type="image/jpeg" href="Images/image00421.jpeg" />
+<item id="item10" media-type="image/jpeg" href="Images/image00422.jpeg" />
+<item id="item11" media-type="image/jpeg" href="Images/image00423.jpeg" />
+<item id="item12" media-type="image/jpeg" href="Images/image00424.jpeg" />
+<item id="item13" media-type="image/jpeg" href="Images/image00425.jpeg" />
+<item id="item14" media-type="image/jpeg" href="Images/image00426.jpeg" />
+<item id="item15" media-type="image/jpeg" href="Images/image00427.jpeg" />
+<item id="item16" media-type="image/jpeg" href="Images/image00428.jpeg" />
+<item id="item17" media-type="image/jpeg" href="Images/image00429.jpeg" />
+<item id="item18" media-type="image/jpeg" href="Images/image00430.jpeg" />
+<item id="item19" media-type="image/jpeg" href="Images/image00431.jpeg" />
+<item id="item20" media-type="image/jpeg" href="Images/image00432.jpeg" />
+<item id="item21" media-type="image/jpeg" href="Images/image00433.jpeg" />
+<item id="item22" media-type="image/jpeg" href="Images/image00434.jpeg" />
+<item id="item23" media-type="image/jpeg" href="Images/image00435.jpeg" />
+<item id="item24" media-type="image/jpeg" href="Images/image00436.jpeg" />
+<item id="cover_img" media-type="image/jpeg" href="Images/cover00437.jpeg" />
+<item id="item26" media-type="image/jpeg" href="Images/image00439.jpeg" />
+<item id="item27" media-type="image/jpeg" href="Images/image00440.jpeg" />
+<item id="item28" media-type="image/jpeg" href="Images/image00441.jpeg" />
+<item id="item29" media-type="image/jpeg" href="Images/image00442.jpeg" />
+<item id="item30" media-type="image/jpeg" href="Images/image00443.jpeg" />
+<item id="item31" media-type="image/jpeg" href="Images/image00444.jpeg" />
+<item id="item32" media-type="image/jpeg" href="Images/image00445.jpeg" />
+<item id="item33" media-type="image/jpeg" href="Images/image00446.jpeg" />
+<item id="item34" media-type="image/jpeg" href="Images/image00447.jpeg" />
+<item id="item35" media-type="image/jpeg" href="Images/image00448.jpeg" />
+<item id="item36" media-type="image/jpeg" href="Images/image00449.jpeg" />
+<item id="item37" media-type="image/jpeg" href="Images/image00450.jpeg" />
+<item id="item38" media-type="image/jpeg" href="Images/image00451.jpeg" />
+<item id="item39" media-type="image/jpeg" href="Images/image00452.jpeg" />
+<item id="item40" media-type="image/jpeg" href="Images/image00453.jpeg" />
+<item id="item41" media-type="image/jpeg" href="Images/image00454.jpeg" />
+<item id="item42" media-type="image/jpeg" href="Images/image00455.jpeg" />
+<item id="item43" media-type="image/jpeg" href="Images/image00456.jpeg" />
+<item id="item44" media-type="image/jpeg" href="Images/image00457.jpeg" />
+<item id="item45" media-type="image/jpeg" href="Images/image00458.jpeg" />
+<item id="item46" media-type="image/jpeg" href="Images/image00459.jpeg" />
+<item id="item47" media-type="image/jpeg" href="Images/image00460.jpeg" />
+<item id="item48" media-type="image/jpeg" href="Images/image00461.jpeg" />
+<item id="item49" media-type="image/jpeg" href="Images/image00462.jpeg" />
+<item id="item50" media-type="image/jpeg" href="Images/image00463.jpeg" />
+<item id="item51" media-type="image/jpeg" href="Images/image00464.jpeg" />
+<item id="ncx" media-type="application/x-dtbncx+xml" href="toc.ncx" />
+</manifest>
+<spine toc="ncx">
+<itemref idref="item0"/>
+</spine>
+<tours>
+</tours>
+<guide>
+<reference type="toc" title="Table of Contents" href="book.html#filepos1665900" />
+<reference type="text" href="book.html#filepos109" />
+</guide>
+</package>
