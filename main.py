@@ -10,6 +10,13 @@ __docformat__ = 'restructuredtext en'
 from PyQt5.Qt import QDialog, QVBoxLayout, QPushButton, QMessageBox, QLabel
 
 from calibre_plugins.xray_creator.config import prefs
+from calibre.ebooks.metadata.mobi import MetadataUpdater
+
+import struct
+from cStringIO import StringIO
+
+from calibre.ebooks.metadata.mobi import MetadataUpdater
+from calibre.ebooks.mobi import MobiError
 
 class XRayCreatorDialog(QDialog):
 
@@ -120,33 +127,86 @@ class XRayCreatorDialog(QDialog):
         db = self.db.new_api
         for book_id in ids:
             # Get the current metadata for this book from the db
-            mi = db.get_metadata(book_id, get_cover=True, cover_as_data=True)
+            # mi = db.get_metadata(book_id, get_cover=True, cover_as_data=True)
+            # fmts = db.formats(book_id)
+            # if not fmts:
+            #     continue
+            # for fmt in fmts:
+            #     fmt = fmt.lower()
+            #     # Get a python file object for the format. This will be either
+            #     # an in memory file or a temporary on disk file
+            #     ffile = db.format(book_id, fmt, as_file=True)
+            #     ffile.seek(0)
+            #     # Set metadata in the format
+            #     set_metadata(ffile, mi, fmt)
+            #     ffile.seek(0)
+            #     # Now replace the file in the calibre library with the updated
+            #     # file. We dont use add_format_with_hooks as the hooks were
+            #     # already run when the file was first added to calibre.
+            #     db.add_format(book_id, fmt, ffile, run_hooks=False)
             print ('------')
-            for k in (mi.all_field_keys()):
-                print (k, mi.metadata_for_field(k), '\n')
+            a = (db.field_for('identifiers', book_id))
+            print (a)
+            print (a['mobi-asin'])
             print ('------')
-            fmts = db.formats(book_id)
-            if not fmts:
-                continue
-            for fmt in fmts:
-                fmt = fmt.lower()
-                # Get a python file object for the format. This will be either
-                # an in memory file or a temporary on disk file
-                ffile = db.format(book_id, fmt, as_file=True)
-                ffile.seek(0)
-                # Set metadata in the format
-                set_metadata(ffile, mi, fmt)
-                ffile.seek(0)
-                # Now replace the file in the calibre library with the updated
-                # file. We dont use add_format_with_hooks as the hooks were
-                # already run when the file was first added to calibre.
-                db.add_format(book_id, fmt, ffile, run_hooks=False)
+            self.update_asin(db.format_abspath(book_id, 'MOBI'))
+            print ('------')
 
         info_dialog(self, 'Updated files',
                 'Updated the metadata in the files of %d book(s)'%len(ids),
                 show=True)
 
+    def update_asin(self, book_path):
+        with open(book_path, 'r+b') as stream:
+            # updater = MetadataUpdater(stream)
+            # print ('0')
+            # exth = updater.fetchEXTHFields()
+            # print ('1')
+            # updater.create_exth(new_title='1234567890', exth='113')
+            # print ('done')
+            updater = MinimalMobiUpdater(stream)
+            updater.update(asin=b'1234567890')
+        print ('done')
+
     def config(self):
         self.do_user_config(parent=self)
         # Apply the changes
         self.label.setText(prefs['hello_world_msg'])
+
+class MinimalMobiUpdater(MetadataUpdater):
+
+    def update(self, asin=None, cdetype=None):
+        def update_exth_record(rec):
+            recs.append(rec)
+            if rec[0] in self.original_exth_records:
+                self.original_exth_records.pop(rec[0])
+
+        if self.type != "BOOKMOBI":
+                raise MobiError("Setting ASIN only supported for MOBI files of type 'BOOK'.\n"
+                                "\tThis is a '%s' file of type '%s'" % (self.type[0:4], self.type[4:8]))
+        recs = []
+        if asin is not None:
+            update_exth_record((113, asin.encode(self.codec, 'replace')))
+            update_exth_record((504, asin.encode(self.codec, 'replace')))
+        if cdetype is not None:
+            update_exth_record((501, cdetype))
+
+        # Include remaining original EXTH fields
+        for id in sorted(self.original_exth_records):
+            recs.append((id, self.original_exth_records[id]))
+        recs = sorted(recs, key=lambda x:(x[0],x[0]))
+
+        exth = StringIO()
+        for code, data in recs:
+            exth.write(struct.pack('>II', code, len(data) + 8))
+            exth.write(data)
+        exth = exth.getvalue()
+        trail = len(exth) % 4
+        pad = '\0' * (4 - trail) # Always pad w/ at least 1 byte
+        exth = ['EXTH', struct.pack('>II', len(exth) + 12, len(recs)), exth, pad]
+        exth = ''.join(exth)
+
+        if getattr(self, 'exth', None) is None:
+            raise MobiError('No existing EXTH record. Cannot update ASIN.')
+
+        self.create_exth(exth=exth)
