@@ -1,71 +1,72 @@
 # book_parser.py
 
-from calibre.ptempfile import TemporaryDirectory
-
-from unpack_structure import fileNames
-from mobi_sectioner import Sectionizer
-from mobi_header import MobiHeader
-from mobi_split import mobi_split
-
+from struct import *
 
 class BookParser(object):
     def __init__(self, book_path):
         self._book_path = book_path
+        self._parse_book()
 
-    def unpackBook(infile, outdir):
-        DUMP = True
-        WRITE_RAW_DATA = True
+    def _parse_book(self):
+        with open(self._book_path, 'rb') as f:
+            self._book_data = f.read()
 
-        infile = unicode_str(infile)
-        outdir = unicode_str(outdir)
+        self._dbName = self._book_data[0:32]
+        self._numOfRecs, = unpack('>H', self._book_data[76:78])
+        self._records_start = 78 + (self._numOfRecs * 8) + 2
+        self._records = self._book_data[self._records_start:]
 
-        files = fileNames(infile, outdir)
+        # get erl and encoding
+        self._erl, = unpack('>L', self._records[4:8])
+        self._encoding = 'latin-1' if unpack('>L', self._records[28:32])[0] == 1252 else 'utf8'
+        
+        # check if mobi has exth and get exth record location
+        if self._records[16:20] != b'MOBI':
+            raise ValueError('MOBI header not found.')
+        has_exth = bin(unpack('>L', self._records[128:132])[0])[2] == '1'
+        if not has_exth:
+            raise ValueError('Book has no EXTH.')
+        self._exth_start = unpack('>L', self._records[20:24])[0] + 16
+        self._exth = self._records[self._exth_start:]
+        if self._exth[:4] != b'EXTH':
+            raise ValueError('EXTH header not found.')
+        exth_len, self._num_of_exth = unpack('>LL', self._exth[4:12])
+        self._exth_end = exth_len + self._pad(exth_len, 4)
+        self._exth = self._exth[:self._exth_end]
+        self._parse_exth()
 
-        # process the PalmDoc database header and verify it is a mobi
-        sect = Sectionizer(infile)
-        if sect.ident != b'BOOKMOBI' and sect.ident != b'TEXtREAd':
-            raise unpackException('Invalid file format')
-        if DUMP:
-            sect.dumppalmheader()
-        else:
-            print("Palm DB type: %s, %d sections." % (sect.ident.decode('utf-8'),sect.num_sections))
 
-        # scan sections to see if this is a compound mobi file (K8 format)
-        # and build a list of all mobi headers to process.
-        mhlst = []
-        mh = MobiHeader(sect,0)
-        # if this is a mobi8-only file hasK8 here will be true
-        mhlst.append(mh)
-        K8Boundary = -1
+    def _parse_exth(self):
+        self._exth_data = {}
+        pos = 12
+        for i in range(self._num_of_exth):
+            rec_type, rec_length = unpack('>LL', self._exth[pos:pos + 8])
+            pos = pos + 8
+            self._exth_data[rec_type] = self._exth[pos:pos + rec_length - 8]
+            pos = pos + rec_length - 8
 
-        if mh.isK8():
-            print("Unpacking a KF8 book...")
-            hasK8 = True
-        else:
-            # This is either a Mobipocket 7 or earlier, or a combi M7/KF8
-            # Find out which
-            hasK8 = False
-            for i in range(len(sect.sectionoffsets)-1):
-                before, after = sect.sectionoffsets[i:i+2]
-                if (after - before) == 8:
-                    data = sect.loadSection(i)
-                    if data == K8_BOUNDARY:
-                        sect.setsectiondescription(i,"Mobi/KF8 Boundary Section")
-                        mh = MobiHeader(sect,i+1)
-                        hasK8 = True
-                        mhlst.append(mh)
-                        K8Boundary = i
-                        break
-            if hasK8:
-                print("Unpacking a Combination M{0:d}/KF8 book...".format(mh.version))
-            else:
-                print("Unpacking a Mobipocket {0:d} book...".format(mh.version))
+    def _pad(self, val, mod):
+        if val % mod == 0:
+            return 0
+        return mod - (val % mod)
 
-        if hasK8:
-            files.makeK8Struct()
+    def update_ASIN(self, val):
+        new_recs = [(113, val.encode(self._encoding)), (504, val.encode(self._encoding))]
+        for rec_type, rec_val in self._exth_data.items():
+            if rec_type != 113 and rec_type != 504:
+                new_recs.append((rec_type, rec_val))
 
-        process_all_mobi_headers(files, apnxfile, sect, mhlst, K8Boundary, False, '2', False)
+        new_recs.sort(key=lambda x:x[0])
 
-        if DUMP:
-            sect.dumpsectionsinfo()
-        return
+        new_exth = b''
+        for rec_type, rec_val in new_recs:
+            new_exth = new_exth + pack('>LL', rec_type, len(rec_val) + 8) + rec_val
+
+        # make new exth string with padding at the end
+        new_exth = b'EXTH' + pack('>LL', len(new_exth) + 12, len(new_recs)) + new_exth + (b'\0' * self._pad(len(new_exth) + 12, 4))
+        print (unpack('>4sLLLL', new_exth[:20]))
+
+        with open('test.mobi', 'wb') as f:
+            f.write(self._book_data[:self._records_start + self._exth_start])
+            f.write(new_exth)
+            f.write(self._book_data[self._records_start + self._exth_end:])

@@ -65,34 +65,13 @@ class XRayCreatorDialog(QDialog):
         ids = list(map(self.gui.library_view.model().id, rows))
         db = self.db.new_api
         for book_id in ids:
-            # Get the current ASIN for this book from the db
-            mi = db.get_metadata(book_id, get_cover=True, cover_as_data=True)
-            fmts = db.formats(book_id)
-            if not fmts:
-                continue
-            for fmt in fmts:
-                fmt = fmt.lower()
-
-                # Get a python file object for the format. This will be either
-                # an in memory file or a temporary on disk file
-                ffile = db.format(book_id, fmt, as_file=True)
-                ffile.seek(0)
-                # Set metadata in the format
-                set_metadata(ffile, mi, fmt)
-                ffile.seek(0)
-                # Now replace the file in the calibre library with the updated
-                # file. We dont use add_format_with_hooks as the hooks were
-                # already run when the file was first added to calibre.
-                db.add_format(book_id, fmt, ffile, run_hooks=False)
             book_path = db.format_abspath(book_id, 'MOBI')
             with open(book_path, 'rb') as stream:
                 raw = stream.read()
-                doctype = raw[:4]
-                length, num_items = struct.unpack('>LL', raw[4:12])
                 print ('------------------------------------')
-                print (doctype, length, num_items)
-                print ('------------------------------------')
-                exthHeader = EXTHHeader(raw, 'utf8', None)
+                print (struct.unpack('4s', raw[3824-12:3824-12+4]))
+                exthHeader = EXTHHeader(raw[3824:14576], 'utf8', None)
+                print (exthHeader.start_offset)
                 mu = MetadataUpdater(stream)
                 print ('------------------------------------')
                 print (self.start_offset)
@@ -109,11 +88,7 @@ class XRayCreatorDialog(QDialog):
                 print (mu.record(mu.nrecs-i)[0:length])
                 print (struct.unpack(stringlen, mu.record(mu.nrecs-i)[0:length]))
                 print ('------------------------------------')
-
-
-        info_dialog(self, 'Updated files',
-                'Updated the metadata in the files of %d book(s)'%len(ids),
-                show=True)
+        print ('Done.')
 
     def config(self):
         self.do_user_config(parent=self)
