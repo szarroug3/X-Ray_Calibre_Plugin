@@ -11,8 +11,10 @@ from PyQt5.Qt import QDialog, QVBoxLayout, QPushButton, QMessageBox, QLabel
 
 from calibre_plugins.xray_creator.config import prefs
 from calibre.ebooks.metadata.mobi import MetadataUpdater
+from calibre.ebooks.mobi.reader.headers import EXTHHeader
 
 import struct
+import os
 
 class XRayCreatorDialog(QDialog):
 
@@ -84,15 +86,28 @@ class XRayCreatorDialog(QDialog):
                 db.add_format(book_id, fmt, ffile, run_hooks=False)
             book_path = db.format_abspath(book_id, 'MOBI')
             with open(book_path, 'rb') as stream:
+                raw = stream.read()
+                doctype = raw[:4]
+                length, num_items = struct.unpack('>LL', raw[4:12])
+                print ('------------------------------------')
+                print (doctype, length, num_items)
+                print ('------------------------------------')
+                exthHeader = EXTHHeader(raw, 'utf8', None)
                 mu = MetadataUpdater(stream)
                 print ('------------------------------------')
-                # print (mu.pdbrecords)
-                # print ('------------------------------------')
-                print (struct.unpack('>i', mu.record0[0x14:0x18]))
+                print (self.start_offset)
+                erl = struct.unpack('>i', mu.record0[0x04:0x08])[0]
+                print ('------------------------------------')
+                print ('erl:', erl)
                 print ('------------------------------------')
                 print (mu.have_exth)
                 print ('------------------------------------')
-                print (struct.unpack('>h', mu.record0[0xc2:0xc4]))
+                i = 100
+                length = len(mu.record(mu.nrecs-i))
+                stringlen = '%is' % length
+                print (i, length)
+                print (mu.record(mu.nrecs-i)[0:length])
+                print (struct.unpack(stringlen, mu.record(mu.nrecs-i)[0:length]))
                 print ('------------------------------------')
 
 
