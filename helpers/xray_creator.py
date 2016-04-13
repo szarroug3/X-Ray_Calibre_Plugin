@@ -3,6 +3,7 @@
 from __future__ import (absolute_import, print_function)
 
 import os
+import re
 import struct
 import httplib
 from urllib import urlencode
@@ -12,46 +13,48 @@ from calibre.ebooks.mobi import MobiError
 from calibre.ebooks.BeautifulSoup import BeautifulSoup
 from calibre.ebooks.metadata.mobi import MetadataUpdater
 
-from calibre_plugins.xray_creator.books.shelfari_parser import ShelfariParser
-from calibre_plugins.xray_creator.books.book_parser import BookParser
+from calibre_plugins.xray_creator.helpers.xray_db_creator import XRayDBCreator
 
 class Books(object):
     def __init__(self, db, book_ids):
         self._book_ids = book_ids
         self._db = db
+        self._books = []
         self._books_skipped = []
-        self._books_to_update = []
         self._aConnection = httplib.HTTPConnection('www.amazon.com')
         self._sConnection = httplib.HTTPConnection('www.shelfari.com')
 
         for book_id in book_ids:
             title = db.field_for('title', book_id)
             author, = db.field_for('authors', book_id)
-            asin = db.field_for('identifiers', book_id)['mobi-asin']
+            asin = db.field_for('identifiers', book_id)['mobi-asin'].decode('ascii')
             book_path = db.format_abspath(book_id, 'MOBI')
             if book_path and title and author:
-                self._books_to_update.append(Book(book_id, book_path, title, author, asin=asin, aConnection=self._aConnection, sConnection=self._sConnection))
+                self._books.append(Book(book_id, book_path, title, author, asin=asin, aConnection=self._aConnection, sConnection=self._sConnection))
                 continue
             if title and author: self._books_skipped.append('%s - %s missing book path.' % (title, author))
             elif book_path: self._books_skipped.append('%s missing title or author.' % (os.path.basename(book_path).split('.')[0]))
             else: self._books_skipped.append('Unknown book with id %s missing book path, title and/or author.' % book_id)
 
+
+    @property
+    def books(self):
+        return self._books
+
     @property
     def book_skipped(self):
         return self._book_skipped
 
-    @property
-    def books_to_update(self):
-        return self._books_to_update
-
     def update_asins(self):
         books_to_remove = []
-        for book in self._books_to_update:
+        for book in self._books:
             try:
                 if not book.asin or len(book.asin) != 10:
                     self._aConnection = book.get_asin()
                     if book.asin and len(book.asin) == 10:
-                        self._db.set_metadata(book.book_id, {'identifiers': {'mobi-asin': book.asin}})
+                        mi = self._db.get_metadata(book.book_id)
+                        mi.set_identifier('mobi-asin', 'abcd123')
+                        self._db.set_metadata(book.book_id, mi)
                     else:
                         books_to_remove.append((book, '%s - %s skipped because could not find ASIN or ASIN is invalid.' % (book.title, book.author)))
                     continue
@@ -60,48 +63,85 @@ class Books(object):
                 books_to_remove.append((book, '%s - %s skipped because %s.' % (book.title, book.author, e)))
 
         for book, reason in books_to_remove:
-            self._books_to_update.remove(book)
+            self._books.remove(book)
             self._books_skipped.append(reason)
 
     def get_shelfari_urls(self):
         books_to_remove = []
-        for book in self._books_to_update:
+        for book in self._books:
             try:
                 if book.asin and len(book.asin) == 10:
                     self._sConnection = book.get_shelfari_url()
-                    if not self._shelfari_url:
+                    if not book.shelfari_url:
                         books_to_remove.append((book, '%s - %s skipped because no shelfari url found.' % (book.title, book.author)))
             except Exception as e:
                 books_to_remove.append((book, '%s - %s skipped because %s.' % (book.title, book.author, e)))
 
         for book, reason in books_to_remove:
-            self._books_to_update.remove(book)
+            self._books.remove(book)
             self._books_skipped.append(reason)
 
-    def parse_shelfari_data(self):
+    def create_xray_db_creators(self):
         books_to_remove = []
-        for book in self._books_to_update:
+        for book in self._books:
             try:
-                self._sConnection = book.get_shelfari_url()
+                xray_file_name = os.path.join(book.xray_directory, 'XRAY.entities.%s.asc' % book.asin)
+                book.create_xray_db_creator()
             except Exception as e:
                 books_to_remove.append((book, '%s - %s skipped because %s.' % (book.title, book.author, e)))
 
         for book, reason in books_to_remove:
-            self._books_to_update.remove(book)
+            self._books.remove(book)
+            self._books_skipped.append(reason)
+
+    def parse_shelfari_data(self):
+        books_to_remove = []
+        for book in self._books:
+            try:
+                book.xray_db_creator.parse_shelfari_data()
+            except Exception:
+                books_to_remove.append((book, '%s - %s skipped because could not parse shelfari data.' % (book.title, book.author)))
+
+        for book, reason in books_to_remove:
+            self._books.remove(book)
+            self._books_skipped.append(reason)
+
+    def parse_book_data(self):
+        books_to_remove = []
+        for book in self._books:
+            #try:
+            book.xray_db_creator.parse_book_data()
+            # except Exception:
+            #     books_to_remove.append((book, '%s - %s skipped because could not parse book data.' % (book.title, book.author)))
+
+        for book, reason in books_to_remove:
+            self._books.remove(book)
             self._books_skipped.append(reason)
 
     def create_xrays(self):
         self.update_asins()
         self.get_shelfari_urls()
+        self.create_xray_db_creators()
         self.parse_shelfari_data()
+        self.parse_book_data()
 
-        print (self._books_skipped)
+        for book in self._books:
+            print ('%s - %s' % (book.title, book.author))
+        print
+        for book in self._books_skipped:
+            print (book)
+
 
 
 class Book(object):
+    AMAZON_ASIN_PAT = re.compile(r'data\-asin=\"([a-zA-z0-9]+)\"')
+    SHELFARI_URL_PAT = re.compile(r'href="(.+/books/.+?)"')
+    HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain", "User-Agent": "Mozilla/5.0"}
+
     def __init__(self, book_id, book_path, title, author, asin=None, aConnection=None, sConnection=None, shelfari_url=None):
         self._book_id = book_id
         self._book_path = book_path
+        self._xray_directory = os.path.join(*os.path.abspath(self._book_path).split('.')[:-1]) + '.sdr'
         self._author = author
         self._title = title
         self._asin = asin
@@ -115,6 +155,10 @@ class Book(object):
         else:
             self._sConnection = httplib.HTTPConnection('www.shelfari.com')
 
+    @property
+    def book_id(self):
+        return self._book_id
+    
     @property
     def title(self):
         return self._title
@@ -137,27 +181,36 @@ class Book(object):
 
     @property
     def sConnection(self):
-        return self._sConnection  
+        return self._sConnection
 
+    @property
+    def xray_db_creator(self):
+        return self._xray_db_creator
+
+    @property
+    def xray_directory(self):
+        return self._xray_directory
+    
+     
     def get_asin(self):
         query = urlencode ({'field-keywords': '%s - %s' % ( self._title, self._author)})
-        self.aConnection.request('GET', '/s/ref=nb_sb_noss_2?url=node%3D154606011&' + query, None, self.headers)
+        self.aConnection.request('GET', '/s/ref=nb_sb_noss_2?url=node%3D154606011&' + query, None, self.HEADERS)
         try:
             response = self.aConnection.getresponse().read()
         except httplib.BadStatusLine:
             self.aConnection.close()
             self.aConnection = httplib.HTTPConnection('www.amazon.com')
-            self.aConnection.request('GET', '/s/ref=nb_sb_noss_2?url=node%3D154606011&' + query, None, self.headers)
+            self.aConnection.request('GET', '/s/ref=nb_sb_noss_2?url=node%3D154606011&' + query, None, self.HEADERS)
             response = self.aConnection.getresponse().read()
         # check to make sure there are results
         if 'did not match any products' in response and not 'Did you mean:' in response and not 'so we searched in All Departments' in response:
             raise ValueError('Could not find ASIN for %s - %s' % ( self._title, self._author))
-        soup = BeautifulSoup(response, 'html.parser')
-        results = soup.find_all('div', {'id': 'centerPlus'})
-        results.append(soup.find_all('div', {'id': 'resultsCol'}))
+        soup = BeautifulSoup(response)
+        results = soup.findAll('div', {'id': 'centerPlus'})
+        results.append(soup.findAll('div', {'id': 'resultsCol'}))
         for r in results:
             if 'Buy now with 1-Click' in str(r):
-                asinSearch = self.amazonASINPat.search(str(r))
+                asinSearch = self.AMAZON_ASIN_PAT.search(str(r))
                 if asinSearch:
                     self._asin = asinSearch.group(1)
                     return self.aConnection
@@ -165,8 +218,8 @@ class Book(object):
 
     def update_asin(self):
         with open(self._book_path, 'r+b') as stream:
-            mu = MinimalMobiUpdater(stream)
-            mu.update(asin=asin)
+            mu = MobiASINUpdater(stream)
+            mu.update(asin=self.asin)
 
     def get_shelfari_url(self):
         query = urlencode ({'Keywords': self.asin})
@@ -182,17 +235,17 @@ class Book(object):
         # check to make sure there are results
         if 'did not return any results' in response:
             return self.sConnection
-        urlsearch = self.shelfariURLPat.search(response)
+        urlsearch = self.SHELFARI_URL_PAT.search(response)
         if not urlsearch:
             return self.sConnection
         self._shelfari_url = urlsearch.group(1)
         return self.sConnection
 
-    def parse_shelfari_data(self):
-        self._parsed_data = ShelfariParser(self._shelfari_url)
+    def create_xray_db_creator(self):
+        self._xray_db_creator = XRayDBCreator(self._shelfari_url, self._book_path)
 
 
-class MinimalMobiUpdater(MetadataUpdater):
+class MobiASINUpdater(MetadataUpdater):
     def update(self, asin):
         def update_exth_record(rec):
             recs.append(rec)

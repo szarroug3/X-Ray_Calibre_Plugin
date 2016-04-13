@@ -49,24 +49,3 @@ class BookParser(object):
         if val % mod == 0:
             return 0
         return mod - (val % mod)
-
-    def update_ASIN(self, val):
-        new_recs = [(113, val.encode(self._encoding)), (504, val.encode(self._encoding))]
-        for rec_type, rec_val in self._exth_data.items():
-            if rec_type != 113 and rec_type != 504:
-                new_recs.append((rec_type, rec_val))
-
-        new_recs.sort(key=lambda x:x[0])
-
-        new_exth = b''
-        for rec_type, rec_val in new_recs:
-            new_exth = new_exth + pack('>LL', rec_type, len(rec_val) + 8) + rec_val
-
-        # make new exth string with padding at the end
-        new_exth = b'EXTH' + pack('>LL', len(new_exth) + 12, len(new_recs)) + new_exth + (b'\0' * self._pad(len(new_exth) + 12, 4))
-        print (unpack('>4sLLLL', new_exth[:20]))
-
-        with open('test.mobi', 'wb') as f:
-            f.write(self._book_data[:self._records_start + self._exth_start])
-            f.write(new_exth)
-            f.write(self._book_data[self._records_start + self._exth_end:])

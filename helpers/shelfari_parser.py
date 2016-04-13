@@ -13,9 +13,6 @@ class ShelfariParser(object):
         response = urlopen(url)
         page_source = response.read()
         self._html_source = html.fromstring(page_source)
-        self._get_characters()
-        self._get_terms()
-        self._get_quotes()
 
     @property
     def characters(self):
@@ -28,6 +25,11 @@ class ShelfariParser(object):
     @property
     def quotes(self):
         return self._quotes
+
+    def parse(self):
+        self._get_characters()
+        self._get_terms()
+        self._get_quotes()
 
     def _get_data_from_ul(self, xpath):
         results = {}

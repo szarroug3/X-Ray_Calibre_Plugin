@@ -12,7 +12,7 @@ from PyQt5.Qt import QDialog, QVBoxLayout, QPushButton, QMessageBox, QLabel
 from calibre_plugins.xray_creator.config import prefs
 from calibre.ebooks.mobi.reader.headers import EXTHHeader
 
-from calibre_plugins.xray_creator.books.books import *
+from calibre_plugins.xray_creator.helpers.xray_creator import *
 
 class XRayCreatorDialog(QDialog):
 
