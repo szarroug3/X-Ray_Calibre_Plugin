@@ -4,17 +4,15 @@ from __future__ import (unicode_literals, division, absolute_import,
                         print_function)
 
 __license__   = 'GPL v3'
-__copyright__ = '2016, szarroug3 & dresendez'
+__copyright__ = '2016, szarroug3'
 __docformat__ = 'restructuredtext en'
 
 from PyQt5.Qt import QDialog, QVBoxLayout, QPushButton, QMessageBox, QLabel
 
 from calibre_plugins.xray_creator.config import prefs
-from calibre.ebooks.metadata.mobi import MetadataUpdater
 from calibre.ebooks.mobi.reader.headers import EXTHHeader
 
-import struct
-import os
+from calibre_plugins.xray_creator.books.books import *
 
 class XRayCreatorDialog(QDialog):
 
@@ -64,30 +62,8 @@ class XRayCreatorDialog(QDialog):
         # Map the rows to book ids
         ids = list(map(self.gui.library_view.model().id, rows))
         db = self.db.new_api
-        for book_id in ids:
-            book_path = db.format_abspath(book_id, 'MOBI')
-            with open(book_path, 'rb') as stream:
-                raw = stream.read()
-                print ('------------------------------------')
-                print (struct.unpack('4s', raw[3824-12:3824-12+4]))
-                exthHeader = EXTHHeader(raw[3824:14576], 'utf8', None)
-                print (exthHeader.start_offset)
-                mu = MetadataUpdater(stream)
-                print ('------------------------------------')
-                print (self.start_offset)
-                erl = struct.unpack('>i', mu.record0[0x04:0x08])[0]
-                print ('------------------------------------')
-                print ('erl:', erl)
-                print ('------------------------------------')
-                print (mu.have_exth)
-                print ('------------------------------------')
-                i = 100
-                length = len(mu.record(mu.nrecs-i))
-                stringlen = '%is' % length
-                print (i, length)
-                print (mu.record(mu.nrecs-i)[0:length])
-                print (struct.unpack(stringlen, mu.record(mu.nrecs-i)[0:length]))
-                print ('------------------------------------')
+        books = Books(db, ids)
+        books.create_xrays()
         print ('Done.')
 
     def config(self):

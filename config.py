@@ -4,7 +4,7 @@ from __future__ import (unicode_literals, division, absolute_import,
                         print_function)
 
 __license__   = 'GPL v3'
-__copyright__ = '2016, szarroug3 & drezendez'
+__copyright__ = '2016, szarroug3'
 __docformat__ = 'restructuredtext en'
 
 from PyQt5.Qt import QWidget, QHBoxLayout, QLabel, QLineEdit

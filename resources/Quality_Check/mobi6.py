@@ -119,7 +119,6 @@ class MinimalMobiReader(object):
 
 
 class MinimalMobiUpdater(MetadataUpdater):
-
     def update(self, asin=None, cdetype=None):
         def update_exth_record(rec):
             recs.append(rec)
@@ -155,4 +154,3 @@ class MinimalMobiUpdater(MetadataUpdater):
             raise MobiError('No existing EXTH record. Cannot update ASIN.')
 
         self.create_exth(exth=exth)
-
