@@ -13,4 +13,4 @@ class XRayDBCreator(object):
 		self._parsed_shelfari_data = ShelfariParser(self._shelfari_url).parse()
 
 	def parse_book_data(self):
-		self._parsed_book_data = BookParser(self._book_path).parse()
+		self._parsed_book_data = BookParser(self._book_path, self._parsed_shelfari_data).parse()

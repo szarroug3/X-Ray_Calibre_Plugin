@@ -1,6 +1,8 @@
 # book_parser.py
 
 import os
+import re
+from sys import exit
 from struct import unpack
 
 from calibre.ebooks.mobi.huffcdic import HuffReader
@@ -9,15 +11,35 @@ from calibre.ebooks.mobi.reader.mobi6 import MobiReader
 from calibre.ebooks.compression.palmdoc import decompress_doc
 
 class BookParser(object):
-    def __init__(self, book_path):
+    PARAGRAPH_PAT = re.compile(r'<p.*?>.+?(?:<\/p>)')
+    def __init__(self, book_path, shelfari_data):
         self._book_path = book_path
+        self._shelfari_data = shelfari_data
 
     def parse(self):
         self._book_html = MobiExtractor(self._book_path, open(os.devnull, 'w')).extract_text()
+
         self.find_erl_and_encoding()
-        self._book_html_soup = BeautifulSoup(self._book_html)
-        self._book_text = [paragraph.decode(self._codec) for paragraph in self._book_html_soup.findAll("p", text=True)]
-        
+        #self._book_html_soup = BeautifulSoup(self._book_html, markupMassage=False)
+        #self._book_text = [paragraph.decode(self._codec) for paragraph in self._book_html_soup.findAll("p", text=True)]
+        self._paragraph_data = []
+
+        for node in re.finditer(self.PARAGRAPH_PAT, self._book_html):
+            soup = BeautifulSoup(node.group(0))
+            plain_text = ''.join([text.decode(self._codec) for text in soup.findAll("p", text=True)])
+            print (node.start(0))
+            exit()
+            self._paragraph_data.append((node.group(0), plain_text, node.start(0) + 1))
+
+    def search_for_characters(self):
+        pass
+
+    def search_for_terms(self):
+        pass
+
+    # do i really need to do this??
+    def search_for_quotes(self):
+        pass
 
     def find_erl_and_encoding(self):
         with open(self._book_path, 'rb') as f:
