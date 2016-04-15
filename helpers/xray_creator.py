@@ -5,15 +5,16 @@ from __future__ import (absolute_import, print_function)
 import os
 import re
 import struct
-import httplib
 from urllib import urlencode
 from cStringIO import StringIO
+from httplib import HTTPConnection, BadStatusLine
 
 from calibre.ebooks.mobi import MobiError
 from calibre.ebooks.BeautifulSoup import BeautifulSoup
 from calibre.ebooks.metadata.mobi import MetadataUpdater
 
-from calibre_plugins.xray_creator.helpers.xray_db_creator import XRayDBCreator
+from calibre_plugins.xray_creator.helpers.book_parser import BookParser
+from calibre_plugins.xray_creator.helpers.shelfari_parser import ShelfariParser
 
 class Books(object):
     def __init__(self, db, book_ids):
@@ -21,8 +22,8 @@ class Books(object):
         self._db = db
         self._books = []
         self._books_skipped = []
-        self._aConnection = httplib.HTTPConnection('www.amazon.com')
-        self._sConnection = httplib.HTTPConnection('www.shelfari.com')
+        self._aConnection = HTTPConnection('www.amazon.com')
+        self._sConnection = HTTPConnection('www.shelfari.com')
 
         for book_id in book_ids:
             title = db.field_for('title', book_id)
@@ -53,7 +54,7 @@ class Books(object):
                     self._aConnection = book.get_asin()
                     if book.asin and len(book.asin) == 10:
                         mi = self._db.get_metadata(book.book_id)
-                        mi.set_identifier('mobi-asin', 'abcd123')
+                        mi.set_identifier('mobi-asin', book.asin)
                         self._db.set_metadata(book.book_id, mi)
                     else:
                         books_to_remove.append((book, '%s - %s skipped because could not find ASIN or ASIN is invalid.' % (book.title, book.author)))
@@ -81,26 +82,13 @@ class Books(object):
             self._books.remove(book)
             self._books_skipped.append(reason)
 
-    def create_xray_db_creators(self):
-        books_to_remove = []
-        for book in self._books:
-            try:
-                xray_file_name = os.path.join(book.xray_directory, 'XRAY.entities.%s.asc' % book.asin)
-                book.create_xray_db_creator()
-            except Exception as e:
-                books_to_remove.append((book, '%s - %s skipped because %s.' % (book.title, book.author, e)))
-
-        for book, reason in books_to_remove:
-            self._books.remove(book)
-            self._books_skipped.append(reason)
-
     def parse_shelfari_data(self):
         books_to_remove = []
         for book in self._books:
-            try:
-                book.xray_db_creator.parse_shelfari_data()
-            except Exception:
-                books_to_remove.append((book, '%s - %s skipped because could not parse shelfari data.' % (book.title, book.author)))
+            #try:
+                book.parse_shelfari_data()
+            # except Exception:
+            #     books_to_remove.append((book, '%s - %s skipped because could not parse shelfari data.' % (book.title, book.author)))
 
         for book, reason in books_to_remove:
             self._books.remove(book)
@@ -110,7 +98,7 @@ class Books(object):
         books_to_remove = []
         for book in self._books:
             #try:
-            book.xray_db_creator.parse_book_data()
+            book.parse_book_data()
             # except Exception:
             #     books_to_remove.append((book, '%s - %s skipped because could not parse book data.' % (book.title, book.author)))
 
@@ -121,7 +109,6 @@ class Books(object):
     def create_xrays(self):
         self.update_asins()
         self.get_shelfari_urls()
-        self.create_xray_db_creators()
         self.parse_shelfari_data()
         self.parse_book_data()
 
@@ -149,11 +136,11 @@ class Book(object):
         if aConnection:
             self._aConnection = aConnection
         else:
-            self._aConnection = httplib.HTTPConnection('www.amazon.com')
+            self._aConnection = HTTPConnection('www.amazon.com')
         if sConnection:
             self._sConnection = sConnection
         else:
-            self._sConnection = httplib.HTTPConnection('www.shelfari.com')
+            self._sConnection = HTTPConnection('www.shelfari.com')
 
     @property
     def book_id(self):
@@ -189,25 +176,23 @@ class Book(object):
 
     @property
     def xray_directory(self):
-        return self._xray_directory
-    
+        return self._xray_directory    
      
     def get_asin(self):
-        query = urlencode ({'field-keywords': '%s - %s' % ( self._title, self._author)})
-        self.aConnection.request('GET', '/s/ref=nb_sb_noss_2?url=node%3D154606011&' + query, None, self.HEADERS)
+        query = urlencode({'keywords': '%s - %s' % ( self._title, self._author)})
+        self.aConnection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, None, self.HEADERS)
         try:
             response = self.aConnection.getresponse().read()
-        except httplib.BadStatusLine:
+        except BadStatusLine:
             self.aConnection.close()
-            self.aConnection = httplib.HTTPConnection('www.amazon.com')
-            self.aConnection.request('GET', '/s/ref=nb_sb_noss_2?url=node%3D154606011&' + query, None, self.HEADERS)
+            self.aConnection = HTTPConnection('www.amazon.com')
+            self.aConnection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, None, self.HEADERS)
             response = self.aConnection.getresponse().read()
         # check to make sure there are results
         if 'did not match any products' in response and not 'Did you mean:' in response and not 'so we searched in All Departments' in response:
             raise ValueError('Could not find ASIN for %s - %s' % ( self._title, self._author))
         soup = BeautifulSoup(response)
-        results = soup.findAll('div', {'id': 'centerPlus'})
-        results.append(soup.findAll('div', {'id': 'resultsCol'}))
+        results = soup.findAll('div', {'id': 'resultsCol'})
         for r in results:
             if 'Buy now with 1-Click' in str(r):
                 asinSearch = self.AMAZON_ASIN_PAT.search(str(r))
@@ -226,9 +211,9 @@ class Book(object):
         self.sConnection.request('GET', '/search/books?' + query)
         try:
             response = self.sConnection.getresponse().read()
-        except httplib.BadStatusLine:
+        except BadStatusLine:
             self.sConnection.close()
-            self.sConnection = httplib.HTTPConnection('www.shelfari.com')
+            self.sConnection = HTTPConnection('www.shelfari.com')
             self.sConnection.request('GET', '/search/books?' + query)
             response = self.sConnection.getresponse().read()
         
@@ -241,9 +226,12 @@ class Book(object):
         self._shelfari_url = urlsearch.group(1)
         return self.sConnection
 
-    def create_xray_db_creator(self):
-        self._xray_db_creator = XRayDBCreator(self._shelfari_url, self._book_path)
+    def parse_shelfari_data(self):
+        self._parsed_shelfari_data = ShelfariParser(self._shelfari_url)
+        self._parsed_shelfari_data.parse()
 
+    def parse_book_data(self):
+        self._parsed_book_data = BookParser(self._book_path, self._parsed_shelfari_data).parse()
 
 class MobiASINUpdater(MetadataUpdater):
     def update(self, asin):

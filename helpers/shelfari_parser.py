@@ -1,5 +1,6 @@
 # shelfari_parser.py
 
+from sys import exit
 from urllib2 import urlopen
 from lxml import html
 import re
@@ -13,6 +14,10 @@ class ShelfariParser(object):
         response = urlopen(url)
         page_source = response.read()
         self._html_source = html.fromstring(page_source)
+        self._characters = []
+        self._terms = []
+        self._quotes = []
+        self._entity_counter = 1
 
     @property
     def characters(self):
@@ -39,7 +44,8 @@ class ShelfariParser(object):
             labelAndDesc = li.xpath("string()")[len(label):]
             descSearch = self._LETTERS_AND_NUMBERS.search(labelAndDesc)
             desc = descSearch.group(1) if descSearch else None
-            results[label] = desc
+            results[self._entity_counter] = {'label': label, 'description': desc}
+            self._entity_counter += 1
         return results
     
     def _get_characters(self):
@@ -51,4 +57,4 @@ class ShelfariParser(object):
 
     def _get_quotes(self):
         quoteList = self._html_source.xpath('//div[@id="WikiModule_Quotations"]//li//blockquote/text()')
-        self._quotes = [quote[1:-1] for quote in quoteList]
+        self._quotes = [quote[1:-1].lower() for quote in quoteList]
