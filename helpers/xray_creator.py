@@ -50,16 +50,18 @@ class Books(object):
         books_to_remove = []
         for book in self._books:
             try:
+                update = False
+                if not book.asin or len(book.asin) != 10:
+                    mi = self._db.get_metadata(book.book_id)
+                    book.asin = mi.get_identifier['mobi-asin']
+                    update = True
                 if not book.asin or len(book.asin) != 10:
                     self._aConnection = book.get_asin()
-                    if book.asin and len(book.asin) == 10:
-                        mi = self._db.get_metadata(book.book_id)
-                        mi.set_identifier('mobi-asin', book.asin)
-                        self._db.set_metadata(book.book_id, mi)
-                    else:
-                        books_to_remove.append((book, '%s - %s skipped because could not find ASIN or ASIN is invalid.' % (book.title, book.author)))
+                    update = True
+                if not book.asin or len(book.asin) != 10:
+                    books_to_remove.append((book, '%s - %s skipped because could not find ASIN or ASIN is invalid.' % (book.title, book.author)))
                     continue
-                book.update_asin()
+                if update: book.update_asin()
             except Exception as e:
                 books_to_remove.append((book, '%s - %s skipped because %s.' % (book.title, book.author, e)))
 
@@ -85,10 +87,10 @@ class Books(object):
     def parse_shelfari_data(self):
         books_to_remove = []
         for book in self._books:
-            #try:
+            try:
                 book.parse_shelfari_data()
-            # except Exception:
-            #     books_to_remove.append((book, '%s - %s skipped because could not parse shelfari data.' % (book.title, book.author)))
+            except Exception:
+                books_to_remove.append((book, '%s - %s skipped because could not parse shelfari data.' % (book.title, book.author)))
 
         for book, reason in books_to_remove:
             self._books.remove(book)
@@ -101,6 +103,18 @@ class Books(object):
             book.parse_book_data()
             # except Exception:
             #     books_to_remove.append((book, '%s - %s skipped because could not parse book data.' % (book.title, book.author)))
+
+        for book, reason in books_to_remove:
+            self._books.remove(book)
+            self._books_skipped.append(reason)
+
+    def create_xray_files(self):
+        books_to_remove = []
+        for book in self._books:
+            #try:
+            book.create_xray_file()
+            # except Exception:
+            #     books_to_remove.append((book, '%s - %s skipped because could not write X-Ray file.' % (book.title, book.author)))
 
         for book, reason in books_to_remove:
             self._books.remove(book)
@@ -131,7 +145,10 @@ class Book(object):
         self._xray_directory = os.path.join(*os.path.abspath(self._book_path).split('.')[:-1]) + '.sdr'
         self._author = author
         self._title = title
-        self._asin = asin
+        if asin:
+            self._asin = asin
+        else:
+            self.check_asin()
         self._shelfari_url = shelfari_url
         if aConnection:
             self._aConnection = aConnection
@@ -201,10 +218,15 @@ class Book(object):
                     return self.aConnection
         raise ValueError('Could not find ASIN for %s - %s' % ( self._title, self._author))
 
+    def check_asin(self):
+        with open(self._book_path, 'r') as stream:
+            mu = MobiASINUpdater(stream)
+            self._asin = mu.update(asin=self.asin)
+
     def update_asin(self):
         with open(self._book_path, 'r+b') as stream:
             mu = MobiASINUpdater(stream)
-            mu.update(asin=self.asin)
+            self._asin = mu.update(asin=self.asin)
 
     def get_shelfari_url(self):
         query = urlencode ({'Keywords': self.asin})
@@ -231,7 +253,12 @@ class Book(object):
         self._parsed_shelfari_data.parse()
 
     def parse_book_data(self):
-        self._parsed_book_data = BookParser(self._book_path, self._parsed_shelfari_data).parse()
+        self._parsed_book_data = BookParser(self._book_path, self._parsed_shelfari_data)
+        self._parsed_book_data.parse()
+
+    def write_xray_file(self):
+        self._xray_db_writer = XRayDBWriter(self.xray_directory, self.asin, self._parsed_book_data)
+        self._xray_db_writer.create_xray()
 
 class MobiASINUpdater(MetadataUpdater):
     def update(self, asin):
@@ -243,6 +270,7 @@ class MobiASINUpdater(MetadataUpdater):
         if self.type != "BOOKMOBI":
                 raise MobiError("Setting ASIN only supported for MOBI files of type 'BOOK'.\n"
                                 "\tThis is a '%s' file of type '%s'" % (self.type[0:4], self.type[4:8]))
+
         recs = []
         update_exth_record((113, asin.encode(self.codec, 'replace')))
         update_exth_record((504, asin.encode(self.codec, 'replace')))
@@ -266,3 +294,13 @@ class MobiASINUpdater(MetadataUpdater):
             raise MobiError('No existing EXTH record. Cannot update ASIN.')
 
         self.create_exth(exth=exth)
+
+        return asin
+
+    def check_for_asin(self):
+        if 113 in self.original_exth_records.keys() and len(self.original_exth_records[113]) == 10:
+            if 504 in self.original_exth_records.keys() and self.original_exth_records[504] == self.original_exth_records[113]:
+                return 1
+            return self.original_exth_records[113]
+        if 504 in self.original_exth_records.keys() and len(self.original_exth_records[504]) == 10:
+                return self.original_exth_records[504]

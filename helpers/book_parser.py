@@ -49,8 +49,10 @@ class BookParser(object):
         self.find_erl_and_encoding()
         self._paragraph_data = []
 
+        # find all paragraphs (sections enclosed in html p tags) and their starting offset
         for node in re.finditer(self.PARAGRAPH_PAT, self._book_html):
-            results = [(word.group(0)[1:-1].decode(self._codec).lower(), word.start(0)) for word in re.finditer(r'>([^<]+?)<', node, re.I]
+            # get plain text from paragraph and locations of letters from beginning of file
+            results = [(word.group(0)[1:-1].decode(self._codec).lower(), word.start(0)) for word in re.finditer(r'>([^<]+?)<', node, re.I)]
             word_loc = {'words': '', 'loc': []}
             for group, loc in results:
                 start = node.start(0) + loc + 1
@@ -78,12 +80,9 @@ class BookParser(object):
     next_space = string.find(' ', start)
     if next_space != 0
     return next_space - start
-    sub = 0
-    for i in range(1, len(a)):
-            if len(a) - i > start:
-                    if not a[len(a) - i].isalpha() and a[len(a) - i] != '\'':
-                        sub += 1
-    return len(string) - start - sub
+
+    # if there is no space between start and the end of the string, return length from start to end of string
+    return len(string) - start
 
     # do i really need to do this??
     def search_for_quotes(self):
