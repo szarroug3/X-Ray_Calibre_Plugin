@@ -14,6 +14,7 @@ from calibre.ebooks.BeautifulSoup import BeautifulSoup
 from calibre.ebooks.metadata.mobi import MetadataUpdater
 
 from calibre_plugins.xray_creator.helpers.book_parser import BookParser
+from calibre_plugins.xray_creator.helpers.xray_db_writer import XRayDBWriter
 from calibre_plugins.xray_creator.helpers.shelfari_parser import ShelfariParser
 
 class Books(object):
@@ -87,10 +88,10 @@ class Books(object):
     def parse_shelfari_data(self):
         books_to_remove = []
         for book in self._books:
-            try:
-                book.parse_shelfari_data()
-            except Exception:
-                books_to_remove.append((book, '%s - %s skipped because could not parse shelfari data.' % (book.title, book.author)))
+            #try:
+            book.parse_shelfari_data()
+            # except Exception:
+            #     books_to_remove.append((book, '%s - %s skipped because could not parse shelfari data.' % (book.title, book.author)))
 
         for book, reason in books_to_remove:
             self._books.remove(book)
@@ -108,11 +109,11 @@ class Books(object):
             self._books.remove(book)
             self._books_skipped.append(reason)
 
-    def create_xray_files(self):
+    def write_xray_files(self):
         books_to_remove = []
         for book in self._books:
             #try:
-            book.create_xray_file()
+            book.write_xray_file()
             # except Exception:
             #     books_to_remove.append((book, '%s - %s skipped because could not write X-Ray file.' % (book.title, book.author)))
 
@@ -125,14 +126,13 @@ class Books(object):
         self.get_shelfari_urls()
         self.parse_shelfari_data()
         self.parse_book_data()
+        self.write_xray_files()
 
         for book in self._books:
             print ('%s - %s' % (book.title, book.author))
         print
         for book in self._books_skipped:
             print (book)
-
-
 
 class Book(object):
     AMAZON_ASIN_PAT = re.compile(r'data\-asin=\"([a-zA-z0-9]+)\"')

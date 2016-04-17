@@ -1,6 +1,5 @@
 # shelfari_parser.py
 
-from sys import exit
 from urllib2 import urlopen
 from lxml import html
 import re
@@ -51,9 +50,9 @@ class ShelfariParser(object):
     def _get_characters(self):
         self._characters = self._get_data_from_ul('//div[@id="WikiModule_Characters"]//ul[@class="li_6"]')
         
-
     def _get_terms(self):
         self._terms = self._get_data_from_ul('//div[@id="WikiModule_Settings"]//ul[@class="li_6"]')
+        self._terms.update(self._get_data_from_ul('//div[@id="WikiModule_Glossary"]//ul[@class="li_6"]'))
 
     def _get_quotes(self):
         quoteList = self._html_source.xpath('//div[@id="WikiModule_Quotations"]//li//blockquote/text()')
