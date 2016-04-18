@@ -164,9 +164,9 @@ class Books(object):
     def send_xray(self, book, kindle_drive, already_created_xray=True):
         try:
             book.send_xray(kindle_drive, already_created_xray=already_created_xray)
-        except Exception:
+        except Exception as e:
             self._books.remove(book)
-            self._books_skipped.append('%s - %s skipped because could not send x-ray to device.' % (book.title, book.author))
+            self._books_skipped.append('%s - %s skipped because %s.' % (book.title, book.author, e))
             return False
 
         return True
@@ -234,13 +234,23 @@ class Books(object):
     def send_xrays_event(self, abort, log, notifications):
         kindle_drive = self._find_kindle()
         if not kindle_drive:
-            raise Exception('No Kindle connected.')
+            raise Exception('No device connected.')
         notif = notifications
         for i, book in enumerate(self._books):
             if abort.isSet():
                 return
             notif.put((i/float(len(self._books)), 'Sending %s - %s x-ray to Device' % (book.title, book.author)))
-            self.send_xray(book, kindle_drive)
+            self.send_xray(book, kindle_drive, already_created_xray=False)
+
+        if len(self._books_skipped) > 0:
+            log('Books Skipped:')
+            for book in self._books_skipped:
+                log('\t%s' % book)
+
+        if len(self._books) > 0:
+            log('Books Completed:')
+            for book in self._books:
+                log('\t%s - %s' % (book.title, book.author))
 
 class Book(object):
     AMAZON_ASIN_PAT = re.compile(r'data\-asin=\"([a-zA-z0-9]+)\"')
