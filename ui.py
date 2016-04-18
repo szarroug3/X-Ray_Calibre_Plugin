@@ -37,10 +37,10 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
         self.menu = QMenu(self.gui)
         self.create_menu_action(self.menu, 'X-Ray Creator Create Button',
-                'Create X-Rays', None, None,
+                'Create X-Rays', None, 'CTRL+SHIFT+ALT+X',
                 'Create X-Rays for Chosen Books', self.create_xrays)
         self.create_menu_action(self.menu, 'Send Local X-Rays to Device',
-                'Send X-Ray files to Device', None, None,
+                'Send X-Ray files to Device', None, 'CTRL+SHIFT+ALT+C',
                 'Sends X-Ray files to Device', self.send_xrays)
         self.menu.addSeparator()
         self.create_menu_action(self.menu, 'X-Ray Creator Preferences Button',
