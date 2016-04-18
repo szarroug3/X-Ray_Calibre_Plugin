@@ -75,7 +75,6 @@ class BookParser(object):
         excerpt_id = 0
         for word_loc, para_start in paragraph_data:
             rel_ent = []
-            add_excerpt = False
             for word in self.entity_data.keys():
                 # search for word in the paragraph
                 WORD_PAT = re.compile(r'\b{}\b'.format(word), re.I)
@@ -88,14 +87,11 @@ class BookParser(object):
                                 'len': self._find_len_word(match.start(0), match.end(0), word_loc)})
                     if entity_id not in rel_ent:
                         rel_ent.append(entity_id)
-                        add_excerpt = True
                 for quote in self._quotes:
                     if quote.lower() in word_loc['words'].lower() and excerpt_id not in self._notable_clips:
                         self._notable_clips.append(excerpt_id)
-                        add_excerpt = True
-            if add_excerpt:
-                self._excerpt_data[excerpt_id] = {'loc': para_start, 'len': self._find_len_excerpt(word_loc), 'related_entities': rel_ent}
-                excerpt_id += 1
+            self._excerpt_data[excerpt_id] = {'loc': para_start, 'len': self._find_len_excerpt(word_loc), 'related_entities': rel_ent}
+            excerpt_id += 1
 
         # add random excerpts to make sure notable clips has at least 20 excerpts
         while len(self._notable_clips) < 20:

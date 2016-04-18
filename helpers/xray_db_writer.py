@@ -71,7 +71,7 @@ class XRayDBWriter(object):
     def fill_excerpt(self):
         excerpt_data = []
         for excerpt_id in self._excerpt_data.keys():
-            if len(self._excerpt_data[excerpt_id]['related_entities']) > 0:
+            if len(self._excerpt_data[excerpt_id]['related_entities']) > 0 or excerpt_id in self._notable_clips:
                 start = str(self._excerpt_data[excerpt_id]['loc']).encode(self._codec)
                 length = str(self._excerpt_data[excerpt_id]['len']).encode(self._codec)
                 image = ''.encode(self._codec)

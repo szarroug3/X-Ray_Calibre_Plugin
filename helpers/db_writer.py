@@ -28,6 +28,7 @@ class DBWriter(object):
 		self._cursor.execute('PRAGMA encoding = utf8')
 
 	def _insert_into_table(self, tableName, data):
+		if len(data) == 0: return
 		if isinstance(data, list):
 			params = ['?' for d in data[0]]
 			self._cursor.executemany('INSERT INTO %s VALUES (%s)' % (tableName, ','.join(params)), data)

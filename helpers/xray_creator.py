@@ -13,6 +13,7 @@ from cStringIO import StringIO
 from httplib import HTTPConnection, BadStatusLine
 
 from calibre.ebooks.mobi import MobiError
+from calibre.ebooks.metadata.meta import get_metadata, set_metadata
 from calibre.ebooks.BeautifulSoup import BeautifulSoup
 from calibre.ebooks.metadata.mobi import MetadataUpdater
 
@@ -44,11 +45,17 @@ class Books(object):
         self._create_xray = create_xray
 
         for book_id in book_ids:
-            title = db.field_for('title', book_id)
-            title_sort = db.field_for('sort', book_id)
-            author, = db.field_for('authors', book_id)
-            author_sort = db.field_for('author_sort', book_id)
-            asin = db.field_for('identifiers', book_id)['mobi-asin'].decode('ascii')
+            title = self._db.field_for('title', book_id)
+            title_sort = self._db.field_for('sort', book_id)
+            author = self._db.field_for('authors', book_id)
+            if len(author) > 0:
+                author = author[0]
+            author_sort = self._db.field_for('author_sort', book_id)
+            identifiers = self._db.field_for('identifiers', book_id)
+            if 'mobi-asin' in identifiers.keys():
+                asin = db.field_for('identifiers', book_id)['mobi-asin'].decode('ascii')
+            else:
+                asin = None
             local_book_path = db.format_abspath(book_id, 'MOBI')
             if local_book_path and title and author and title_sort and author_sort:
                 device_book_path = os.path.join('documents', author_sort, title_sort + ' - ' + author + '.mobi')
@@ -93,14 +100,14 @@ class Books(object):
     def update_asin(self, book):
         try:
             if not book.asin or len(book.asin) != 10:
-                mi = self._db.get_metadata(book.book_id)
-                book.asin = mi.get_identifier['mobi-asin']
-            if not book.asin or len(book.asin) != 10:
                 self._aConnection = book.get_asin()
             if not book.asin or len(book.asin) != 10:
                 self._books.remove(book)
                 self._books_skipped.append('%s - %s skipped because could not find ASIN or ASIN is invalid.' % (book.title, book.author))
                 return
+            mi = self._db.get_metadata(book.book_id)
+            mi.get_identifiers()['mobi-asin'] = book.asin
+            self._db.set_metadata(book.book_id, mi)
             book.update_asin()
         except Exception as e:
             self._books.remove(book)
@@ -125,7 +132,7 @@ class Books(object):
 
     def parse_shelfari_data(self, book):
         try:
-            book.parse_shelfari_data(spoilers=self._spoilers)
+            book.parse_shelfari_data()
         except Exception:
             self._books.remove(book)
             self._books_skipped.append('%s - %s skipped because could not parse shelfari data.' % (book.title, book.author))
@@ -213,6 +220,9 @@ class Books(object):
                 if kindle_drive:
                     self.send_xray(book, kindle_drive)
 
+        for book in self._books_skipped:
+            print (book)
+
     def send_xrays_event(self, abort, log, notifications):
         kindle_drive = self._find_kindle()
         if not kindle_drive:
@@ -233,8 +243,8 @@ class Book(object):
         self._book_id = book_id
         self._local_book_path = local_book_path
         self._device_book_path = device_book_path
-        self._local_xray_directory = os.path.join(*os.path.abspath(self._local_book_path).split('.')[:-1]) + '.sdr'
-        self._device_xray_directory = device_book_path[:-4] + 'sdr'
+        self._local_xray_directory = self._local_book_path[:-4] + 'sdr'
+        self._device_xray_directory = self._device_book_path[:-4] + 'sdr'
         self._author = author
         self._title = title
         self._spoilers = spoilers
@@ -243,7 +253,7 @@ class Book(object):
         if asin:
             self._asin = asin
         else:
-            self.check_asin()
+            self._asin = None
         self._shelfari_url = shelfari_url
         if aConnection:
             self._aConnection = aConnection
@@ -318,11 +328,6 @@ class Book(object):
                     return self.aConnection
         raise ValueError('Could not find ASIN for %s - %s' % ( self._title, self._author))
 
-    def check_asin(self):
-        with open(self._local_book_path, 'r') as stream:
-            mu = MobiASINUpdater(stream)
-            self._asin = mu.update(asin=self.asin)
-
     def update_asin(self):
         with open(self._local_book_path, 'r+b') as stream:
             mu = MobiASINUpdater(stream)
@@ -368,12 +373,12 @@ class Book(object):
     def create_xray(self):
         try:
             if not self.asin or len(self.asin) != 10:
-                mi = self._db.get_metadata(self.book_id)
-                self.asin = mi.get_identifier['mobi-asin']
-            if not self.asin or len(self.asin) != 10:
                 self._aConnection = self.get_asin()
             if not self.asin or len(self.asin) != 10:
                 return
+            mi = self._db.get_metadata(self.book_id)
+            mi.get_identifiers()['mobi-asin'] = self.asin
+            self._db.set_metadata(self.book_id, mi)
             self.update_asin()
             if self.asin and len(self.asin) == 10:
                 self._sConnection = self.get_shelfari_url()
@@ -448,11 +453,3 @@ class MobiASINUpdater(MetadataUpdater):
         self.create_exth(exth=exth)
 
         return asin
-
-    def check_for_asin(self):
-        if 113 in self.original_exth_records.keys() and len(self.original_exth_records[113]) == 10:
-            if 504 in self.original_exth_records.keys() and self.original_exth_records[504] == self.original_exth_records[113]:
-                return 1
-            return self.original_exth_records[113]
-        if 504 in self.original_exth_records.keys() and len(self.original_exth_records[504]) == 10:
-                return self.original_exth_records[504]

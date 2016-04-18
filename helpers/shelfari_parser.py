@@ -17,19 +17,31 @@ class ShelfariParser(object):
 
         response = opener.open('/'.join(url.split('/')[:-1]) + '/wiki/Characters')
         page_source = response.read()
-        self._characters_html_source = html.fromstring(page_source)
+        if page_source:
+            self._characters_html_source = html.fromstring(page_source)
+        else:
+            self._characters_html_source = None
 
         response = opener.open('/'.join(url.split('/')[:-1]) + '/wiki/Settings')
         page_source = response.read()
-        self._settings_html_source = html.fromstring(page_source)
+        if page_source:
+            self._settings_html_source = html.fromstring(page_source)
+        else:
+            self._settings_html_source = None
 
         response = opener.open('/'.join(url.split('/')[:-1]) + '/wiki/Glossary')
         page_source = response.read()
-        self._glossary_html_source = html.fromstring(page_source)
+        if page_source:
+            self._glossary_html_source = html.fromstring(page_source)
+        else:
+            self._glossary_html_source = None
 
         response = opener.open('/'.join(url.split('/')[:-1]) + '/wiki/Quotations')
         page_source = response.read()
-        self._quotations_html_source = html.fromstring(page_source)
+        if page_source:
+            self._quotations_html_source = html.fromstring(page_source)
+        else:
+            self._quotations_html_source = None
 
         self._characters = []
         self._terms = []
@@ -54,13 +66,26 @@ class ShelfariParser(object):
         self._get_quotes()
 
     def _get_data_from_ul(self, type):
-        xpath = '//ul[@class="li_6"]'
-        if type == 'Characters': ul = self._characters_html_source.xpath(xpath)
-        elif type == 'Settings': ul = self._settings_html_source.xpath(xpath)
-        elif type == 'Glossary': ul = self._glossary_html_source.xpath(xpath)
-        else: return
-
         results = {}
+        xpath = '//ul[@class="li_6"]'
+        if type == 'Characters':
+            if self._characters_html_source:
+                ul = self._characters_html_source.xpath(xpath)
+            else:
+                return results
+        elif type == 'Settings':
+            if self._settings_html_source:
+                ul = self._settings_html_source.xpath(xpath)
+            else:
+                return results
+
+        elif type == 'Glossary':
+            if self._glossary_html_source:
+                ul = self._glossary_html_source.xpath(xpath)
+            else:
+                return results
+        else: return results
+
         for li in ul[0]:
             label = li.getchildren()[0].text
             labelAndDesc = li.xpath("string()")[len(label):]
@@ -78,5 +103,8 @@ class ShelfariParser(object):
         self._terms.update(self._get_data_from_ul('Glossary'))
 
     def _get_quotes(self):
-        quoteList = self._quotations_html_source.xpath('//ul[@class="li_6"]//li//blockquote/text()')
-        self._quotes = [quote[1:-1].lower() for quote in quoteList]
+        if self._quotations_html_source:
+            quoteList = self._quotations_html_source.xpath('//ul[@class="li_6"]//li//blockquote/text()')
+            self._quotes = [quote[1:-1].lower() for quote in quoteList]
+        else:
+            self._quotes = []
