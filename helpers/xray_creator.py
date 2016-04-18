@@ -220,8 +220,15 @@ class Books(object):
                 if kindle_drive:
                     self.send_xray(book, kindle_drive)
 
-        for book in self._books_skipped:
-            print (book)
+        if len(self._books_skipped) > 0:
+            log('Books Skipped:')
+            for book in self._books_skipped:
+                log('\t%s' % book)
+
+        if len(self._books) > 0:
+            log('Books Completed:')
+            for book in self._books:
+                log('\t%s - %s' % (book.title, book.author))
 
     def send_xrays_event(self, abort, log, notifications):
         kindle_drive = self._find_kindle()
