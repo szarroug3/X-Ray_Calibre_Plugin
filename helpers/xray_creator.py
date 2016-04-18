@@ -153,9 +153,9 @@ class Books(object):
 
         return True
 
-    def send_xray(self, book, kindle_drive):
+    def send_xray(self, book, kindle_drive, already_created_xray=True):
         try:
-            book.send_xray(kindle_drive)
+            book.send_xray(kindle_drive, already_created_xray=already_created_xray)
         except Exception:
             self._books.remove(book)
             self._books_skipped.append('%s - %s skipped because could not send x-ray to device.' % (book.title, book.author))
@@ -329,7 +329,6 @@ class Book(object):
             self._asin = mu.update(asin=self.asin)
 
     def update_asin_on_device(self, asin):
-        print (self._device_book_path)
         with open(self._device_book_path, 'r+b') as stream:
             mu = MobiASINUpdater(stream)
             self._asin = mu.update(asin=asin)
@@ -386,7 +385,7 @@ class Book(object):
         except Exception:
             return
 
-    def send_xray(self, kindle_drive):
+    def send_xray(self, kindle_drive, already_created_xray=False):
         self._device_xray_directory = os.path.join(kindle_drive, os.sep, self._device_xray_directory)
         self._device_book_path = os.path.join(kindle_drive, os.sep, self._device_book_path)
 
@@ -399,7 +398,7 @@ class Book(object):
             return
 
         # do nothing if book has no x-ray and create_xray is false
-        if not self._create_xray:
+        if not self._create_xray and already_created_xray:
             return
 
         # check if there's a local x-ray file and create one if there isn't

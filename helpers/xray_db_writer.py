@@ -79,7 +79,6 @@ class XRayDBWriter(object):
                 excerpt_data.append((str(excerpt_id).encode(self._codec), start, length, image, related_entities, None))
         self._db_writer.insert_into_excerpt(excerpt_data)
 
-
     def fill_occurrence(self):
         occurrence_data = []
         for entity in self._entity_data.keys():
