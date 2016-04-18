@@ -5,12 +5,14 @@ import os
 from calibre_plugins.xray_creator.helpers.db_writer import DBWriter
 
 class XRayDBWriter(object):
-    def __init__(self, xray_directory, asin, parsed_data):
+    def __init__(self, xray_directory, asin, shelfari_url, parsed_data):
         self._filename = os.path.join(xray_directory, 'XRAY.entities.%s.asc' % asin)
         if not os.path.exists(xray_directory): os.mkdir(xray_directory)
+        self._shelfari_url = shelfari_url
         self._db_writer = DBWriter(self._filename)
         self._erl = parsed_data.erl
         self._excerpt_data = parsed_data.excerpt_data
+        self._notable_clips = parsed_data.notable_clips
         self._entity_data = parsed_data.entity_data
         self._codec = parsed_data.codec
 
@@ -21,8 +23,10 @@ class XRayDBWriter(object):
         self.fill_entity_excerpt()
         self.fill_excerpt()
         self.fill_occurrence()
-        self.fill_type()
+        self.update_string()
+        self.update_type()
         self._db_writer.create_indices()
+        self._db_writer.save()
         self._db_writer.close()
 
     def fill_book_metadata(self):
@@ -53,6 +57,11 @@ class XRayDBWriter(object):
 
     def fill_entity_excerpt(self):
         entity_excerpt_data = []
+
+        # add notable clips to entity_excerpt as entity 0
+        for notable_clip in self._notable_clips:
+            entity_excerpt_data.append(('0'.encode(self._codec), str(notable_clip).encode(self._codec)))
+
         for entity in self._entity_data.keys():
             entity_id = str(self._entity_data[entity]['entity_id']).encode(self._codec)
             for excerpt_id in self._entity_data[entity]['excerpt_ids']:
@@ -62,11 +71,12 @@ class XRayDBWriter(object):
     def fill_excerpt(self):
         excerpt_data = []
         for excerpt_id in self._excerpt_data.keys():
-            start = str(self._excerpt_data[excerpt_id]['loc']).encode(self._codec)
-            length = str(self._excerpt_data[excerpt_id]['len']).encode(self._codec)
-            image = ''.encode(self._codec)
-            related_entities = ','.join([str(entity_id).encode(self._codec) for entity_id in self._excerpt_data[excerpt_id]['related_entities']])
-            excerpt_data.append((str(excerpt_id).encode(self._codec), start, length, image, related_entities, None))
+            if len(self._excerpt_data[excerpt_id]['related_entities']) > 0:
+                start = str(self._excerpt_data[excerpt_id]['loc']).encode(self._codec)
+                length = str(self._excerpt_data[excerpt_id]['len']).encode(self._codec)
+                image = ''.encode(self._codec)
+                related_entities = ','.join([str(entity_id) for entity_id in self._excerpt_data[excerpt_id]['related_entities']]).encode(self._codec)
+                excerpt_data.append((str(excerpt_id).encode(self._codec), start, length, image, related_entities, None))
         self._db_writer.insert_into_excerpt(excerpt_data)
 
 
@@ -78,13 +88,16 @@ class XRayDBWriter(object):
                 occurrence_data.append((entity_id, str(excerpt['loc']).encode(self._codec), str(excerpt['len']).encode(self._codec)))
         self._db_writer.insert_into_occurrence(occurrence_data)
 
-    def fill_type(self):
+    def update_string(self):
+        self._db_writer.update_string(self._shelfari_url.encode(self._codec))
+
+    def update_type(self):
         top_mentioned_people = [(str(self._entity_data[entity]['entity_id']), self._entity_data[entity]['mentions']) for entity in self._entity_data.keys() if self._entity_data[entity]['type'] == 1]
         top_mentioned_people.sort(key=lambda x:x[1], reverse=True)
         if len(top_mentioned_people) > 10:
             top_mentioned_people = top_mentioned_people[:10]
         top_mentioned_people = [entity_id for entity_id, mentions in top_mentioned_people]
-        self._db_writer.update_type(1, ','.join(top_mentioned_people))
+        self._db_writer.update_type(1, ','.join(top_mentioned_people).encode(self._codec))
 
         top_mentioned_terms = [(str(self._entity_data[entity]['entity_id']), self._entity_data[entity]['mentions']) for entity in self._entity_data.keys() if self._entity_data[entity]['type'] == 2]
         top_mentioned_terms.sort(key=lambda x:x[1], reverse=True)

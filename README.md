@@ -1,1 +1,1 @@
-# X-Ray-Creator-3
+# X-Ray Calibre Plugin

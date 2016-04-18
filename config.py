@@ -7,34 +7,36 @@ __license__   = 'GPL v3'
 __copyright__ = '2016, szarroug3'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import QWidget, QHBoxLayout, QLabel, QLineEdit
+from PyQt5.Qt import QWidget, QVBoxLayout, QLabel, QLineEdit, QCheckBox
 
 from calibre.utils.config import JSONConfig
 
-# This is where all preferences for this plugin will be stored
-# Remember that this name (i.e. plugins/interface_demo) is also
-# in a global namespace, so make it as unique as possible.
-# You should always prefix your config file name with plugins/,
-# so as to ensure you dont accidentally clobber a calibre config file
 prefs = JSONConfig('plugins/xray_creator')
 
 # Set defaults
-prefs.defaults['hello_world_msg'] = 'Hello, World!'
+prefs.defaults['spoilers'] = False
+prefs.defaults['send_to_device'] = True
+prefs.defaults['create_xray_when_sending'] = True
 
 class ConfigWidget(QWidget):
-
     def __init__(self):
         QWidget.__init__(self)
-        self.l = QHBoxLayout()
+        self.l = QVBoxLayout()
         self.setLayout(self.l)
 
-        self.label = QLabel('Hello world &message:')
-        self.l.addWidget(self.label)
+        self.spoilers = QCheckBox('Use spoilers when creating x-ray')
+        self.spoilers.setChecked(prefs['spoilers'])
+        self.l.addWidget(self.spoilers)
 
-        self.msg = QLineEdit(self)
-        self.msg.setText(prefs['hello_world_msg'])
-        self.l.addWidget(self.msg)
-        self.label.setBuddy(self.msg)
+        self.send_to_device = QCheckBox('Send x-ray to device if connected')
+        self.send_to_device.setChecked(prefs['send_to_device'])
+        self.l.addWidget(self.send_to_device)
+
+        self.create_xray_when_sending = QCheckBox('Create x-ray for files that don\'t already have them when sending to device')
+        self.create_xray_when_sending.setChecked(prefs['create_xray_when_sending'])
+        self.l.addWidget(self.create_xray_when_sending)
 
     def save_settings(self):
-        prefs['hello_world_msg'] = unicode(self.msg.text())
+        prefs['spoilers'] = self.spoilers.isChecked()
+        prefs['send_to_device'] = self.send_to_device.isChecked()
+        prefs['create_xray_when_sending'] = self.create_xray_when_sending.isChecked()

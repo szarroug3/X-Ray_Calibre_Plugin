@@ -2,7 +2,7 @@
 
 import os
 import re
-from sys import exit
+from random import randrange
 from struct import unpack
 
 from calibre.ebooks.mobi.huffcdic import HuffReader
@@ -17,6 +17,8 @@ class BookParser(object):
         self._book_path = book_path
         self._excerpt_data = {}
         self._entity_data = {}
+        self._quotes = shelfari_data.quotes
+        self._notable_clips = []
 
         for char in shelfari_data.characters.items():
             label = char[1]['label']
@@ -37,6 +39,11 @@ class BookParser(object):
         return self._excerpt_data
 
     @property
+    def notable_clips(self):
+        return self._notable_clips
+    
+
+    @property
     def entity_data(self):
         return self._entity_data
 
@@ -52,46 +59,89 @@ class BookParser(object):
         # find all paragraphs (sections enclosed in html p tags) and their starting offset
         for node in re.finditer(self.PARAGRAPH_PAT, self._book_html):
             # get plain text from paragraph and locations of letters from beginning of file
-            results = [(word.group(0)[1:-1].decode(self._codec), word.start(0)) for word in re.finditer(self.PLAIN_TEXT_PAT, node.group(0))]
-            word_loc = {'words': '', 'loc': []}
+            results = [(word.group(0)[1:-1].decode(self.codec), word.start(0)) for word in re.finditer(self.PLAIN_TEXT_PAT, node.group(0))]
+            word_loc = {'words': '', 'locs': [], 'char_sizes': []}
             for group, loc in results:
                 start = node.start(0) + loc + 1
                 for char in group:
-                    word_loc['words'] = word_loc['words'] + char
-                    word_loc['loc'].append(start)
-                    start += 1
-            paragraph_data.append((word_loc, node.start(0) + 1))
+                    word_loc['words'] += char
+                    word_loc['locs'].append(start)
+                    start += len(char.encode(self.codec))
+                    word_loc['char_sizes'].append(len(char.encode(self.codec)))
+            if len(word_loc['locs']) > 0:
+                paragraph_data.append((word_loc, word_loc['locs'][0]))
 
         # get db data
-        for excerpt_id, data in enumerate(paragraph_data):
-            word_loc = data[0]
-            para_start = data[1]
-            self._excerpt_data[excerpt_id] = {'loc': para_start, 'len': len(word_loc['words']), 'related_entities': []}
+        excerpt_id = 0
+        for word_loc, para_start in paragraph_data:
+            rel_ent = []
+            add_excerpt = False
             for word in self.entity_data.keys():
+                # search for word in the paragraph
                 WORD_PAT = re.compile(r'\b{}\b'.format(word), re.I)
+                # for each match found, fill in entity_data and excerpt_data information
                 for match in re.finditer(WORD_PAT, word_loc['words']):
                     entity_id = self._entity_data[word]['entity_id']
                     self._entity_data[word]['mentions'] += 1
                     self._entity_data[word]['excerpt_ids'].append(excerpt_id)
-                    self._entity_data[word]['occurrence'].append({'loc': word_loc['loc'][match.start(0)],
-                                'len': self._find_len(match.start(0), word_loc['words'])})
-                    if entity_id not in self._excerpt_data[excerpt_id]['related_entities']:
-                        self._excerpt_data[excerpt_id]['related_entities'].append(entity_id)
+                    self._entity_data[word]['occurrence'].append({'loc': word_loc['locs'][self._find_start(match.start(0), word_loc['words'])],
+                                'len': self._find_len_word(match.start(0), match.end(0), word_loc)})
+                    if entity_id not in rel_ent:
+                        rel_ent.append(entity_id)
+                        add_excerpt = True
+                for quote in self._quotes:
+                    if quote.lower() in word_loc['words'].lower() and excerpt_id not in self._notable_clips:
+                        self._notable_clips.append(excerpt_id)
+                        add_excerpt = True
+            if add_excerpt:
+                self._excerpt_data[excerpt_id] = {'loc': para_start, 'len': self._find_len_excerpt(word_loc), 'related_entities': rel_ent}
+                excerpt_id += 1
 
-    def _find_len(self, start, string):
-        previous_space = string[:start].rfind(' ', )
-        next_space = string.find(' ', start)
-        if previous_space != -1 and next_space != -1:
-            next_space -= 1
+        # add random excerpts to make sure notable clips has at least 20 excerpts
+        while len(self._notable_clips) < 20:
+            rand_excerpt = randrange(0, excerpt_id - 1)
+            if rand_excerpt not in self._notable_clips:
+                self._notable_clips.append(rand_excerpt)
+
+    def _find_start(self, start, string):
+        previous_space = string[:start].rfind(' ')
         if previous_space == -1:
             previous_space = 0
-        if next_space == -1:
-            next_space = len(string) - 1
-        return (next_space - previous_space)
+        else:
+            previous_space += 1
+        return previous_space
 
-    # do i really need to do this??
-    def search_for_quotes(self):
-        pass
+    def _find_len_word(self, start, end, word_loc):
+        string = word_loc['words']
+        char_sizes = word_loc['char_sizes']
+
+        first_char = string[:start].rfind(' ')
+        last_char = string.find(' ', end)
+
+        if first_char == -1:
+            first_char = 0
+        else:
+            first_char += 1
+        if last_char == -1:
+            last_char = len(string) - 1
+        else:
+            last_char -= 1
+
+        total_len = 0
+        for char in range(first_char, last_char + 1):
+            total_len += char_sizes[char]
+
+        return total_len
+
+    def _find_len_excerpt(self, word_loc):
+        string = word_loc['words']
+        char_sizes = word_loc['char_sizes']
+
+        total_len = 0
+        for char in range(0, len(string) ):
+            total_len += char_sizes[char]
+
+        return total_len
 
     def find_erl_and_encoding(self):
         with open(self._book_path, 'rb') as f:

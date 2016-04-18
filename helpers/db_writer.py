@@ -1,7 +1,7 @@
 # db_writer.py
 
-from sqlite3 import *
 import os
+from sqlite3 import *
 
 class DBWriter(object):
 	def __init__(self, filename):
@@ -10,6 +10,9 @@ class DBWriter(object):
 		self._connection = connect(filename)
 		self._cursor = self._connection.cursor()
 		self._import_base_db()
+
+	def save(self):
+		self._connection.commit()
 
 	def close(self):
 		self._connection.close()
@@ -33,7 +36,6 @@ class DBWriter(object):
 			self._cursor.execute('INSERT INTO %s VALUES (%s)' % (tableName, ','.join(params)), data)
 		else:
 			raise ValueError('data is invalid. Expected list or tuple, found %s' % type(data))
-		self._connection.commit()
 
 	def insert_into_book_metadata(self, data):
 		'''Insert data into the book_metadata table'''
@@ -59,16 +61,18 @@ class DBWriter(object):
 		'''Insert data into the occurrence table'''
 		self._insert_into_table('occurrence', data)
 
+	def update_string(self, url):
+		'''Update shelfari url in string table'''
+		self._cursor.execute('UPDATE string SET text=? WHERE id=15', (url,))
+		self._connection.commit()
+
 	def update_type(self, type_id, data):
 		'''Update top_mentioned_entities in type table'''
 		if type_id != 1 and type_id != 2:
 			raise ValueError('type_id %i is invalid; must be 1 or 2.' % type_id)
-		data = str(data)
 		self._cursor.execute('UPDATE type SET top_mentioned_entities=? WHERE id=?', (data, type_id))
-		self._connection.commit()
 
 	def create_indices(self):
 		self._cursor.execute('CREATE INDEX idx_entity_excerpt ON entity_excerpt(entity ASC)')
 		self._cursor.execute('CREATE INDEX idx_entity_type ON entity(type ASC)')
 		self._cursor.execute('CREATE INDEX idx_occurrence_start ON occurrence(start ASC)')
-		self._connection.commit()

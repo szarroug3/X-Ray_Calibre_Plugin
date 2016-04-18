@@ -18,13 +18,14 @@ from calibre_plugins.xray_creator.helpers.xray_db_writer import XRayDBWriter
 from calibre_plugins.xray_creator.helpers.shelfari_parser import ShelfariParser
 
 class Books(object):
-    def __init__(self, db, book_ids):
+    def __init__(self, db, book_ids, spoilers=False):
         self._book_ids = book_ids
         self._db = db
         self._books = []
         self._books_skipped = []
         self._aConnection = HTTPConnection('www.amazon.com')
         self._sConnection = HTTPConnection('www.shelfari.com')
+        self._spoilers = spoilers
 
         for book_id in book_ids:
             title = db.field_for('title', book_id)
@@ -88,10 +89,10 @@ class Books(object):
     def parse_shelfari_data(self):
         books_to_remove = []
         for book in self._books:
-            #try:
-            book.parse_shelfari_data()
-            # except Exception:
-            #     books_to_remove.append((book, '%s - %s skipped because could not parse shelfari data.' % (book.title, book.author)))
+            try:
+                book.parse_shelfari_data(spoilers=self._spoilers)
+            except Exception:
+                books_to_remove.append((book, '%s - %s skipped because could not parse shelfari data.' % (book.title, book.author)))
 
         for book, reason in books_to_remove:
             self._books.remove(book)
@@ -100,10 +101,10 @@ class Books(object):
     def parse_book_data(self):
         books_to_remove = []
         for book in self._books:
-            #try:
-            book.parse_book_data()
-            # except Exception:
-            #     books_to_remove.append((book, '%s - %s skipped because could not parse book data.' % (book.title, book.author)))
+            try:
+                book.parse_book_data()
+            except Exception:
+                books_to_remove.append((book, '%s - %s skipped because could not parse book data.' % (book.title, book.author)))
 
         for book, reason in books_to_remove:
             self._books.remove(book)
@@ -112,27 +113,39 @@ class Books(object):
     def write_xray_files(self):
         books_to_remove = []
         for book in self._books:
-            #try:
-            book.write_xray_file()
-            # except Exception:
-            #     books_to_remove.append((book, '%s - %s skipped because could not write X-Ray file.' % (book.title, book.author)))
+            try:
+                book.write_xray_file()
+            except Exception:
+                books_to_remove.append((book, '%s - %s skipped because could not write X-Ray file.' % (book.title, book.author)))
 
         for book, reason in books_to_remove:
             self._books.remove(book)
             self._books_skipped.append(reason)
 
-    def create_xrays(self):
+    def create_xrays(self, abort, log, notifications):
+        notif = notifications
+        if abort.is_set():
+            return
+        notif.put((.2, 'Updating ASINs for books'))
         self.update_asins()
+        if abort.is_set():
+            return
+        notif.put((.4, 'Getting Shelfari URLs'))
         self.get_shelfari_urls()
+        if abort.is_set():
+            return
+        notif.put((.6, 'Parsing Shelfari Data'))
         self.parse_shelfari_data()
+        if abort.is_set():
+            return
+        notif.put((.8, 'Parsing Book Data'))
         self.parse_book_data()
+        if abort.is_set():
+            return
+        notif.put((1, 'Creating X-Ray Files'))
         self.write_xray_files()
-
-        for book in self._books:
-            print ('%s - %s' % (book.title, book.author))
-        print
-        for book in self._books_skipped:
-            print (book)
+        print (self._books_skipped)
+        print (self._books)
 
 class Book(object):
     AMAZON_ASIN_PAT = re.compile(r'data\-asin=\"([a-zA-z0-9]+)\"')
@@ -248,8 +261,8 @@ class Book(object):
         self._shelfari_url = urlsearch.group(1)
         return self.sConnection
 
-    def parse_shelfari_data(self):
-        self._parsed_shelfari_data = ShelfariParser(self._shelfari_url)
+    def parse_shelfari_data(self, spoilers=False):
+        self._parsed_shelfari_data = ShelfariParser(self._shelfari_url, spoilers=spoilers)
         self._parsed_shelfari_data.parse()
 
     def parse_book_data(self):
@@ -257,7 +270,7 @@ class Book(object):
         self._parsed_book_data.parse()
 
     def write_xray_file(self):
-        self._xray_db_writer = XRayDBWriter(self.xray_directory, self.asin, self._parsed_book_data)
+        self._xray_db_writer = XRayDBWriter(self.xray_directory, self.asin, self.shelfari_url, self._parsed_book_data)
         self._xray_db_writer.create_xray()
 
 class MobiASINUpdater(MetadataUpdater):
