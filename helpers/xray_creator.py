@@ -104,7 +104,7 @@ class Books(object):
             if not book.asin or len(book.asin) != 10:
                 self._books.remove(book)
                 self._books_skipped.append('%s - %s skipped because could not find ASIN or ASIN is invalid.' % (book.title, book.author))
-                return
+                return False
             mi = self._db.get_metadata(book.book_id)
             mi.get_identifiers()['mobi-asin'] = book.asin
             self._db.set_metadata(book.book_id, mi)
@@ -123,6 +123,7 @@ class Books(object):
                 if not book.shelfari_url:
                     self._books.remove(book)
                     self._books_skipped.append('%s - %s skipped because no shelfari url found.' % (book.title, book.author))
+                    return False
         except Exception as e:
             self._books.remove(book)
             self._books_skipped.append('%s - %s skipped because %s.' % (book.title, book.author, e))
