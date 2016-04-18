@@ -57,29 +57,37 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         self._create_xray_when_sending = prefs['create_xray_when_sending']
 
     def create_xrays(self):
-        from calibre.ebooks.metadata.meta import get_metadata, set_metadata
-        from calibre.gui2 import error_dialog, info_dialog
+        books = self._get_books('Cannot create X-Rays')
+        job = ThreadedJob('create_xray', 'Creating X-Ray Files', books.create_xrays_event, (), {}, Dispatcher(self.created_xrays))
+        self.gui.job_manager.run_threaded_job(job)
 
-        self.db = self.gui.current_db
-
-        # Get currently selected books
-        rows = self.gui.library_view.selectionModel().selectedRows()
-        if not rows or len(rows) == 0:
-            return error_dialog(self.gui, 'Cannot create X-Ray',
-                             'No books selected', show=True)
-        # Map the rows to book ids
-        ids = list(map(self.gui.library_view.model().id, rows))
-        db = self.db.new_api
-        books = Books(db, ids, spoilers=self._spoilers)
-        print (books)
-        job = ThreadedJob('create_xray', 'Creating X-Ray Files', books.create_xrays, (), {}, Dispatcher(self.created_xrays))
+    def send_xrays(self):
+        books = self._get_books('Cannot send X-Rays')
+        job = ThreadedJob('create_xray', 'Sending X-Ray Files to Device', books.send_xrays_event, (), {}, Dispatcher(self.sent_xrays))
         self.gui.job_manager.run_threaded_job(job)
 
     def created_xrays(self, job):
         pass
 
-    def send_xrays(self):
+    def sent_xrays(self, job):
         pass
+
+    def _get_books(self, error_msg):
+        from calibre.ebooks.metadata.meta import get_metadata, set_metadata
+        from calibre.gui2 import error_dialog
+
+        db = self.gui.current_db
+        rows = self.gui.library_view.selectionModel().selectedRows()
+        if not rows or len(rows) == 0:
+            return error_dialog(self.gui, error_msg,
+                             'No books selected', show=True)
+
+        ids = list(map(self.gui.library_view.model().id, rows))
+        db = db.new_api
+
+        books = Books(db, ids, spoilers=self._spoilers, send_to_device=self._send_to_device)
+
+        return books
 
     def config(self):
         self.interface_action_base_plugin.do_user_config(self.gui)
