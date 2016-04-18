@@ -32,7 +32,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         self._spoilers = prefs['spoilers']
         self._send_to_device = prefs['send_to_device']
         self._create_xray_when_sending = prefs['create_xray_when_sending']
-        
+
         icon = get_icons('images/icon.png')
 
         self.menu = QMenu(self.gui)
@@ -76,13 +76,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         self.gui.job_manager.run_threaded_job(job)
 
     def created_xrays(self, job):
-        print (dir(job))
-        print ('\n\n\n')
-        print (dir(job.status_text))
-        if job.failed:
-            #job.status_text = 'Failed to create x-ray files'
-            return
-        #job.status_text = job.descritpion + ' ' + 'finished'
+        pass
 
     def send_xrays(self):
         pass
