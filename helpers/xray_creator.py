@@ -53,7 +53,6 @@ class Books(object):
             if len(author) > 0:
                 author = author[0]
             author_sort = self._db.field_for('author_sort', book_id)
-            if author_sort[-1] == '.': author_sort[-1] = '_'
             identifiers = self._db.field_for('identifiers', book_id)
             if 'mobi-asin' in identifiers.keys():
                 asin = db.field_for('identifiers', book_id)['mobi-asin'].decode('ascii')
@@ -61,6 +60,7 @@ class Books(object):
                 asin = None
             local_book_path = db.format_abspath(book_id, 'MOBI')
             if local_book_path and title and author and title_sort and author_sort:
+                if author_sort[-1] == '.': author_sort = author_sort[:-1] + '_'
                 device_book_path = os.path.join('documents', author_sort, title_sort + ' - ' + author + '.mobi')
                 self._books.append(Book(book_id, local_book_path, device_book_path, title, author, asin=asin, aConnection=self._aConnection, sConnection=self._sConnection, spoilers=self._spoilers, db=self._db))
                 continue
@@ -164,9 +164,9 @@ class Books(object):
 
         return True
 
-    def send_xray(self, book, kindle_drive):
+    def send_xray(self, book, kindle_drive, already_created=True):
         try:
-            completed = book.send_xray(kindle_drive)
+            completed = book.send_xray(kindle_drive, already_created=already_created)
         except Exception as e:
             self._books_to_remove.append(book)
             self._books_skipped.append('%s - %s skipped because could not send x-ray.\n\t\t%s.' % (book.title, book.author, e))
