@@ -179,7 +179,7 @@ class Books(object):
 
     def create_xrays_event(self, abort, log, notifications):
         notif = notifications
-        log('\n')
+        log('')
         actions = 5.0
         if self._send_to_device:
             actions += 1
