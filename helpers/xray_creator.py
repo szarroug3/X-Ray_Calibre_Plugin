@@ -38,6 +38,7 @@ class Books(object):
         self._book_ids = book_ids
         self._db = db
         self._books = []
+        self._books_to_remove = []
         self._books_skipped = []
         self._aConnection = HTTPConnection('www.amazon.com')
         self._sConnection = HTTPConnection('www.shelfari.com')
@@ -51,7 +52,7 @@ class Books(object):
             author = self._db.field_for('authors', book_id)
             if len(author) > 0:
                 author = author[0]
-            author_sort = self._db.field_for('author_sort', book_id)
+            author_sort = self._db.field_for('author_sort', book_id).replace('.', '_')
             identifiers = self._db.field_for('identifiers', book_id)
             if 'mobi-asin' in identifiers.keys():
                 asin = db.field_for('identifiers', book_id)['mobi-asin'].decode('ascii')
@@ -103,7 +104,7 @@ class Books(object):
             if not book.asin or len(book.asin) != 10:
                 self._aConnection = book.get_asin()
             if not book.asin or len(book.asin) != 10:
-                self._books.remove(book)
+                self._books_to_remove.append(book)
                 self._books_skipped.append('%s - %s skipped because could not find ASIN or ASIN is invalid.' % (book.title, book.author))
                 return False
             mi = self._db.get_metadata(book.book_id)
@@ -111,7 +112,7 @@ class Books(object):
             self._db.set_metadata(book.book_id, mi)
             book.update_asin()
         except Exception as e:
-            self._books.remove(book)
+            self._books_to_remove.append(book)
             self._books_skipped.append('%s - %s skipped because could not update ASIN.\n\t\t%s.' % (book.title, book.author, e))
             return False
 
@@ -122,11 +123,11 @@ class Books(object):
             if book.asin and len(book.asin) == 10:
                 self._sConnection = book.get_shelfari_url()
                 if not book.shelfari_url:
-                    self._books.remove(book)
+                    self._books_to_remove.append(book)
                     self._books_skipped.append('%s - %s skipped because no shelfari url found.' % (book.title, book.author))
                     return False
         except Exception as e:
-            self._books.remove(book)
+            self._books_to_remove.append(book)
             self._books_skipped.append('%s - %s skipped because %s.' % (book.title, book.author, e))
             return False
 
@@ -136,7 +137,7 @@ class Books(object):
         try:
             book.parse_shelfari_data()
         except Exception as e:
-            self._books.remove(book)
+            self._books_to_remove.append(book)
             self._books_skipped.append('%s - %s skipped because could not parse shelfari data.\n\t\t%s' % (book.title, book.author, e))
             return False
 
@@ -146,7 +147,7 @@ class Books(object):
         try:
             book.parse_book_data(log=log)
         except Exception as e:
-            self._books.remove(book)
+            self._books_to_remove.append(book)
             self._books_skipped.append('%s - %s skipped because could not parse book data.\n\t\t%s' % (book.title, book.author, e))
             return False
 
@@ -156,24 +157,29 @@ class Books(object):
         try:
             book.write_xray_file()
         except Exception as e:
-            self._books.remove(book)
+            self._books_to_remove.append(book)
             self._books_skipped.append('%s - %s skipped because could not write X-Ray file.\n\t\t%s' % (book.title, book.author, e))
             return False
 
         return True
 
-    def send_xray(self, book, kindle_drive, already_created_xray=True):
+    def send_xray(self, book, kindle_drive):
         try:
-            book.send_xray(kindle_drive, already_created_xray=already_created_xray)
+            completed = book.send_xray(kindle_drive)
         except Exception as e:
-            self._books.remove(book)
+            self._books_to_remove.append(book)
             self._books_skipped.append('%s - %s skipped because could not send x-ray.\n\t\t%s.' % (book.title, book.author, e))
             return False
 
-        return True
+        if not completed:
+            self._books_to_remove.append(book)
+            self._books_skipped.append('%s - %s skipped because could not send x-ray.' % (book.title, book.author))
+
+        return completed
 
     def create_xrays_event(self, abort, log, notifications):
         notif = notifications
+        log('\n')
         actions = 5.0
         if self._send_to_device:
             actions += 1
@@ -230,6 +236,9 @@ class Books(object):
                 if kindle_drive:
                     self.send_xray(book, kindle_drive)
 
+        for book in self._books_to_remove:
+            self._books.remove(book)
+
         if len(self._books_skipped) > 0:
             log('\nBooks Skipped:')
             for book in self._books_skipped:
@@ -249,15 +258,19 @@ class Books(object):
             if abort.isSet():
                 return
             notif.put((i/float(len(self._books)), 'Sending %s - %s x-ray to Device' % (book.title, book.author)))
-            self.send_xray(book, kindle_drive, already_created_xray=False)
+            self.send_xray(book, kindle_drive, already_created=False)
+
+        for book in self._books_to_remove:
+            self._books.remove(book)
+            self._books_skipped.append('%s - %s skipped because could not send x-ray.\n\t\t%s.' % (book.title, book.author, e))
 
         if len(self._books_skipped) > 0:
-            log('Books Skipped:')
+            log('\nBooks Skipped:')
             for book in self._books_skipped:
                 log('\t%s' % book)
 
         if len(self._books) > 0:
-            log('Books Completed:')
+            log('\nBooks Completed:')
             for book in self._books:
                 log('\t%s - %s' % (book.title, book.author))
 
@@ -411,38 +424,44 @@ class Book(object):
                 self._sConnection = self.get_shelfari_url()
                 if not self.shelfari_url:
                     books_to_remove.append((self, '%s - %s skipped because no shelfari url found.' % (self.title, self.author)))
+                    return
             book.parse_shelfari_data()
             book.parse_book_data()
             book.write_xray_file()
         except Exception:
             return
 
-    def send_xray(self, kindle_drive, already_created_xray=False):
+    def send_xray(self, kindle_drive, already_created=True):
         self._device_xray_directory = os.path.join(kindle_drive, os.sep, self._device_xray_directory)
         self._device_book_path = os.path.join(kindle_drive, os.sep, self._device_book_path)
 
         # check if x-ray directory and book path exist, return if either doesn't - that means book isn't on kindle
-        if not os.path.exists(self._device_xray_directory) or not os.path.exists(self._device_book_path):
-            return
+        if not os.path.exists(self._device_book_path):
+            print ('1')
+            return False
 
         # do nothing if book already has x-ray
         if len(glob(os.path.join(self._device_xray_directory, '*.asc'))) > 0:
-            return
+            return True
 
-        # do nothing if book has no x-ray and create_xray is false
-        if not self._create_xray and already_created_xray:
-            return
-
-        # check if there's a local x-ray file and create one if there isn't
-        local_file = glob(os.path.join(self._local_xray_directory, '*.asc'))
-        if len(local_file) == 0:
-            self.create_xray()
+        # do nothing if there is no local x-ray and we already tried to create one
+        if not len(glob(os.path.join(self._local_xray_directory, '*.asc'))) > 0:
+            if not already_created and self._create_xray:
+                self.create_xray()
+            else:
+                print ('2')
+                return False
 
         # check if there's a local x-ray file and copy it to device if there is
         local_file = glob(os.path.join(self._local_xray_directory, '*.asc'))
         if len(local_file) > 0:
             self.update_asin_on_device(local_file[0].split('.')[3])
+            if not os.path.exists(self._device_xray_directory):
+                os.mkdir(self._device_xray_directory)
             copy(local_file[0], os.path.join(kindle_drive, os.sep, self._device_xray_directory))
+            return True
+        print ('3')
+        return False
 
 class MobiASINUpdater(MetadataUpdater):
     def update(self, asin):

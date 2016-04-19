@@ -28,13 +28,14 @@ class BookParser(object):
             self._entity_data[label] = {'original_label': original, 'entity_id': char[0], 'description': desc, 'type': 1, 'mentions': 0, 'excerpt_ids': [], 'occurrence': []}
 
         for term in shelfari_data.terms.items():
-            original = char[1]['label']
+            original = term[1]['label']
             label = original.lower()
             desc = term[1]['description'] if term[1]['description'] else ''
             self._entity_data[label] = {'original_label': original, 'entity_id': term[0], 'description': desc, 'type': 2, 'mentions': 0, 'excerpt_ids': [], 'occurrence': []}
 
         # named this way to keep same format as other regex's above
-        self.WORD_PAT = re.compile(r'(\b' + r'\b|\b'.join(self.entity_data.keys()) + r'\b)', re.I)
+        escaped_word_list = [re.escape(word) for word in self.entity_data.keys()]
+        self.WORD_PAT = re.compile(r'(\b' + r'\b|\b'.join(escaped_word_list) + r'\b)', re.I)
 
     @property
     def erl(self):
@@ -84,15 +85,17 @@ class BookParser(object):
         if log: log('%s\t\t\t\tNumber of paragraphs: %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), len(paragraph_data)))
         for word_loc, para_start in paragraph_data:
             rel_ent = []
+            if len(self.entity_data.keys()) > 0:
             # for each match found, fill in entity_data and excerpt_data information
-            for match in re.finditer(self.WORD_PAT, word_loc['words']):
-                entity_id = self._entity_data[match.group(1).lower()]['entity_id']
-                self._entity_data[match.group(1).lower()]['mentions'] += 1
-                self._entity_data[match.group(1).lower()]['excerpt_ids'].append(excerpt_id)
-                self._entity_data[match.group(1).lower()]['occurrence'].append({'loc': word_loc['locs'][self._find_start(match.start(0), word_loc['words'])],
-                            'len': self._find_len_word(match.start(0), match.end(0), word_loc)})
-                if entity_id not in rel_ent:
-                    rel_ent.append(entity_id)
+                for match in re.finditer(self.WORD_PAT, word_loc['words']):
+                    matched_word = match.group(1).decode(self.codec).lower()
+                    entity_id = self._entity_data[matched_word]['entity_id']
+                    self._entity_data[matched_word]['mentions'] += 1
+                    self._entity_data[matched_word]['excerpt_ids'].append(excerpt_id)
+                    self._entity_data[matched_word]['occurrence'].append({'loc': word_loc['locs'][self._find_start(match.start(0), word_loc['words'])],
+                                'len': self._find_len_word(match.start(0), match.end(0), word_loc)})
+                    if entity_id not in rel_ent:
+                        rel_ent.append(entity_id)
             for quote in self._quotes:
                 if quote.lower() in word_loc['words'].lower() and excerpt_id not in self._notable_clips:
                     self._notable_clips.append(excerpt_id)
