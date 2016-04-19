@@ -438,7 +438,6 @@ class Book(object):
 
         # check if x-ray directory and book path exist, return if either doesn't - that means book isn't on kindle
         if not os.path.exists(self._device_book_path):
-            print ('1')
             return False
 
         # do nothing if book already has x-ray
@@ -450,7 +449,6 @@ class Book(object):
             if not already_created and self._create_xray:
                 self.create_xray()
             else:
-                print ('2')
                 return False
 
         # check if there's a local x-ray file and copy it to device if there is
@@ -461,7 +459,6 @@ class Book(object):
                 os.mkdir(self._device_xray_directory)
             copy(local_file[0], os.path.join(kindle_drive, os.sep, self._device_xray_directory))
             return True
-        print ('3')
         return False
 
 class MobiASINUpdater(MetadataUpdater):
