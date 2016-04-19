@@ -9,6 +9,7 @@ import ctypes
 from glob import glob
 from shutil import copy
 from urllib import urlencode
+from datetime import datetime
 from cStringIO import StringIO
 from httplib import HTTPConnection, BadStatusLine
 
@@ -111,7 +112,7 @@ class Books(object):
             book.update_asin()
         except Exception as e:
             self._books.remove(book)
-            self._books_skipped.append('%s - %s skipped because %s.' % (book.title, book.author, e))
+            self._books_skipped.append('%s - %s skipped because could not update ASIN.\n\t\t%s.' % (book.title, book.author, e))
             return False
 
         return True
@@ -134,19 +135,19 @@ class Books(object):
     def parse_shelfari_data(self, book):
         try:
             book.parse_shelfari_data()
-        except Exception:
+        except Exception as e:
             self._books.remove(book)
-            self._books_skipped.append('%s - %s skipped because could not parse shelfari data.' % (book.title, book.author))
+            self._books_skipped.append('%s - %s skipped because could not parse shelfari data.\n\t\t%s' % (book.title, book.author, e))
             return False
 
         return True
 
-    def parse_book_data(self, book):
+    def parse_book_data(self, book, log=None):
         try:
-            book.parse_book_data()
-        except Exception:
+            book.parse_book_data(log=log)
+        except Exception as e:
             self._books.remove(book)
-            self._books_skipped.append('%s - %s skipped because could not parse book data.' % (book.title, book.author))
+            self._books_skipped.append('%s - %s skipped because could not parse book data.\n\t\t%s' % (book.title, book.author, e))
             return False
 
         return True
@@ -154,9 +155,9 @@ class Books(object):
     def write_xray_file(self, book):
         try:
             book.write_xray_file()
-        except Exception:
+        except Exception as e:
             self._books.remove(book)
-            self._books_skipped.append('%s - %s skipped because could not write X-Ray file.' % (book.title, book.author))
+            self._books_skipped.append('%s - %s skipped because could not write X-Ray file.\n\t\t%s' % (book.title, book.author, e))
             return False
 
         return True
@@ -166,7 +167,7 @@ class Books(object):
             book.send_xray(kindle_drive, already_created_xray=already_created_xray)
         except Exception as e:
             self._books.remove(book)
-            self._books_skipped.append('%s - %s skipped because %s.' % (book.title, book.author, e))
+            self._books_skipped.append('%s - %s skipped because could not send x-ray.\n\t\t%s.' % (book.title, book.author, e))
             return False
 
         return True
@@ -180,14 +181,18 @@ class Books(object):
             title_and_author = '%s - %s' % (book.title, book.author)
             if abort.isSet():
                 return
+            log('%s\t%s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), title_and_author))
             notif.put(((i * actions)/(len(self._books) * actions), 'Updating %s ASIN' % title_and_author))
+            log('%s\t\tUpdating ASIN' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
             completed = self.update_asin(book)
             if not completed:
                 continue
 
             if abort.isSet():
                 return
+
             notif.put((((i * actions) + 1)/(len(self._books) * actions), 'Getting %s shelfari URL' % title_and_author))
+            log('%s\t\tGetting shelfari URL' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
             completed = self.get_shelfari_url(book)
             if not completed:
                 continue
@@ -195,6 +200,7 @@ class Books(object):
             if abort.isSet():
                 return
             notif.put((((i * actions) + 2)/(len(self._books) * actions), 'Parsing %s shelfari data' % title_and_author))
+            log('%s\t\tParsing shelfari data' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
             completed = self.parse_shelfari_data(book)
             if not completed:
                 continue
@@ -202,6 +208,7 @@ class Books(object):
             if abort.isSet():
                 return
             notif.put((((i * actions) + 3)/(len(self._books) * actions), 'Parsing %s book data' % title_and_author))
+            log('%s\t\tParsing book data' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
             completed = self.parse_book_data(book)
             if not completed:
                 continue
@@ -209,6 +216,7 @@ class Books(object):
             if abort.isSet():
                 return
             notif.put((((i * actions) + 4)/(len(self._books) * actions), 'Creating %s x-ray' % title_and_author))
+            log('%s\t\tCreating x-ray' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
             completed = self.write_xray_file(book)
             if not completed:
                 continue
@@ -218,16 +226,17 @@ class Books(object):
                     return
                 kindle_drive = self._find_kindle()
                 notif.put((((i * actions) + 5)/(len(self._books) * actions), 'Sending %s x-ray to device' % title_and_author))
+                log('%s\t\tSending x-ray to device' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
                 if kindle_drive:
                     self.send_xray(book, kindle_drive)
 
         if len(self._books_skipped) > 0:
-            log('Books Skipped:')
+            log('\nBooks Skipped:')
             for book in self._books_skipped:
                 log('\t%s' % book)
 
         if len(self._books) > 0:
-            log('Books Completed:')
+            log('\nBooks Completed:')
             for book in self._books:
                 log('\t%s - %s' % (book.title, book.author))
 
@@ -335,7 +344,7 @@ class Book(object):
             response = self.aConnection.getresponse().read()
         # check to make sure there are results
         if 'did not match any products' in response and not 'Did you mean:' in response and not 'so we searched in All Departments' in response:
-            raise ValueError('Could not find ASIN for %s - %s' % ( self._title, self._author))
+            raise ValueError('Could not find Amazon page for %s - %s' % ( self._title, self._author))
         soup = BeautifulSoup(response)
         results = soup.findAll('div', {'id': 'resultsCol'})
         for r in results:
@@ -380,9 +389,9 @@ class Book(object):
         self._parsed_shelfari_data = ShelfariParser(self._shelfari_url, spoilers=self._spoilers)
         self._parsed_shelfari_data.parse()
 
-    def parse_book_data(self):
+    def parse_book_data(self, log=None):
         self._parsed_book_data = BookParser(self._local_book_path, self._parsed_shelfari_data)
-        self._parsed_book_data.parse()
+        self._parsed_book_data.parse(log=log)
 
     def write_xray_file(self):
         self._xray_db_writer = XRayDBWriter(self.local_xray_directory, self.asin, self.shelfari_url, self._parsed_book_data)

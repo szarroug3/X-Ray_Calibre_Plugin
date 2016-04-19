@@ -8,6 +8,7 @@ class DBWriter(object):
 		if (os.path.exists(filename)):
 			os.remove(filename)
 		self._connection = connect(filename)
+		self._connection.text_factory = Binary
 		self._cursor = self._connection.cursor()
 		self._import_base_db()
 

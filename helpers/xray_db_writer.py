@@ -39,20 +39,22 @@ class XRayDBWriter(object):
     def fill_entity(self):
         entity_data = []
         for entity in self._entity_data.keys():
+            original_label = self._entity_data[entity]['original_label']
             entity_id = str(self._entity_data[entity]['entity_id']).encode(self._codec)
             entity_type = str(self._entity_data[entity]['type']).encode(self._codec)
             count = str(self._entity_data[entity]['mentions']).encode(self._codec)
             has_info_card = '1'.encode(self._codec) if self._entity_data[entity]['description'] else '0'.encode(self._codec)
-            entity_data.append((entity_id, entity.encode(self._codec), None, entity_type, count, has_info_card))
+            entity_data.append((entity_id, original_label.encode(self._codec), None, entity_type, count, has_info_card))
         self._db_writer.insert_into_entity(entity_data)
 
     def fill_entity_description(self):
         entity_description_data = []
         for entity in self._entity_data.keys():
+            original_label = self._entity_data[entity]['original_label']
             entity_id = str(self._entity_data[entity]['entity_id']).encode(self._codec)
             text = str(self._entity_data[entity]['description']).encode(self._codec)
             source = '2'.encode(self._codec)
-            entity_description_data.append((text, entity.encode(self._codec), source, entity_id))
+            entity_description_data.append((text, original_label.encode(self._codec), source, entity_id))
         self._db_writer.insert_into_entity_description(entity_description_data)
 
     def fill_entity_excerpt(self):

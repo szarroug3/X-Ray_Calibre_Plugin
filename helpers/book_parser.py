@@ -2,8 +2,9 @@
 
 import os
 import re
-from random import randrange
 from struct import unpack
+from random import randrange
+from datetime import datetime
 
 from calibre.ebooks.mobi.huffcdic import HuffReader
 from calibre.ebooks.mobi.reader.mobi6 import MobiReader
@@ -21,14 +22,19 @@ class BookParser(object):
         self._notable_clips = []
 
         for char in shelfari_data.characters.items():
-            label = char[1]['label']
+            original = char[1]['label']
+            label = original.lower()
             desc = char[1]['description'] if char[1]['description'] else ''
-            self._entity_data[label] = {'entity_id': char[0], 'description': desc, 'type': 1, 'mentions': 0, 'excerpt_ids': [], 'occurrence': []}
+            self._entity_data[label] = {'original_label': original, 'entity_id': char[0], 'description': desc, 'type': 1, 'mentions': 0, 'excerpt_ids': [], 'occurrence': []}
 
         for term in shelfari_data.terms.items():
-            label = term[1]['label']
+            original = char[1]['label']
+            label = original.lower()
             desc = term[1]['description'] if term[1]['description'] else ''
-            self._entity_data[label] = {'entity_id': term[0], 'description': desc, 'type': 2, 'mentions': 0, 'excerpt_ids': [], 'occurrence': []}
+            self._entity_data[label] = {'original_label': original, 'entity_id': term[0], 'description': desc, 'type': 2, 'mentions': 0, 'excerpt_ids': [], 'occurrence': []}
+
+        # named this way to keep same format as other regex's above
+        self.WORD_PAT = re.compile(r'(\b' + r'\b|\b'.join(self.entity_data.keys()) + r'\b)', re.I)
 
     @property
     def erl(self):
@@ -51,12 +57,13 @@ class BookParser(object):
     def codec(self):
         return self._codec   
 
-    def parse(self):
+    def parse(self, log=None):
         self._book_html = MobiExtractor(self._book_path, open(os.devnull, 'w')).extract_text()
         self.find_erl_and_encoding()
         paragraph_data = []
 
         # find all paragraphs (sections enclosed in html p tags) and their starting offset
+        if log: log('%s\t\t\tGetting paragraphs...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         for node in re.finditer(self.PARAGRAPH_PAT, self._book_html):
             # get plain text from paragraph and locations of letters from beginning of file
             results = [(word.group(0)[1:-1].decode(self.codec), word.start(0)) for word in re.finditer(self.PLAIN_TEXT_PAT, node.group(0))]
@@ -73,28 +80,32 @@ class BookParser(object):
 
         # get db data
         excerpt_id = 0
+        if log: log('%s\t\t\tGetting paragraph data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        if log: log('%s\t\t\t\tNumber of paragraphs: %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), len(paragraph_data)))
         for word_loc, para_start in paragraph_data:
             rel_ent = []
-            for word in self.entity_data.keys():
-                # search for word in the paragraph
-                WORD_PAT = re.compile(r'\b{}\b'.format(word), re.I)
-                # for each match found, fill in entity_data and excerpt_data information
-                for match in re.finditer(WORD_PAT, word_loc['words']):
-                    entity_id = self._entity_data[word]['entity_id']
-                    self._entity_data[word]['mentions'] += 1
-                    self._entity_data[word]['excerpt_ids'].append(excerpt_id)
-                    self._entity_data[word]['occurrence'].append({'loc': word_loc['locs'][self._find_start(match.start(0), word_loc['words'])],
-                                'len': self._find_len_word(match.start(0), match.end(0), word_loc)})
-                    if entity_id not in rel_ent:
-                        rel_ent.append(entity_id)
-                for quote in self._quotes:
-                    if quote.lower() in word_loc['words'].lower() and excerpt_id not in self._notable_clips:
-                        self._notable_clips.append(excerpt_id)
+            # for each match found, fill in entity_data and excerpt_data information
+            for match in re.finditer(self.WORD_PAT, word_loc['words']):
+                entity_id = self._entity_data[match.group(1).lower()]['entity_id']
+                self._entity_data[match.group(1).lower()]['mentions'] += 1
+                self._entity_data[match.group(1).lower()]['excerpt_ids'].append(excerpt_id)
+                self._entity_data[match.group(1).lower()]['occurrence'].append({'loc': word_loc['locs'][self._find_start(match.start(0), word_loc['words'])],
+                            'len': self._find_len_word(match.start(0), match.end(0), word_loc)})
+                if entity_id not in rel_ent:
+                    rel_ent.append(entity_id)
+            for quote in self._quotes:
+                if quote.lower() in word_loc['words'].lower() and excerpt_id not in self._notable_clips:
+                    self._notable_clips.append(excerpt_id)
             self._excerpt_data[excerpt_id] = {'loc': para_start, 'len': self._find_len_excerpt(word_loc), 'related_entities': rel_ent}
             excerpt_id += 1
 
         # add random excerpts to make sure notable clips has at least 20 excerpts
-        while len(self._notable_clips) < 20:
+        if len(self._notable_clips) + excerpt_id >= 20:
+            num_of_notable_clips = 20
+        else:
+            num_of_notable_clips = len(self._notable_clips) + excerpt_id
+        if self._notable_clips < num_of_notable_clips and log: log('%s\t\t\tGetting extra notable clips...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        while len(self._notable_clips) < num_of_notable_clips:
             rand_excerpt = randrange(0, excerpt_id - 1)
             if rand_excerpt not in self._notable_clips:
                 self._notable_clips.append(rand_excerpt)
