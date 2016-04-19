@@ -8,6 +8,7 @@ This plugin will allow you to:
 	2. Send previously generated x-ray files to device
 
 	Note: Creating an x-ray file using this plugin will automatically update ASIN in book
+	Note: Highlighting words should work but I have not tested with a book that has DRM so I don't know if it will work for them.
 
 Preferences:
 	1. Use spoilers when creating x-ray
