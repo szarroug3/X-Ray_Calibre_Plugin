@@ -52,7 +52,8 @@ class Books(object):
             author = self._db.field_for('authors', book_id)
             if len(author) > 0:
                 author = author[0]
-            author_sort = self._db.field_for('author_sort', book_id).replace('.', '_')
+            author_sort = self._db.field_for('author_sort', book_id)
+            if author_sort[-1] == '.': author_sort[-1] = '_'
             identifiers = self._db.field_for('identifiers', book_id)
             if 'mobi-asin' in identifiers.keys():
                 asin = db.field_for('identifiers', book_id)['mobi-asin'].decode('ascii')
