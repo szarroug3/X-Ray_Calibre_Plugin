@@ -7,7 +7,7 @@ import re
 # Parses shelfari page for characters, terms, and quotes
 class ShelfariParser(object):
     # ShelfariBookWikiSession {"SpoilerBookId":51683,"SpoilerShowCharacters":true,"SpoilerShowSettings":true
-    _LETTERS_AND_NUMBERS = re.compile('([a-zA-Z0-9].+)')
+    DESC_PAT = re.compile(r'([a-zA-Z0-9\'"].+)')
 
     def __init__(self, url, spoilers=False):
         opener = build_opener()
@@ -89,7 +89,7 @@ class ShelfariParser(object):
         for li in ul[0]:
             label = li.getchildren()[0].text
             labelAndDesc = li.xpath("string()")[len(label):]
-            descSearch = self._LETTERS_AND_NUMBERS.search(labelAndDesc)
+            descSearch = self.DESC_PAT.search(labelAndDesc)
             desc = descSearch.group(1) if descSearch else None
             results[self._entity_counter] = {'label': label, 'description': desc}
             self._entity_counter += 1
