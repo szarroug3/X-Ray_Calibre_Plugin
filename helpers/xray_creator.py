@@ -388,12 +388,12 @@ class Book(object):
     def update_asin(self):
         with open(self._local_book_path, 'r+b') as stream:
             mu = MobiASINUpdater(stream)
-            self._asin = mu.update(asin=self.asin)
+            self._book_asin = mu.update(asin=self.asin)
 
     def update_asin_on_device(self, asin):
         with open(self._device_book_path, 'r+b') as stream:
             mu = MobiASINUpdater(stream)
-            self._asin = mu.update(asin=asin)
+            mu.update(asin=asin)
 
     def get_shelfari_url(self):
         query = urlencode ({'Keywords': self.asin})
@@ -424,7 +424,7 @@ class Book(object):
         self._parsed_book_data.parse(log=log)
 
     def write_xray_file(self):
-        self._xray_db_writer = XRayDBWriter(self.local_xray_directory, self.asin, self.shelfari_url, self._parsed_book_data)
+        self._xray_db_writer = XRayDBWriter(self.local_xray_directory, self._book_asin, self.shelfari_url, self._parsed_book_data)
         self._xray_db_writer.create_xray()
 
     def create_xray(self, log=None):
@@ -497,6 +497,11 @@ class MobiASINUpdater(MetadataUpdater):
                                 "\tThis is a '%s' file of type '%s'" % (self.type[0:4], self.type[4:8]))
 
         recs = []
+        if 113 in self.original_exth_records:
+            return self.original_exth_records[113]
+        if 504 in self.original_exth_records:
+            asin = self.original_exth_records[504]
+
         update_exth_record((113, asin.encode(self.codec, 'replace')))
         update_exth_record((504, asin.encode(self.codec, 'replace')))
 
