@@ -276,7 +276,7 @@ class Books(object):
                 return
             notif.put((i/float(len(self._books)), 'Sending %s - %s x-ray to device' % (book.title, book.author)))
             log('%s\t%s - %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title, book.author))
-            self.send_xray(book, device_drive, already_created=False)
+            self.send_xray(book, device_drive, already_created=False, log=log)
 
         for book in self._books_to_remove:
             self._books.remove(book)
@@ -427,7 +427,8 @@ class Book(object):
         self._xray_db_writer = XRayDBWriter(self.local_xray_directory, self.asin, self.shelfari_url, self._parsed_book_data)
         self._xray_db_writer.create_xray()
 
-    def create_xray(self):
+    def create_xray(self, log=None):
+        if log: log('%s\t\tUpdating ASIN' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
         if not self.asin or len(self.asin) != 10:
             self._aConnection = self.get_asin()
         if not self.asin or len(self.asin) != 10:
@@ -436,13 +437,23 @@ class Book(object):
         mi.get_identifiers()['mobi-asin'] = self.asin
         self._db.set_metadata(self.book_id, mi)
         self.update_asin()
+
+        if log: log('%s\t\tGetting shelfari URL' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
         if self.asin and len(self.asin) == 10:
             self._sConnection = self.get_shelfari_url()
             if not self.shelfari_url:
                 raise Exception('%s - %s skipped because no shelfari url found.' % (self.title, self.author))
+
+        if log: log('%s\t\tParsing shelfari data' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))       
         self.parse_shelfari_data()
+
+        if log: log('%s\t\tParsing book data' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
         self.parse_book_data()
+
+        if log: log('%s\t\tCreating x-ray' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
         self.write_xray_file()
+
+        if log: log('%s\t\tSending x-ray to device' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
 
     def send_xray(self, device_drive, already_created=True, log=None):
         self._device_xray_directory = os.path.join(device_drive, os.sep, self._device_xray_directory)
@@ -456,13 +467,12 @@ class Book(object):
         print (os.path.join(self._device_xray_directory, '*.asc'))
         print (glob(os.path.join(self._device_xray_directory, '*.asc')))
         if len(glob(os.path.join(self._device_xray_directory, '*.asc'))) > 0:
-            if log: log('Book already has x-ray.')
             return
 
         # do nothing if there is no local x-ray and we already tried to create one
         if not len(glob(os.path.join(self._local_xray_directory, '*.asc'))) > 0:
             if not already_created and self._create_xray:
-                self.create_xray()
+                self.create_xray(log=log)
             else:
                 if already_created: raise Exception('No local x-ray found. Already tried to create x-ray but couldn\'t.')
                 if not self._create_xray: raise Exception('No local x-ray found. Preferences set to not create one if not found.')
