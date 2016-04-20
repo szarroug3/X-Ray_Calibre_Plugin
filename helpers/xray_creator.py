@@ -83,9 +83,12 @@ class Books(object):
                 device_book_path = os.path.join('documents', author_sort, title_sort + ' - ' + author_in_filename + '.mobi')
                 self._books.append(Book(book_id, local_book_path, device_book_path, title, author, asin=asin, aConnection=self._aConnection, sConnection=self._sConnection, spoilers=self._spoilers, db=self._db))
                 continue
-            if title and author: self._books_skipped.append('%s - %s missing book path.' % (title, author))
-            elif local_book_path: self._books_skipped.append('%s missing title or author.' % (os.path.basename(local_book_path).split('.')[0]))
-            else: self._books_skipped.append('Unknown book with id %s missing book path, title and/or author.' % book_id)
+            if not local_book_path:
+                if title and author: self._books_skipped.append('%s - %s does not have MOBI file. Please convert and try again.' % (title, author))
+                elif title: self._books_skipped.append('%s does not have MOBI file. Please convert and try again.' % title)
+                else: self._books_skipped.append('%s does not have MOBI file. Please convert and try again.' % (os.path.basename(local_book_path).split('.')[0]))
+                continue
+            self._books_skipped.append('%s missing title, title sort, author, or author sort. Please fix and try again.' % (os.path.basename(local_book_path).split('.')[0]))
 
 
     @property
@@ -445,11 +448,13 @@ class Book(object):
         self._device_xray_directory = os.path.join(device_drive, os.sep, self._device_xray_directory)
         self._device_book_path = os.path.join(device_drive, os.sep, self._device_book_path)
 
-        # check if x-ray directory and book path exist, return if either doesn't - that means book isn't on kindle
+        # check if book is on kindle, return if it doesn't
         if not os.path.exists(self._device_book_path):
             raise Exception('Book is not on device at %s' % self._device_book_path)
 
         # do nothing if book already has x-ray
+        print (os.path.join(self._device_xray_directory, '*.asc'))
+        print (glob(os.path.join(self._device_xray_directory, '*.asc')))
         if len(glob(os.path.join(self._device_xray_directory, '*.asc'))) > 0:
             if log: log('Book already has x-ray.')
             return
