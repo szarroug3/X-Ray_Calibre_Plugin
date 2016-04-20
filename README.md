@@ -13,7 +13,7 @@ X-Ray files allow you to get information on key characters and terms from shelfa
 2. You can click X-Ray and search for the word either by looking through the list or using the search bar. Clicking on the word will show you the same popup from #1.
 
 Note: X-Ray files work only work on Amazon products such as the Kindle PW. For more information on X-Ray files, see here: http://www.amazon.com/gp/help/custom...7-239A35EB4119
-It also has a notable clips section which show quotes from shelfari. If there are not enough shelfari quotes found, the plugin will more random excerpts so there are least 20 notable clips.
+It also has a notable clips section which show quotes from shelfari. If there are not enough shelfari quotes found, the plugin will add more random excerpts so there are least 20 notable clips.
 Github Page: https://github.com/szarroug3/X-Ray_Calibre_Plugin
 
 -------------------------------------------------------------------------------------------------------------------------------
