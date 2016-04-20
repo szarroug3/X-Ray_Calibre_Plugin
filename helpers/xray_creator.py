@@ -464,8 +464,6 @@ class Book(object):
             raise Exception('Book is not on device at %s' % self._device_book_path)
 
         # do nothing if book already has x-ray
-        print (os.path.join(self._device_xray_directory, '*.asc'))
-        print (glob(os.path.join(self._device_xray_directory, '*.asc')))
         if len(glob(os.path.join(self._device_xray_directory, '*.asc'))) > 0:
             return
 
@@ -480,7 +478,7 @@ class Book(object):
         # check if there's a local x-ray file and copy it to device if there is
         local_file = glob(os.path.join(self._local_xray_directory, '*.asc'))
         if len(local_file) > 0:
-            self.update_asin_on_device(local_file[0].split('.')[3])
+            self.update_asin_on_device(local_file[0].split(os.sep)[-1].split('.')[2])
             if not os.path.exists(self._device_xray_directory):
                 os.mkdir(self._device_xray_directory)
             copy(local_file[0], os.path.join(device_drive, os.sep, self._device_xray_directory))
