@@ -6,12 +6,21 @@ Github Page: https://github.com/szarroug3/X-Ray_Calibre_Plugin
 
 Mobileread Page: http://www.mobileread.com/forums/showthread.php?p=3301947#post3301947
 
-This plugin will allow you to:
+Some background information on X-Ray:
+-------------------------------------------------------------------------------------------------------------------------------
+X-Ray files allow you to get information on key characters and terms from shelfari. You can do this in one of a few ways.
+1. You can highlight the word in question and if the x-ray file has information on it, a popup with a brief description will show. It will also show you where this character has been mentioned in the past (will show page number and excerpt where mention occurred).
+2. You can click X-Ray and search for the word either by looking through the list or using the search bar. Clicking on the word will show you the same popup from #1.
+
+Note: X-Ray files work only work on Amazon products such as the Kindle PW. For more information on X-Ray files, see here: http://www.amazon.com/gp/help/custom...7-239A35EB4119
+It also has a notable clips section which show quotes from shelfari. If there are not enough shelfari quotes found, the plugin will more random excerpts so there are least 20 notable clips.
+Github Page: https://github.com/szarroug3/X-Ray_Calibre_Plugin
+
 -------------------------------------------------------------------------------------------------------------------------------
 	1. Create x-ray files for selected books
 	2. Send previously generated x-ray files to device
 
-	Note: Creating an x-ray file using this plugin will automatically update ASIN in book
+	Note: Creating an x-ray file using this plugin will automatically search for and use the correct ASIN so you don't need to search for it.
 	Note: Highlighting words should work but I have not tested with a book that has DRM so I don't know if it will work for them.
 
 Preferences:
@@ -26,3 +35,4 @@ Preferences:
 Testing:
 -------------------------------------------------------------------------------------------------------------------------------
 	This plugin has been tested using a Kindle PW2 on Windows 8 and 10.
+	I am still working on testing some portions of it so if you do find a bug or want to request a feature, please let me know via Github or Mobileread.
