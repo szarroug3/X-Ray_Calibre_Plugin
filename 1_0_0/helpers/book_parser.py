@@ -14,16 +14,12 @@ class BookParser(object):
     PARAGRAPH_PAT = re.compile(r'<p.*?>.+?(?:<\/p>)', re.I)
     PLAIN_TEXT_PAT = re.compile(r'>([^<]+?)<', re.I)
 
-    def __init__(self, book_type, book_path, shelfari_data):
+    def __init__(self, book_path, shelfari_data):
         self._book_path = book_path
         self._excerpt_data = {}
         self._entity_data = {}
         self._quotes = shelfari_data.quotes
         self._notable_clips = []
-
-        self._offset = 0
-        if book_type.lower() == 'azw3':
-            self._offset = -16
 
         for char in shelfari_data.characters.items():
             original = char[1]['label']
@@ -64,8 +60,6 @@ class BookParser(object):
 
     def parse(self, log=None):
         self._book_html = MobiExtractor(self._book_path, open(os.devnull, 'w')).extract_text()
-        with open('text.txt', 'w+') as f:
-            f.write(self._book_html)
         self.find_erl_and_encoding()
         paragraph_data = []
 
@@ -76,7 +70,7 @@ class BookParser(object):
             results = [(word.group(0)[1:-1].decode(self.codec), word.start(0)) for word in re.finditer(self.PLAIN_TEXT_PAT, node.group(0))]
             word_loc = {'words': '', 'locs': [], 'char_sizes': []}
             for group, loc in results:
-                start = node.start(0) + loc + 1 + self._offset
+                start = node.start(0) + loc + 1
                 for char in group:
                     word_loc['words'] += char
                     word_loc['locs'].append(start)

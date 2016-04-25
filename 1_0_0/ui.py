@@ -32,8 +32,6 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         self._spoilers = prefs['spoilers']
         self._send_to_device = prefs['send_to_device']
         self._create_xray_when_sending = prefs['create_xray_when_sending']
-        self._mobi = prefs['mobi']
-        self._azw3 = prefs['azw3']
 
         icon = get_icons('images/icon.png')
 
@@ -57,8 +55,6 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         self._spoilers = prefs['spoilers']
         self._send_to_device = prefs['send_to_device']
         self._create_xray_when_sending = prefs['create_xray_when_sending']
-        self._mobi = prefs['mobi']
-        self._azw3 = prefs['azw3']
 
     def create_xrays(self):
         books = self._get_books('Cannot create X-Rays')
@@ -89,12 +85,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         ids = list(map(self.gui.library_view.model().id, rows))
         db = db.new_api
 
-        types = []
-        if self._mobi:
-            types.append('MOBI')
-        if self._azw3:
-            types.append('AZW3')
-        books = Books(db, ids, types, spoilers=self._spoilers, send_to_device=self._send_to_device)
+        books = Books(db, ids, spoilers=self._spoilers, send_to_device=self._send_to_device)
 
         return books
 

@@ -7,7 +7,7 @@ __license__   = 'GPL v3'
 __copyright__ = '2016, Samreen Zarroug & Alex Mayer'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QGroupBox
+from PyQt5.Qt import QWidget, QVBoxLayout, QLabel, QLineEdit, QCheckBox
 
 from calibre.utils.config import JSONConfig
 
@@ -17,8 +17,6 @@ prefs = JSONConfig('plugins/xray_creator')
 prefs.defaults['spoilers'] = False
 prefs.defaults['send_to_device'] = True
 prefs.defaults['create_xray_when_sending'] = True
-prefs.defaults['mobi'] = True
-prefs.defaults['azw3'] = True
 
 class ConfigWidget(QWidget):
     def __init__(self):
@@ -38,23 +36,7 @@ class ConfigWidget(QWidget):
         self.create_xray_when_sending.setChecked(prefs['create_xray_when_sending'])
         self.l.addWidget(self.create_xray_when_sending)
 
-        self.book_types_to_create = QGroupBox()
-        self.book_types_to_create.setTitle('Book types to create x-ray files for')
-        self.book_types_to_create.setLayout(QHBoxLayout (self.book_types_to_create))
-
-        self.mobi = QCheckBox('MOBI')
-        self.mobi.setChecked(prefs['mobi'])
-        self.book_types_to_create.layout().addWidget(self.mobi)
-
-        self.azw3 = QCheckBox('AZW3')
-        self.azw3.setChecked(prefs['azw3'])
-        self.book_types_to_create.layout().addWidget(self.azw3)
-
-        self.l.addWidget(self.book_types_to_create)
-
     def save_settings(self):
         prefs['spoilers'] = self.spoilers.isChecked()
         prefs['send_to_device'] = self.send_to_device.isChecked()
         prefs['create_xray_when_sending'] = self.create_xray_when_sending.isChecked()
-        prefs['mobi'] = self.mobi.isChecked()
-        prefs['azw3'] = self.azw3.isChecked()

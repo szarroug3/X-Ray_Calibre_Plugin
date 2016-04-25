@@ -1,4 +1,4 @@
-# mobi.py
+# xray_creator.py
 
 from __future__ import (absolute_import, print_function)
 
@@ -34,19 +34,21 @@ books_updated = []
 books_skipped = []
 
 class Books(object):
-    def __init__(self, db, book_ids, spoilers=False, send_to_device=True, create_xray=True):
+    def __init__(self, db, book_ids, types=[], spoilers=False, send_to_device=True, create_xray=True):
         self._book_ids = book_ids
         self._db = db
         self._books = []
-        self._books_to_remove = []
         self._books_skipped = []
         self._aConnection = HTTPConnection('www.amazon.com')
         self._sConnection = HTTPConnection('www.shelfari.com')
-        self._spoilers = spoilers
         self._send_to_device = send_to_device
-        self._create_xray = create_xray
+
+        if len(types) == 0:
+            self._books_skipped.append('No books processed because no book file type chosen in preferences.')
+            return
 
         for book_id in book_ids:
+            # Get basic book information
             title = self._db.field_for('title', book_id)
             title_sort = self._db.field_for('sort', book_id)
             author = self._db.field_for('authors', book_id)
@@ -54,50 +56,65 @@ class Books(object):
                 author = ' & '.join(author)
             author_sort = self._db.field_for('author_sort', book_id)
             identifiers = self._db.field_for('identifiers', book_id)
-            if 'mobi-asin' in identifiers.keys():
-                asin = db.field_for('identifiers', book_id)['mobi-asin'].decode('ascii')
-            else:
-                asin = None
-            local_book_path = db.format_abspath(book_id, 'MOBI')
-            if local_book_path and title and author and title_sort and author_sort:
-                if author_sort[-1] == '.': author_sort = author_sort[:-1] + '_'
-                author_sort = author_sort.replace(':', '_').replace('\"', '_')
+            asin = self._db.field_for('identifiers', book_id)['mobi-asin'].decode('ascii') if 'mobi-asin' in identifiers.keys() else None
 
-                trailing_period = False
-                while title_sort[-1] == '.':
-                    title_sort = title_sort[:-1]
-                    trailing_period = True
-                if trailing_period:
-                    title_sort += '_'
-                title_sort = title_sort.replace(':', '_').replace('\"', '_')
-
-                trailing_period = False
-                author_in_filename = author
-                while author_in_filename[-1] == '.':
-                    author_in_filename = title_sort[:-1]
-                    trailing_period = True
-                if trailing_period:
-                    author_in_filename += '_'
-                author_in_filename = author_in_filename.replace(':', '_').replace('\"', '_')
-
-                device_book_path = os.path.join('documents', author_sort, title_sort + ' - ' + author_in_filename + '.mobi')
-                self._books.append(Book(book_id, local_book_path, device_book_path, title, author, asin=asin, aConnection=self._aConnection, sConnection=self._sConnection, spoilers=self._spoilers, db=self._db))
+            if not title or not title_sort or not author or not author_sort:
+                if title:
+                    self._books_skipped.append('%s: missing title sort, author, or author sort information.' % title)
+                    continue
+                if title_sort:
+                    self._books_skipped.append('%s: missing title, author, or author sort information.' % title_sort)
+                    continue
+                if author:
+                    self._books_skipped.append('%s: missing title, title sort, or author sort information.' % title_sort)
+                    continue
+                if author_sort:
+                    self._books_skipped.append('%s: missing title, title sort, or author information.' % title_sort)
+                    continue
+                self._books_skipped.append('Unknown book missing title, title sort, author, and author sort information.')
                 continue
-            if not local_book_path:
-                if title and author: self._books_skipped.append('%s - %s does not have MOBI file. Please convert and try again.' % (title, author))
-                elif title: self._books_skipped.append('%s does not have MOBI file. Please convert and try again.' % title)
-                else: self._books_skipped.append('%s does not have MOBI file. Please convert and try again.' % (os.path.basename(local_book_path).split('.')[0]))
-                continue
-            self._books_skipped.append('%s missing title, title sort, author, or author sort. Please fix and try again.' % (os.path.basename(local_book_path).split('.')[0]))
 
+            # Book definitely has title, title_sort, author, and author_sort at this point
 
-    @property
-    def books(self):
-        return self._books
+            # sanitize author_sort and title_sort and get author name  in filename
+            if author_sort[-1] == '.': author_sort = author_sort[:-1] + '_'
+            author_sort = author_sort.replace(':', '_').replace('\"', '_')
 
-    @property
-    def book_skipped(self):
-        return self._book_skipped
+            trailing_period = False
+            while title_sort[-1] == '.':
+                title_sort = title_sort[:-1]
+                trailing_period = True
+            if trailing_period:
+                title_sort += '_'
+            title_sort = title_sort.replace(':', '_').replace('\"', '_')
+
+            trailing_period = False
+            author_in_filename = author
+            while author_in_filename[-1] == '.':
+                author_in_filename = title_sort[:-1]
+                trailing_period = True
+            if trailing_period:
+                author_in_filename += '_'
+            author_in_filename = author_in_filename.replace(':', '_').replace('\"', '_')
+
+            type_specific_data = []
+
+            for book_type in types:
+                type_info = {'type': book_type, 'local_book': db.format_abspath(book_id, book_type)}
+                if not type_info['local_book']:
+                    type_info['status'] = 'Fail'
+                    type_info['status_message'] = 'Book path in %s format not found.' % book_type
+                    type_specific_data.append(type_info)
+                    continue
+
+                # book path exists at this point
+                type_info['status'] = 'In Progress'
+                type_info['status_message'] = ''
+                type_info['local_xray'] = os.path.join('.'.join(type_info['local_book'].split('.')[:-1]) + '.sdr', book_type)
+                type_info['device_book'] = os.path.join('documents', author_sort, title_sort + ' - ' + author_in_filename + '.' + book_type.lower())
+                type_info['device_xray'] = '.'.join(type_info['device_book'].split('.')[:-1]) + '.sdr'
+                type_specific_data.append(type_info)
+            self._books.append(Book(self._db, book_id, title, author, type_specific_data, asin, spoilers, create_xray))
 
     def _find_device(self):
         drive_info = self._get_drive_info()
@@ -122,126 +139,56 @@ class Books(object):
                 result.append((drive_letter, drive_type))
         return result
 
-    def update_asin(self, book):
-        try:
-            if not book.asin or len(book.asin) != 10:
-                self._aConnection = book.get_asin()
-            if not book.asin or len(book.asin) != 10:
-                self._books_to_remove.append(book)
-                self._books_skipped.append('%s - %s skipped because could not find ASIN or ASIN is invalid.' % (book.title, book.author))
-                return False
-            mi = self._db.get_metadata(book.book_id)
-            mi.get_identifiers()['mobi-asin'] = book.asin
-            self._db.set_metadata(book.book_id, mi)
-            book.update_asin()
-        except Exception as e:
-            self._books_to_remove.append(book)
-            self._books_skipped.append('%s - %s skipped because could not update ASIN.\n\t\t%s' % (book.title, book.author, e))
-            return False
-
-        return True
-
-    def get_shelfari_url(self, book):
-        try:
-            if book.asin and len(book.asin) == 10:
-                self._sConnection = book.get_shelfari_url()
-                if not book.shelfari_url:
-                    self._books_to_remove.append(book)
-                    self._books_skipped.append('%s - %s skipped because no shelfari url found.' % (book.title, book.author))
-                    return False
-        except Exception as e:
-            self._books_to_remove.append(book)
-            self._books_skipped.append('%s - %s skipped because %s.' % (book.title, book.author, e))
-            return False
-
-        return True
-
-    def parse_shelfari_data(self, book):
-        try:
-            book.parse_shelfari_data()
-        except Exception as e:
-            self._books_to_remove.append(book)
-            self._books_skipped.append('%s - %s skipped because could not parse shelfari data.\n\t\t%s' % (book.title, book.author, e))
-            return False
-
-        return True
-
-    def parse_book_data(self, book, log=None):
-        try:
-            book.parse_book_data(log=log)
-        except Exception as e:
-            self._books_to_remove.append(book)
-            self._books_skipped.append('%s - %s skipped because could not parse book data.\n\t\t%s' % (book.title, book.author, e))
-            return False
-
-        return True
-
-    def write_xray_file(self, book):
-        try:
-            book.write_xray_file()
-        except Exception as e:
-            self._books_to_remove.append(book)
-            self._books_skipped.append('%s - %s skipped because could not write X-Ray file.\n\t\t%s' % (book.title, book.author, e))
-            return False
-
-        return True
-
-    def send_xray(self, book, device_drive, already_created=True, log=None):
-        try:
-            book.send_xray(device_drive, already_created=already_created, log=log)
-        except Exception as e:
-            self._books_to_remove.append(book)
-            self._books_skipped.append('%s - %s skipped because could not send x-ray.\n\t\t%s' % (book.title, book.author, e))
-
     def create_xrays_event(self, abort, log, notifications):
         notif = notifications
         log('')
         actions = 5.0
         if self._send_to_device:
             actions += 1
+
         for i, book in enumerate(self._books):
             title_and_author = '%s - %s' % (book.title, book.author)
             if abort.isSet():
                 return
             log('%s\t%s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), title_and_author))
+
             notif.put(((i * actions)/(len(self._books) * actions), 'Updating %s ASIN' % title_and_author))
             log('%s\t\tUpdating ASIN' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
-            completed = self.update_asin(book)
-            if not completed:
+            if not book.asin or len(book.asin) != 10:
+                self._aConnection = book.get_asin(self._aConnection)
+            if book.status is 'Fail':
+                continue
+            book.update_asin()
+            if book.status is 'Fail':
                 continue
 
             if abort.isSet():
                 return
-
             notif.put((((i * actions) + 1)/(len(self._books) * actions), 'Getting %s shelfari URL' % title_and_author))
             log('%s\t\tGetting shelfari URL' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
-            completed = self.get_shelfari_url(book)
-            if not completed:
+            self._sConnection = book.get_shelfari_url(self._sConnection)
+            if book.status is 'Fail':
                 continue
 
             if abort.isSet():
                 return
             notif.put((((i * actions) + 2)/(len(self._books) * actions), 'Parsing %s shelfari data' % title_and_author))
             log('%s\t\tParsing shelfari data' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
-            completed = self.parse_shelfari_data(book)
-            if not completed:
+            book.parse_shelfari_data()
+            if book.status is 'Fail':
                 continue
 
             if abort.isSet():
                 return
             notif.put((((i * actions) + 3)/(len(self._books) * actions), 'Parsing %s book data' % title_and_author))
             log('%s\t\tParsing book data' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
-            completed = self.parse_book_data(book)
-            if not completed:
-                continue
+            book.parse_book_data()
 
             if abort.isSet():
                 return
             notif.put((((i * actions) + 4)/(len(self._books) * actions), 'Creating %s x-ray' % title_and_author))
             log('%s\t\tCreating x-ray' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
-            completed = self.write_xray_file(book)
-            if not completed:
-                continue
+            book.write_xray_file()
 
             if self._send_to_device:
                 if abort.isSet():
@@ -249,11 +196,7 @@ class Books(object):
                 device_drive = self._find_device()
                 notif.put((((i * actions) + 5)/(len(self._books) * actions), 'Sending %s x-ray to device' % title_and_author))
                 log('%s\t\tSending x-ray to device' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
-                if device_drive:
-                    self.send_xray(book, device_drive)
-
-        for book in self._books_to_remove:
-            self._books.remove(book)
+                book.send_xray(device_drive)
 
         if len(self._books_skipped) > 0:
             log('\nBooks Skipped:')
@@ -261,9 +204,20 @@ class Books(object):
                 log('\t%s' % book)
 
         if len(self._books) > 0:
-            log('\nBooks Completed:')
+            log('\nBook Proccessing Information:')
             for book in self._books:
-                log('\t%s - %s' % (book.title, book.author))
+                log('\t%s - %s:' % (book.title, book.author))
+                if book.status is 'Fail':
+                    log('\t\t%s' % book.status_message)
+                    continue
+                for type_data in book.type_specific_data:
+                    if type_data['status'] is 'Fail':
+                        log('\t\t%s: %s' % (type_data['type'], type_data['status_message']))
+                        continue
+                    if not type_data['send_status']:
+                        log('\t\t%s: %s' % (type_data['type'], type_data['send_status_message']))
+                        continue
+                    log('\t\t%s: Sent to device.' % type_data['type'])
 
     def send_xrays_event(self, abort, log, notifications):   
         log('')
@@ -276,10 +230,7 @@ class Books(object):
                 return
             notif.put((i/float(len(self._books)), 'Sending %s - %s x-ray to device' % (book.title, book.author)))
             log('%s\t%s - %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title, book.author))
-            self.send_xray(book, device_drive, already_created=False, log=log)
-
-        for book in self._books_to_remove:
-            self._books.remove(book)
+            book.send_xray(device_drive, already_created=False, log=log, aConnection=self._aConnection, sConnection=self._sConnection)
 
         if len(self._books_skipped) > 0:
             log('\nBooks Skipped:')
@@ -287,48 +238,37 @@ class Books(object):
                 log('\t%s' % book)
 
         if len(self._books) > 0:
-            log('\nBooks Completed:')
+            log('\nBook Proccessing Information:')
             for book in self._books:
-                log('\t%s - %s' % (book.title, book.author))
+                log('\t%s - %s:' % (book.title, book.author))
+                for type_data in book.type_specific_data:
+                    if not type_data['send_status']:
+                        log('\t\t%s: %s' % (type_data['type'], type_data['send_status_message']))
+                        continue
+                    log('\t\t%s: Sent to device.' % type_data['type'])
+
 
 class Book(object):
     AMAZON_ASIN_PAT = re.compile(r'data\-asin=\"([a-zA-z0-9]+)\"')
     SHELFARI_URL_PAT = re.compile(r'href="(.+/books/.+?)"')
     HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain", "User-Agent": "Mozilla/5.0"}
 
-    def __init__(self, book_id, local_book_path, device_book_path, title, author, asin=None, db=None, aConnection=None, sConnection=None, shelfari_url=None, spoilers=False, create_xray=True):
+    def __init__(self, db, book_id, title, author, type_specific_data, asin, spoilers, create_xray):
+        self._db = db
         self._book_id = book_id
-        self._local_book_path = local_book_path
-        self._device_book_path = device_book_path
-        self._local_xray_directory = self._local_book_path[:-4] + 'sdr'
-        self._device_xray_directory = self._device_book_path[:-4] + 'sdr'
-        self._author = author
         self._title = title
+        self._author = author
+        self._type_specific_data = type_specific_data
+        self._asin = asin
         self._spoilers = spoilers
         self._create_xray = create_xray
-        self._db = db
-        if asin:
-            self._asin = asin
-        else:
-            self._asin = None
-        self._shelfari_url = shelfari_url
-        if aConnection:
-            self._aConnection = aConnection
-        else:
-            self._aConnection = HTTPConnection('www.amazon.com')
-        if sConnection:
-            self._sConnection = sConnection
-        else:
-            self._sConnection = HTTPConnection('www.shelfari.com')
+        self._status = 'In Progress'
+        self._status_message = None
 
-    @property
-    def book_id(self):
-        return self._book_id
-    
     @property
     def title(self):
         return self._title
-
+    
     @property
     def author(self):
         return self._author
@@ -338,43 +278,33 @@ class Book(object):
         return self._asin
 
     @property
-    def shelfari_url(self):
-        return self._shelfari_url
+    def status(self):
+        return self._status
+
+    @property
+    def type_specific_data(self):
+        return self._type_specific_data
     
     @property
-    def aConnection(self):
-        return self._aConnection
-
-    @property
-    def sConnection(self):
-        return self._sConnection
-
-    @property
-    def xray_db_creator(self):
-        return self._xray_db_creator
-
-    @property
-    def local_xray_directory(self):
-        return self._local_xray_directory
-
-    @property
-    def device_xray_directory(self):
-        return self._device_xray_directory
-      
-     
-    def get_asin(self):
+    def status_message(self):
+        return self._status_message
+    
+    def get_asin(self, connection):
         query = urlencode({'keywords': '%s - %s' % ( self._title, self._author)})
-        self.aConnection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, None, self.HEADERS)
+        connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, None, self.HEADERS)
         try:
-            response = self.aConnection.getresponse().read()
+            response = connection.getresponse().read()
         except BadStatusLine:
-            self.aConnection.close()
-            self.aConnection = HTTPConnection('www.amazon.com')
-            self.aConnection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, None, self.HEADERS)
-            response = self.aConnection.getresponse().read()
+            connection.close()
+            connection = HTTPConnection('www.amazon.com')
+            connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, None, self.HEADERS)
+            response = connection.getresponse().read()
+
         # check to make sure there are results
         if 'did not match any products' in response and not 'Did you mean:' in response and not 'so we searched in All Departments' in response:
-            raise ValueError('Could not find Amazon page for %s - %s' % ( self._title, self._author))
+            self._status = 'Fail'
+            self._status_message = 'Could not find amazon page.'
+            return
         soup = BeautifulSoup(response)
         results = soup.findAll('div', {'id': 'resultsCol'})
         for r in results:
@@ -382,70 +312,107 @@ class Book(object):
                 asinSearch = self.AMAZON_ASIN_PAT.search(str(r))
                 if asinSearch:
                     self._asin = asinSearch.group(1)
-                    return self.aConnection
-        raise ValueError('Could not find ASIN for %s - %s' % ( self._title, self._author))
+                    return connection
+
+        self._status = 'Fail'
+        self._status_message = 'Could not find ASIN on amazon page.'
 
     def update_asin(self):
-        with open(self._local_book_path, 'r+b') as stream:
-            mu = MobiASINUpdater(stream)
-            self._book_asin = mu.update(asin=self.asin)
+        mi = self._db.get_metadata(self._book_id)
+        mi.get_identifiers()['mobi-asin'] = self.asin
+        self._db.set_metadata(self._book_id, mi)
 
-    def update_asin_on_device(self, asin):
-        with open(self._device_book_path, 'r+b') as stream:
-            mu = MobiASINUpdater(stream)
-            mu.update(asin=asin)
+        for type_data in self._type_specific_data:
+            if type_data['status'] is not 'Fail':
+                try:
+                    if type_data['type'].lower() == 'mobi' or type_data['type'].lower() == 'azw3':
+                        with open(type_data['local_book'], 'r+b') as stream:
+                            mu = ASINUpdater(stream)
+                            type_data['book_asin'] = mu.update(asin=self.asin)
+                except Exception:
+                    type_data['status'] = 'Fail'
+                    type_data['status_message'] = 'Could not update ASIN in local book.'
 
-    def get_shelfari_url(self):
-        query = urlencode ({'Keywords': self.asin})
-        self.sConnection.request('GET', '/search/books?' + query)
+    def update_asin_on_device(self, type_data, asin):
+        if type_data['type'].lower() is 'mobi' or type_data['type'].lower() is 'azw3':
+            with open(type_data['device_book'], 'r+b') as stream:
+                mu = ASINUpdater(stream)
+                mu.update(asin=asin)
+
+    def get_shelfari_url(self, connection):
+        query = urlencode ({'Keywords': self._asin})
+        connection.request('GET', '/search/books?' + query)
         try:
-            response = self.sConnection.getresponse().read()
+            response = connection.getresponse().read()
         except BadStatusLine:
-            self.sConnection.close()
-            self.sConnection = HTTPConnection('www.shelfari.com')
-            self.sConnection.request('GET', '/search/books?' + query)
-            response = self.sConnection.getresponse().read()
-        
+            connection.close()
+            connection = HTTPConnection('www.shelfari.com')
+            connection.request('GET', '/search/books?' + query)
+            response = connection.getresponse().read()
+
         # check to make sure there are results
         if 'did not return any results' in response:
-            return self.sConnection
+            self._status = 'Fail'
+            self._status_message = 'Could not find shelfari page.'
+            return connection
         urlsearch = self.SHELFARI_URL_PAT.search(response)
         if not urlsearch:
-            return self.sConnection
+            self._status = 'Fail'
+            self._status_message = 'Could not find shelfari page.'
+            return connection
         self._shelfari_url = urlsearch.group(1)
-        return self.sConnection
+        return connection
 
     def parse_shelfari_data(self):
-        self._parsed_shelfari_data = ShelfariParser(self._shelfari_url, spoilers=self._spoilers)
-        self._parsed_shelfari_data.parse()
+        try:
+            self._parsed_shelfari_data = ShelfariParser(self._shelfari_url, spoilers=self._spoilers)
+            self._parsed_shelfari_data.parse()
+            self._status = 'Success'
+        except Exception:
+            self._status = 'Fail'
+            self._status_message = 'Could not parse shelfari data.'
 
     def parse_book_data(self, log=None):
-        self._parsed_book_data = BookParser(self._local_book_path, self._parsed_shelfari_data)
-        self._parsed_book_data.parse(log=log)
+        for type_data in self._type_specific_data:
+            if type_data['status'] is not 'Fail':
+                try:
+                    type_data['parsed_book_data'] = BookParser(type_data['type'], type_data['local_book'], self._parsed_shelfari_data)
+                    type_data['parsed_book_data'].parse(log=log)
+                except Exception:
+                    type_data['status'] = 'Fail'
+                    type_data['status_message'] = 'Could not parse book data.'
 
     def write_xray_file(self):
-        self._xray_db_writer = XRayDBWriter(self.local_xray_directory, self._book_asin, self.shelfari_url, self._parsed_book_data)
-        self._xray_db_writer.create_xray()
+        for type_data in self._type_specific_data:
+            if type_data['status'] is not 'Fail':
+                try:
+                    xray_db_writer = XRayDBWriter(type_data['local_xray'], type_data['book_asin'], self._shelfari_url, type_data['parsed_book_data'])
+                    xray_db_writer.create_xray()
+                    type_data['status'] = 'Success'
+                except Exception:
+                    type_data['status'] = 'Fail'
+                    type_data['status_message'] = 'Could not write x-ray file.'
 
-    def create_xray(self, log=None):
+    def create_xray(self, aConnection, sConnection, log=None):
         if log: log('%s\t\tUpdating ASIN' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
         if not self.asin or len(self.asin) != 10:
-            self._aConnection = self.get_asin()
-        if not self.asin or len(self.asin) != 10:
-            return
-        mi = self._db.get_metadata(self.book_id)
-        mi.get_identifiers()['mobi-asin'] = self.asin
-        self._db.set_metadata(self.book_id, mi)
+            aConnection = self.get_asin(aConnection)
+        if self._status is 'Fail':
+            return (aConnection, sConnection)
         self.update_asin()
 
         if log: log('%s\t\tGetting shelfari URL' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
         if self.asin and len(self.asin) == 10:
-            self._sConnection = self.get_shelfari_url()
-            if not self.shelfari_url:
-                raise Exception('%s - %s skipped because no shelfari url found.' % (self.title, self.author))
+            sConnection = self.get_shelfari_url(sConnection)
+
+        if self._status is 'Fail':
+            return (aConnection, sConnection)
 
         if log: log('%s\t\tParsing shelfari data' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))       
         self.parse_shelfari_data()
+
+        if self._status is 'Fail':
+            return (aConnection, sConnection)
 
         if log: log('%s\t\tParsing book data' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
         self.parse_book_data()
@@ -455,37 +422,73 @@ class Book(object):
 
         if log: log('%s\t\tSending x-ray to device' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
 
-    def send_xray(self, device_drive, already_created=True, log=None):
-        self._device_xray_directory = os.path.join(device_drive, os.sep, self._device_xray_directory)
-        self._device_book_path = os.path.join(device_drive, os.sep, self._device_book_path)
+        return (aConnection, sConnection)
 
-        # check if book is on kindle, return if it doesn't
-        if not os.path.exists(self._device_book_path):
-            raise Exception('Book is not on device at %s' % self._device_book_path)
+    def send_xray(self, device_drive, already_created=True, log=None, aConnection=None, sConnection=None):
+        # find which version of book is on device
+        sent = False
+        rewritten = False
+        for type_data in self.type_specific_data:
+            print (type_data)
+            if type_data['status'] is not 'Fail':
+                type_data['send_status'] = False
+                type_data['send_status_message'] = None
+                if not device_drive:
+                    type_data['send_status_message'] = 'Created x-ray but no device connected.'
+                    continue
+                type_data['device_xray'] = os.path.join(device_drive, os.sep, type_data['device_xray'])
+                type_data['device_book'] = os.path.join(device_drive, os.sep, type_data['device_book'])
 
-        # do nothing if book already has x-ray
-        if len(glob(os.path.join(self._device_xray_directory, '*.asc'))) > 0:
-            return
+                # do nothing if book already has x-ray
+                device_files = glob(os.path.join(type_data['device_xray'], '*.asc'))
+                if len(device_files) > 0:
+                    if sent:
+                        type_data['send_status_message'] = 'X-Ray from another book format has already been sent.'
+                        continue
+                    if not already_created:
+                        type_data['send_status_message'] = 'Book already has x-ray.'
+                        continue
 
-        # do nothing if there is no local x-ray and we already tried to create one
-        if not len(glob(os.path.join(self._local_xray_directory, '*.asc'))) > 0:
-            if not already_created and self._create_xray:
-                self.create_xray(log=log)
-            else:
-                if already_created: raise Exception('No local x-ray found. Already tried to create x-ray but couldn\'t.')
-                if not self._create_xray: raise Exception('No local x-ray found. Preferences set to not create one if not found.')
+                if not os.path.exists(type_data['device_book']):
+                    type_data['send_status_message'] = 'Book format not found on device.'
+                    continue
 
-        # check if there's a local x-ray file and copy it to device if there is
-        local_file = glob(os.path.join(self._local_xray_directory, '*.asc'))
-        if len(local_file) > 0:
-            self.update_asin_on_device(local_file[0].split(os.sep)[-1].split('.')[2])
-            if not os.path.exists(self._device_xray_directory):
-                os.mkdir(self._device_xray_directory)
-            copy(local_file[0], os.path.join(device_drive, os.sep, self._device_xray_directory))
-            return
-        raise Exception('No local x-ray found. Tried to create one but couldn\'t.')
+                # do nothing if there is no local x-ray and we already tried to create one
+                local_file = glob(os.path.join(type_data['local_xray'], '*.asc'))
+                if not len(local_file) > 0:
+                    if not self._create_xray:
+                        type_data['send_status_message'] = 'No local x-ray found. Preferences set to not create one if not found.'
+                        continue
+                    if not already_created:
+                        aConnection, sConnection = self.create_xray(aConnection, sConnection, log=log)
+                    local_file = glob(os.path.join(type_data['local_xray'], '*.asc'))
+                    if not len(local_file) > 0:
+                        type_data['send_status_message'] = 'No local x-ray found. Already tried to create it but couldn\'t.'
+                        continue
 
-class MobiASINUpdater(MetadataUpdater):
+                try:
+                    self.update_asin_on_device(type_data, local_file[0].split(os.sep)[-1].split('.')[2])
+                except Exception:
+                    type_data['send_status_message'] = 'Could not update ASIN in book on device.'
+                    continue
+
+                if len(device_files) > 0:
+                    if rewritten:
+                        type_data['send_status_message'] = 'Book already has x-ray.'
+                        continue
+                    for file in device_files:
+                        os.remove(file)
+                        rewritten = True
+
+                if not os.path.exists(type_data['device_xray']):
+                    os.mkdir(type_data['device_xray'])
+                copy(local_file[0], type_data['device_xray'])
+                type_data['send_status'] = True
+                sent = True
+        return (aConnection, sConnection)
+
+
+class ASINUpdater(MetadataUpdater):
     def update(self, asin):
         def update_exth_record(rec):
             recs.append(rec)
