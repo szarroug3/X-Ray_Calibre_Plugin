@@ -8,7 +8,16 @@ class Book(object):
 
 	# Status Messages
 	FAILED_BASIC_INFORMATION_MISSING = 'Missing title, title sort, author, and/or author sort.'
+    FAILED_COULD_NOT_FIND_AMAZON_PAGE = 'Could not find amazon page.'
 	FAILED_COULD_NOT_FIND_SHELFARI_PAGE = 'Could not find shelfari page.'
+    FAILED_UNSUPPORTED_FORMAT = 'Chosen format is unsupported.'
+    FAILED_LOCAL_BOOK_NOT_FOUND = 'Local book not found.'
+    FAILED_UNABLE_TO_PARSE_BOOK = 'Unable to parse book.'
+    FAILED_UNABLE_TO_UPDATE_ASIN = 'Unable to update book\'s ASIN.'
+    FAILED_UNABLE_TO_WRITE_XRAY = 'Unable to write x-ray file.'
+
+    # allowed formats
+    FMTS = ['mobi', 'azw3']
 
 	def __init__(self, db, book_id, formats, spoilers=False, send_to_device=True, create_xray=True):
 		self._db = db
@@ -88,8 +97,8 @@ class Book(object):
 
         # check to make sure there are results
         if 'did not match any products' in response and not 'Did you mean:' in response and not 'so we searched in All Departments' in response:
-            self._status = 'Fail'
-            self._status_message = 'Could not find amazon page.'
+            self._status = self.FAIL
+            self._status_message = self.FAILED_COULD_NOT_FIND_AMAZON_PAGE
             return
         soup = BeautifulSoup(response)
         results = soup.findAll('div', {'id': 'resultsCol'})
@@ -129,8 +138,65 @@ class Book(object):
             self._parsed_shelfari_data = ShelfariParser(self._shelfari_url, spoilers=self._spoilers)
             self._parsed_shelfari_data.parse()
         except Exception:
-            self._status = 'Fail'
+            self._status = self.FAIL
             self._status_message = 'Could not parse shelfari data.'
+
+    def get_format_specific_information(self):
+        self._format_specific_info = []
+
+        for fmt in self._formats:
+            info = {'format': fmt}
+            
+            # check to make sure format is supported
+            if fmt.lower() is not in self.FMTS:
+                info['status'] = self.FAIL
+                info['status_message'] = self.FAILED_UNSUPPORTED_FORMAT
+                return
+
+            # find local book if it exists; fail if it doesn't
+            local_book = self._db.format_abspath(self._book_id, fmt.upper())
+            if not local_path or not os.path.exists(local_book):
+                info['status'] = self.FAIL
+                info['status_message'] = self.FAILED_LOCAL_BOOK_NOT_FOUND
+                return
+
+            info['local_book'] = local_book
+            info['local_xray'] = os.path.join('.'.join(local_book.split('.')[:-1]) + '.sdr', fmt.lower())
+            info['device_book'] = os.path.join('documents', self._author_sort, self._title_sort + ' - ' + self._author_in_filename + '.' + fmt.lower())
+            info['device_xray'] = '.'.join(info['device_book'].split('.')[:-1]) + '.sdr'
+
+            self._format_specific_info.append(info)
+
+    def parse_book(self):
+        for info in self._format_specific_info:
+            if info['status'] is not self.FAIL:
+                try:
+                    info['parsed_book_data'] = BookParser(info['format'], info['local_book'], self._parsed_shelfari_data)
+                    info['parsed_book_data'].parse()
+                except:
+                    info['status'] = self.FAIL
+                    info['status_message'] = self.FAILED_UNABLE_TO_PARSE_BOOK
+
+    def get_book_asin(self):
+        for info in self._format_specific_info:
+            if info['status'] is not self.FAIL:
+                try:
+                    with open(info['local_book'], 'r+b') as stream:
+                        mu = ASINUpdater(stream)
+                        info['book_asin'] = mu.update(asin=self._asin)
+                except:
+                    info['status'] = self.FAIL
+                    info['status_message'] = self.FAILED_UNABLE_TO_UPDATE_ASIN
+
+    def write_xray(self):
+        for info in self._format_specific_info:
+            if info['status'] is not self.FAIL:
+                try:
+                    xray_db_writer = XRayDBWriter(info['local_xray'], info['book_asin'], self._shelfari_url, info['parse_book_data'])
+                    xray_db_writer.create_xray()
+                except:
+                    info['status'] = self.FAIL
+                    info['status_message'] = self.FAILED_UNABLE_TO_WRITE_XRAY
 
 
 
@@ -147,39 +213,44 @@ class Book(object):
 
 
 
+class ASINUpdater(MetadataUpdater):
+    def update(self, asin):
+        def update_exth_record(rec):
+            recs.append(rec)
+            if rec[0] in self.original_exth_records:
+                self.original_exth_records.pop(rec[0])
 
+        if self.type != "BOOKMOBI":
+                raise MobiError("Setting ASIN only supported for MOBI files of type 'BOOK'.\n"
+                                "\tThis is a '%s' file of type '%s'" % (self.type[0:4], self.type[4:8]))
 
+        recs = []
+        if 113 in self.original_exth_records:
+            asin = self.original_exth_records[113]
+        elif 504 in self.original_exth_records:
+            asin = self.original_exth_records[504]
 
+        update_exth_record((113, asin.encode(self.codec, 'replace')))
+        update_exth_record((504, asin.encode(self.codec, 'replace')))
 
+        # Include remaining original EXTH fields
+        for id in sorted(self.original_exth_records):
+            recs.append((id, self.original_exth_records[id]))
+        recs = sorted(recs, key=lambda x:(x[0],x[0]))
 
+        exth = StringIO()
+        for code, data in recs:
+            exth.write(struct.pack('>II', code, len(data) + 8))
+            exth.write(data)
+        exth = exth.getvalue()
+        trail = len(exth) % 4
+        pad = '\0' * (4 - trail) # Always pad w/ at least 1 byte
+        exth = ['EXTH', struct.pack('>II', len(exth) + 12, len(recs)), exth, pad]
+        exth = ''.join(exth)
 
+        if getattr(self, 'exth', None) is None:
+            raise MobiError('No existing EXTH record. Cannot update ASIN.')
 
+        self.create_exth(exth=exth)
 
-
-
-
-
-
-                continue
-
-            # Book definitely has title, title_sort, author, and author_sort at this point
-
-           
-            type_specific_data = []
-
-            for book_type in types:
-                type_info = {'type': book_type, 'local_book': db.format_abspath(book_id, book_type)}
-                if not type_info['local_book']:
-                    type_info['status'] = 'Fail'
-                    type_info['status_message'] = 'Book path in %s format not found.' % book_type
-                    type_specific_data.append(type_info)
-                    continue
-
-                # book path exists at this point
-                type_info['status'] = 'In Progress'
-                type_info['status_message'] = ''
-                type_info['local_xray'] = os.path.join('.'.join(type_info['local_book'].split('.')[:-1]) + '.sdr', book_type)
-                type_info['device_book'] = os.path.join('documents', author_sort, title_sort + ' - ' + author_in_filename + '.' + book_type.lower())
-                type_info['device_xray'] = '.'.join(type_info['device_book'].split('.')[:-1]) + '.sdr'
-                type_specific_data.append(type_info)
-            self._books.append(Book(self._db, book_id, title, author, type_specific_data, asin, spoilers, create_xray))
+        return asin
