@@ -2,7 +2,7 @@
 
 import os
 
-from calibre_plugins.xray_creator.helpers.db_writer import DBWriter
+from calibre_plugins.xray_creator.lib.db_writer import DBWriter
 
 class XRayDBWriter(object):
     def __init__(self, xray_directory, asin, shelfari_url, parsed_data):

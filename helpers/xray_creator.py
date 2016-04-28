@@ -16,9 +16,9 @@ from calibre.ebooks.metadata.meta import get_metadata, set_metadata
 from calibre.ebooks.BeautifulSoup import BeautifulSoup
 from calibre.ebooks.metadata.mobi import MetadataUpdater
 
-from calibre_plugins.xray_creator.helpers.book_parser import BookParser
-from calibre_plugins.xray_creator.helpers.xray_db_writer import XRayDBWriter
-from calibre_plugins.xray_creator.helpers.shelfari_parser import ShelfariParser
+from calibre_plugins.xray_creator.lib.book_parser import BookParser
+from calibre_plugins.xray_creator.lib.xray_db_writer import XRayDBWriter
+from calibre_plugins.xray_creator.lib.shelfari_parser import ShelfariParser
 
 # Drive types
 DRIVE_UNKNOWN     = 0  # The drive type cannot be determined.

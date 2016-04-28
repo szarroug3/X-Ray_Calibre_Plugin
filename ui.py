@@ -15,7 +15,7 @@ from calibre.gui2.actions import InterfaceAction
 from calibre.gui2.threaded_jobs import ThreadedJob
 
 from calibre_plugins.xray_creator.config import prefs
-from calibre_plugins.xray_creator.helpers.xray_creator import *
+from calibre_plugins.xray_creator.lib.xray_creator import *
 
 class XRayCreatorInterfacePlugin(InterfaceAction):
 
