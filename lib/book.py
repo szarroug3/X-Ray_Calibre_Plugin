@@ -5,7 +5,7 @@ import re
 import struct
 import ctypes
 from glob import glob
-from shutil import copy
+from shutil import copy, rmtree
 from urllib import urlencode
 from datetime import datetime
 from cStringIO import StringIO
@@ -44,6 +44,7 @@ class Book(object):
     # Status Messages
     FAILED_BASIC_INFORMATION_MISSING = 'Missing title, title sort, author, and/or author sort.'
     FAILED_COULD_NOT_FIND_AMAZON_PAGE = 'Could not find amazon page.'
+    FAILED_COULD_NOT_FIND_AMAZON_ASIN = 'Could not find asin on amazon page.'
     FAILED_COULD_NOT_FIND_SHELFARI_PAGE = 'Could not find shelfari page.'
     FAILED_COULD_NOT_PARSE_SHELFARI_DATA = 'Could not parse shelfari data.'
     FAILED_UNSUPPORTED_FORMAT = 'Chosen format is unsupported.'
@@ -164,15 +165,27 @@ class Book(object):
 
         soup = BeautifulSoup(response)
         results = soup.findAll('div', {'id': 'resultsCol'})
+       
+        if not results or len(results) == 0:
+            self._status = self.FAIL
+            self._status_message = self.FAILED_COULD_NOT_FIND_AMAZON_PAGE
+            raise Exception(self._status_message)
+
         for r in results:
             if 'Buy now with 1-Click' in str(r):
                 asinSearch = self.AMAZON_ASIN_PAT.search(str(r))
                 if asinSearch:
                     self._asin = asinSearch.group(1)
                     mi = self._db.get_metadata(self._book_id)
-                    mi.get_identifiers()['mobi-asin'] = self.asin
+                    identifiers = mi.get_identifiers()
+                    identifiers['mobi-asin'] = self._asin
+                    mi.set_identifiers(identifiers)
                     self._db.set_metadata(self._book_id, mi)
                     return connection
+
+        self._status = self.FAIL
+        self._status_message = self.FAILED_COULD_NOT_FIND_AMAZON_ASIN
+        raise Exception(self._status_message)
 
     def _get_shelfari_url(self, connection):
         self._shelfari_url = None
@@ -256,6 +269,7 @@ class Book(object):
                 if remove_files_from_dir:
                     for file in glob(os.path.join(info['local_xray'], '*.asc')):
                         os.remove(file)
+
                 xray_db_writer = XRayDBWriter(info['local_xray'], self._asin, self._shelfari_url, info['parsed_book_data'])
                 xray_db_writer.create_xray()
                 info['status'] = self.SUCCESS
@@ -290,7 +304,8 @@ class Book(object):
     def create_xray(self, aConnection, sConnection, log=None, abort=None, remove_files_from_dir=False):
         if abort and abort.isSet():
             return
-        if log: log('%s \t\tUpdating ASIN...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        if log: log('%s \t\tGetting ASIN...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        log(self._asin)
         if not self._asin or len(self._asin) != 10:
             aConnection = self._get_asin(aConnection)
 
@@ -375,6 +390,12 @@ class Book(object):
                     with open(info['device_book'], 'r+b') as stream:
                         mu = ASINUpdater(stream)
                         info['original_asin'], info['asin'] = mu.update(self._asin, info['format'])
+                    if info['original_asin'] is not info['asin']:
+                        # if we changed the asin, update the image file name
+                        for dirName, subDirList, fileList in os.walk(info['device_book'].split(os.sep)[0]):
+                            for file in glob(os.path.join(dirName, '*%s*.jpg' % info['original_asin'])):
+                                new_name = file.replace(info['original_asin'], info['asin'])
+                                os.rename(file, new_name)
                 except:
                     info['send_status'] = self.FAIL
                     info['status_message'] = self.FAILED_UNABLE_TO_UPDATE_ASIN
@@ -383,14 +404,21 @@ class Book(object):
                 if not os.path.exists(info['device_xray']):
                     os.mkdir(info['device_xray'])
 
-                copy(local_xray[0], info['device_xray'])
-                device_xray_files = glob(os.path.join(info['device_xray'], '*.asc'))
-                if len(device_xray_files) == 0:
-                    info['send_status'] = self.FAIL
-                    info['status_message'] = self.FAILED_FAILED_TO_COPY_XRAY
-                    continue
+                # copy file to temporary directory and rename to file name with correct asin
+                tmp_dir = os.path.join(os.path.dirname(local_xray[0]), 'tmp')
+                if os.path.exists(tmp_dir):
+                    rmtree(tmp_dir)
+                os.mkdir(tmp_dir)
+                copy(local_xray[0], tmp_dir)
+                original_name = os.path.basename(local_xray[0])
+                new_name = 'XRAY.entities.%s.asc' % info['asin']
+                if not os.path.exists(os.path.join(tmp_dir, new_name)):
+                    os.rename(os.path.join(tmp_dir, original_name), os.path.join(tmp_dir, new_name))
 
-                os.rename(device_xray_files[0], 'XRAY.entities.%s.asc' % info['asin'])
+                # copy file to x-ray folder on device and clean up
+                copy(os.path.join(tmp_dir, 'XRAY.entities.%s.asc' % info['asin']), info['device_xray'])
+                rmtree(tmp_dir)
+                info['send_status'] = self.SUCCESS
             except:
                 info['send_status'] = self.FAIL
                 info['status_message'] = self.FAILED_FAILED_TO_SEND_XRAY
@@ -405,11 +433,11 @@ class Book(object):
         try:
             if abort and abort.isSet():
                 return
-            if notifications: notifications.put((perc/(total * actions), 'Updating %s ASIN' % self.title_and_author))
-            if log: log('%s \tUpdating ASIN...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-            perc += 1
             if not self._asin or len(self._asin) != 10:
+                if notifications: notifications.put((perc/(total * actions), 'Getting %s ASIN' % self.title_and_author))
+                if log: log('%s \tGetting ASIN...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
                 aConnection = self._get_asin(aConnection)
+            perc += 1
 
             if abort and abort.isSet():
                 return

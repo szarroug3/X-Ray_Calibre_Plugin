@@ -15,9 +15,6 @@ class XRayCreator(object):
         self._create_xray = create_xray
 
     def _initialize_books(self):
-        if len(self._formats) == 0:
-            raise Exception('No formats chosen in prefences.')
-
         self._books = []
         for book_id in self._book_ids:
             self._books.append(Book(self._db, book_id, self._formats, spoilers=self._spoilers, send_to_device=self._send_to_device, create_xray=self._create_xray))
@@ -70,16 +67,17 @@ class XRayCreator(object):
                 fmts_completed = []
                 fmts_failed = []
                 for info in book.formats_not_failing():
-                    if info['send_status'] is not book.FAIL:
-                        fmts_completed.append(info['format'])
-                    else:
+                    if info['send_status'] is book.FAIL:
                         fmts_failed.append(info)
+                    else:
+                        fmts_completed.append(info['format'])
+
                 if len(fmts_completed) > 0:
                     self._send_completed.append('%s: %s' % (book.title_and_author, ', '.join(fmts_completed)))
                 if len(fmts_failed) > 0:
                     self._send_failed.append('%s:' % book.title_and_author)
                     for fmt in fmts_failed:
-                        self._create_failed.append('\t%s: %s' % (fmt['format'], fmt['status_message']))
+                        self._send_failed.append('\t%s: %s' % (fmt['format'], fmt['status_message']))
 
     def create_xrays_event(self, abort, log, notifications):
         log('')
@@ -118,7 +116,7 @@ class XRayCreator(object):
     def send_xrays_event(self, abort, log, notifications):
         log('')
         self._initialize_books()
-        for book_num, book in enumerate(books_not_failing()):
+        for book_num, book in enumerate(self.books_not_failing()):
             if abort.isSet():
                 return
             if log: log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
@@ -126,10 +124,10 @@ class XRayCreator(object):
 
         self.get_results_send()
         if len(self._send_completed) > 0:
-            log('Books Completed:')
+            log('\nBooks Completed:')
             for line in self._send_completed:
                 log('\t%s' % line)
         if len(self._send_failed) > 0:
-            log('Books Failed:')
+            log('\nBooks Failed:')
             for line in self._send_failed:
                 log('\t%s' % line)

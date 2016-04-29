@@ -5,7 +5,7 @@ from __future__ import (unicode_literals, division, absolute_import,
                         print_function)
 
 __license__   = 'GPL v3'
-__copyright__ = '2016, szarroug3'
+__copyright__ = '2016, Samreen Zarroug & Alex Mayer'
 __docformat__ = 'restructuredtext en'
 
 from PyQt5.Qt import QMenu, QToolButton
@@ -62,13 +62,15 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
     def create_xrays(self):
         xray_creator = self._get_books('Cannot create X-Rays')
-        job = ThreadedJob('create_xray', 'Creating X-Ray Files', xray_creator.create_xrays_event, (), {}, Dispatcher(self.created_xrays))
-        self.gui.job_manager.run_threaded_job(job)
+        if xray_creator:
+            job = ThreadedJob('create_xray', 'Creating X-Ray Files', xray_creator.create_xrays_event, (), {}, Dispatcher(self.created_xrays))
+            self.gui.job_manager.run_threaded_job(job)
 
     def send_xrays(self):
         xray_creator = self._get_books('Cannot send X-Rays')
-        job = ThreadedJob('create_xray', 'Sending X-Ray Files to Device', xray_creator.send_xrays_event, (), {}, Dispatcher(self.sent_xrays))
-        self.gui.job_manager.run_threaded_job(job)
+        if xray_creator:
+            job = ThreadedJob('create_xray', 'Sending X-Ray Files to Device', xray_creator.send_xrays_event, (), {}, Dispatcher(self.sent_xrays))
+            self.gui.job_manager.run_threaded_job(job)
 
     def created_xrays(self, job):
         pass
@@ -83,8 +85,14 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         db = self.gui.current_db
         rows = self.gui.library_view.selectionModel().selectedRows()
         if not rows or len(rows) == 0:
-            return error_dialog(self.gui, error_msg,
-                             'No books selected', show=True)
+            error_dialog(self.gui, error_msg,
+                         'No books selected', show=True)
+            return None
+
+        if not self._mobi and not self._azw3:
+            error_dialog(self.gui, error_msg,
+                         'No formats chosen in preferences.', show=True)
+            return None
 
         ids = list(map(self.gui.library_view.model().id, rows))
         db = db.new_api
