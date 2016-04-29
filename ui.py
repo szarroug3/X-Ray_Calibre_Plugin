@@ -38,9 +38,9 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         icon = get_icons('images/icon.png')
 
         self.menu = QMenu(self.gui)
-        self.create_menu_action(self.menu, 'X-Ray Creator Create Button',
-                'Create X-Rays', None, 'CTRL+SHIFT+ALT+X',
-                'Create X-Rays for Chosen Books', self.create_xrays)
+        self.create_menu_action(self.menu, 'X-Ray Creator Create/Update Button',
+                'Create/Update X-Rays', None, 'CTRL+SHIFT+ALT+X',
+                'Create/Update X-Rays for Chosen Books', self.create_xrays)
         self.create_menu_action(self.menu, 'Send Local X-Rays to Device',
                 'Send X-Ray files to Device', None, 'CTRL+SHIFT+ALT+C',
                 'Sends X-Ray files to Device', self.send_xrays)
@@ -61,13 +61,13 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         self._azw3 = prefs['azw3']
 
     def create_xrays(self):
-        books = self._get_books('Cannot create X-Rays')
-        job = ThreadedJob('create_xray', 'Creating X-Ray Files', books.create_xrays_event, (), {}, Dispatcher(self.created_xrays))
+        xray_creator = self._get_books('Cannot create X-Rays')
+        job = ThreadedJob('create_xray', 'Creating X-Ray Files', xray_creator.create_xrays_event, (), {}, Dispatcher(self.created_xrays))
         self.gui.job_manager.run_threaded_job(job)
 
     def send_xrays(self):
-        books = self._get_books('Cannot send X-Rays')
-        job = ThreadedJob('create_xray', 'Sending X-Ray Files to Device', books.send_xrays_event, (), {}, Dispatcher(self.sent_xrays))
+        xray_creator = self._get_books('Cannot send X-Rays')
+        job = ThreadedJob('create_xray', 'Sending X-Ray Files to Device', xray_creator.send_xrays_event, (), {}, Dispatcher(self.sent_xrays))
         self.gui.job_manager.run_threaded_job(job)
 
     def created_xrays(self, job):
@@ -89,14 +89,14 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         ids = list(map(self.gui.library_view.model().id, rows))
         db = db.new_api
 
-        types = []
+        formats = []
         if self._mobi:
-            types.append('MOBI')
+            formats.append('MOBI')
         if self._azw3:
-            types.append('AZW3')
-        books = Books(db, ids, types, spoilers=self._spoilers, send_to_device=self._send_to_device)
+            formats.append('AZW3')
 
-        return books
+        xray_creator = XRayCreator(db, ids, formats=formats, spoilers=self._spoilers, send_to_device=self._send_to_device, create_xray=self._create_xray_when_sending)
+        return xray_creator
 
     def config(self):
         self.interface_action_base_plugin.do_user_config(self.gui)
