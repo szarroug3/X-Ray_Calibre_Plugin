@@ -305,7 +305,6 @@ class Book(object):
         if abort and abort.isSet():
             return
         if log: log('%s \t\tGetting ASIN...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        log(self._asin)
         if not self._asin or len(self._asin) != 10:
             aConnection = self._get_asin(aConnection)
 
