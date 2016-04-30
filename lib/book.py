@@ -425,7 +425,7 @@ class Book(object):
                 info['send_status'] = self.SUCCESS
 
                 # one last check to make sure file is actually on the device
-                if not os.path.exists(os.path.join(info['device_xray'], 'XRAY.entities.%s.asc' % info['asin']):
+                if not os.path.exists(os.path.join(info['device_xray'], 'XRAY.entities.%s.asc' % info['asin'])):
                     info['send_status'] = self.FAIL
                     info['status_message'] = self.FAILED_FAILED_TO_SEND_XRAY
                     continue
