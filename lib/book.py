@@ -304,13 +304,13 @@ class Book(object):
     def create_xray(self, aConnection, sConnection, log=None, abort=None, remove_files_from_dir=False):
         if abort and abort.isSet():
             return
-        if log: log('%s \t\tGetting ASIN...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        if log: log('%s \t\t\tGetting ASIN...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         if not self._asin or len(self._asin) != 10:
             aConnection = self._get_asin(aConnection)
 
         if abort and abort.isSet():
             return
-        if log: log('%s \t\tGetting shelfari url...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        if log: log('%s \t\t\tGetting shelfari url...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         try:
             sConnection = self._get_shelfari_url(sConnection)
         except:
@@ -322,17 +322,17 @@ class Book(object):
 
         if abort and abort.isSet():
             return
-        if log: log('%s \t\tParsing shelfari data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        if log: log('%s \t\t\tParsing shelfari data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         self._parse_shelfari_data()
         
         if abort and abort.isSet():
             return
-        if log: log('%s \t\tParsing book data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        if log: log('%s \t\t\tParsing book data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         self._parse_book()
         
         if abort and abort.isSet():
             return
-        if log: log('%s \t\tCreating x-ray...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        if log: log('%s \t\t\tCreating x-ray...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         self._write_xray(remove_files_from_dir=remove_files_from_dir)
         return (aConnection, sConnection)
 
@@ -366,7 +366,13 @@ class Book(object):
                         info['status_message'] = self.FAILED_PREFERENCES_SET_TO_NOT_CREATE_XRAY
                         continue
 
-                    aConnection, sConnection = self.create_xray(aConnection, sConnection, log=log, abort=abort)
+                    try:
+                        aConnection, sConnection = self.create_xray(aConnection, sConnection, log=log, abort=abort)
+                    except Exception as e:
+                        info['send_status'] = self.FAIL
+                        info['status_message'] = e
+                        continue
+                        
                     local_xray = glob(os.path.join(info['local_xray'], '*.asc'))
                     if len(local_xray) == 0:
                         info['send_status'] = self.FAIL
