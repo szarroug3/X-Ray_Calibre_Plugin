@@ -55,7 +55,6 @@ class Book(object):
     FAILED_BOOK_NOT_ON_DEVICE = 'The book is not on the device.'
     FAILED_FAILED_TO_CREATE_XRAY = 'Attempted to create x-ray but failed to do so.'
     FAILED_PREFERENCES_SET_TO_NOT_CREATE_XRAY = 'No local x-ray found. Your preferences are set to not create one if one is not already found when sending to device.'
-    FAILED_FAILED_TO_COPY_XRAY = 'Could not copy local x-ray file to device.'
     FAILED_FAILED_TO_SEND_XRAY = 'Could not send x-ray to device.'
     FAILED_NO_CONNECTED_DEVICE = 'No device is connected.'
 
