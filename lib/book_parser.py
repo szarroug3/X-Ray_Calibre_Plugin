@@ -64,8 +64,6 @@ class BookParser(object):
 
     def parse(self, log=None):
         self._book_html = MobiExtractor(self._book_path, open(os.devnull, 'w')).extract_text()
-        with open('text.txt', 'w+') as f:
-            f.write(self._book_html)
         self.find_erl_and_encoding()
         paragraph_data = []
 

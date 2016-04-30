@@ -247,8 +247,16 @@ class Book(object):
             info['status_message'] = None
             self._format_specific_info.append(info)
 
-    def _parse_book(self):
-        for info  in self.formats_not_failing():
+    def _parse_book(self, info=None):
+        if not info:
+            for info in self.formats_not_failing():
+                self._parse(info)
+            return
+        self._parse(info)
+        if info['status'] is self.FAIL:
+            raise Exception(info['status_message'])
+
+        def _parse(self, info):
             try:
                 info['parsed_book_data'] = BookParser(info['format'], info['local_book'], self._parsed_shelfari_data)
                 info['parsed_book_data'].parse()
@@ -256,8 +264,16 @@ class Book(object):
                 info['status'] = self.FAIL
                 info['status_message'] = self.FAILED_UNABLE_TO_PARSE_BOOK
 
-    def _write_xray(self, remove_files_from_dir=True):
-        for info  in self.formats_not_failing():
+    def _write_xray(self, info=None, remove_files_from_dir=True):
+        if not info:
+            for info in self.formats_not_failing():
+                self._write(info, remove_files_from_dir)
+            return
+        self._write(info, remove_files_from_dir)
+        if info['status'] is self.FAIL:
+            raise Exception(info['status_message'])
+
+        def _write(self, info, remove_files):
             try:
                 # make sure local xray directory exists; create it if it doesn't
                 if not os.path.exists(info['local_xray']):
@@ -300,7 +316,7 @@ class Book(object):
                 result.append((drive_letter, drive_type))
         return result
 
-    def create_xray(self, aConnection, sConnection, log=None, abort=None, remove_files_from_dir=False):
+    def create_xray(self, aConnection, sConnection, info, log=None, abort=None, remove_files_from_dir=False):
         if abort and abort.isSet():
             return
         if log: log('%s \t\t\tGetting ASIN...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
@@ -323,21 +339,24 @@ class Book(object):
             return
         if log: log('%s \t\t\tParsing shelfari data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         self._parse_shelfari_data()
+
+        if self.status is self.FAIL:
+            raise self.status_message
         
         if abort and abort.isSet():
             return
         if log: log('%s \t\t\tParsing book data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        self._parse_book()
+        self._parse_book(info=info)
         
         if abort and abort.isSet():
             return
         if log: log('%s \t\t\tCreating x-ray...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        self._write_xray(remove_files_from_dir=remove_files_from_dir)
+        self._write_xray(info, remove_files_from_dir=remove_files_from_dir)
         return (aConnection, sConnection)
 
     def send_xray(self, overwrite=True, already_created=True, log=None, abort=None, aConnection=None, sConnection=None):
         device_drive = self._find_device()
-        for info  in self.formats_not_failing():
+        for info in self.formats_not_failing():
             try:
                 if not device_drive:
                     info['send_status'] = self.FAIL
@@ -366,7 +385,7 @@ class Book(object):
                         continue
 
                     try:
-                        aConnection, sConnection = self.create_xray(aConnection, sConnection, log=log, abort=abort)
+                        aConnection, sConnection = self.create_xray(aConnection, sConnection, info=info, log=log, abort=abort)
                     except Exception as e:
                         info['send_status'] = self.FAIL
                         info['status_message'] = e

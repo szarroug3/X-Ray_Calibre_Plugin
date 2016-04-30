@@ -62,7 +62,10 @@ class XRayCreator(object):
     def get_results_send(self):
         self._send_completed = []
         self._send_failed = []
-        for book in self.books_not_failing():
+        for book in self._books:
+            if book.status is book.FAIL:
+                self._send_failed.append('%s: %s' % (book.title_and_author, book.status_message))
+                continue
             if book.format_specific_info:
                 fmts_completed = []
                 fmts_failed = []
