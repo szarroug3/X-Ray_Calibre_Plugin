@@ -43,6 +43,8 @@ class Book(object):
 
     # Status Messages
     FAILED_BASIC_INFORMATION_MISSING = 'Missing title, title sort, author, and/or author sort.'
+    FAILED_COULD_NOT_CONNECT_TO_AMAZON = 'Had a problem connecting to amazon.'
+    FAILED_COULD_NOT_CONNECT_TO_SHELFARI = 'Had a problem connecting to shelfari.'
     FAILED_COULD_NOT_FIND_AMAZON_PAGE = 'Could not find amazon page.'
     FAILED_COULD_NOT_FIND_AMAZON_ASIN = 'Could not find asin on amazon page.'
     FAILED_COULD_NOT_FIND_SHELFARI_PAGE = 'Could not find shelfari page.'
@@ -146,15 +148,20 @@ class Book(object):
         self._author_in_filename = self._author_in_filename.replace(':', '_').replace('\"', '_')
 
     def _get_asin(self, connection):
-        query = urlencode({'keywords': '%s - %s' % ( self._title, self._author)})
-        connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, None, self.HEADERS)
         try:
-            response = connection.getresponse().read()
-        except BadStatusLine:
-            connection.close()
-            connection = HTTPConnection('www.amazon.com')
+            query = urlencode({'keywords': '%s - %s' % ( self._title, self._author)})
             connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, None, self.HEADERS)
             response = connection.getresponse().read()
+        except:
+            try:
+                connection.close()
+                connection = HTTPConnection('www.amazon.com')
+                connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, None, self.HEADERS)
+                response = connection.getresponse().read()
+            except:
+                self._status = self.FAIL
+                self._status_message = self.FAILED_COULD_NOT_CONNECT_TO_AMAZON
+                raise Exception(self._status_message)
 
         # check to make sure there are results
         if 'did not match any products' in response and not 'Did you mean:' in response and not 'so we searched in All Departments' in response:
@@ -192,11 +199,16 @@ class Book(object):
         connection.request('GET', '/search/books?' + query)
         try:
             response = connection.getresponse().read()
-        except BadStatusLine:
-            connection.close()
-            connection = HTTPConnection('www.shelfari.com')
-            connection.request('GET', '/search/books?' + query)
-            response = connection.getresponse().read()
+        except:
+            try:
+                connection.close()
+                connection = HTTPConnection('www.shelfari.com')
+                connection.request('GET', '/search/books?' + query)
+                response = connection.getresponse().read()
+            except:
+                self._status = self.FAIL
+                self._status_message = self.FAILED_COULD_NOT_CONNECT_TO_SHELFARI
+                raise Exception(self._status_message)
 
         # check to make sure there are results
         if 'did not return any results' in response:
