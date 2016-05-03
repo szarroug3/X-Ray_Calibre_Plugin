@@ -116,10 +116,10 @@ class Book(object):
         if len(self._author) > 0:
             self._author = ' & '.join(self._author)
         self._author_sort = self._db.field_for('author_sort', self._book_id)
-        if not self._title or not self._title_sort or not self._author or not self._author_sort:
+        if self._title is 'Unknown' or self._title_sort is 'Unknown' or not self._author or not self._author_sort:
             self._status = self.FAIL
             self._status_message = self.FAILED_BASIC_INFORMATION_MISSING
-            raise Exception(self._status_message)
+            return
 
         identifiers = self._db.field_for('identifiers', self._book_id)
         self._asin = self._db.field_for('identifiers', self._book_id)['mobi-asin'].decode('ascii') if 'mobi-asin' in identifiers.keys() else None
@@ -248,32 +248,25 @@ class Book(object):
             self._format_specific_info.append(info)
 
     def _parse_book(self, info=None):
-        if not info:
-            for info in self.formats_not_failing():
-                self._parse(info)
-            return
-        self._parse(info)
-        if info['status'] is self.FAIL:
-            raise Exception(info['status_message'])
-
-        def _parse(self, info):
+        def _parse(info):
             try:
                 info['parsed_book_data'] = BookParser(info['format'], info['local_book'], self._parsed_shelfari_data)
                 info['parsed_book_data'].parse()
-            except:
+            except Exception:
                 info['status'] = self.FAIL
                 info['status_message'] = self.FAILED_UNABLE_TO_PARSE_BOOK
 
-    def _write_xray(self, info=None, remove_files_from_dir=True):
         if not info:
             for info in self.formats_not_failing():
-                self._write(info, remove_files_from_dir)
+                _parse(info)
             return
-        self._write(info, remove_files_from_dir)
+
+        _parse(info)
         if info['status'] is self.FAIL:
             raise Exception(info['status_message'])
 
-        def _write(self, info, remove_files):
+    def _write_xray(self, info=None, remove_files_from_dir=True):
+        def _write(info, remove_files):
             try:
                 # make sure local xray directory exists; create it if it doesn't
                 if not os.path.exists(info['local_xray']):
@@ -292,6 +285,14 @@ class Book(object):
             except:
                 info['status'] = self.FAIL
                 info['status_message'] = self.FAILED_UNABLE_TO_WRITE_XRAY
+
+        if not info:
+            for info in self.formats_not_failing():
+                _write(info, remove_files_from_dir)
+            return
+        _write(info, remove_files_from_dir)
+        if info['status'] is self.FAIL:
+            raise Exception(info['status_message'])
 
     def _find_device(self):
         drive_info = self._get_drive_info()
@@ -339,9 +340,6 @@ class Book(object):
             return
         if log: log('%s \t\t\tParsing shelfari data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         self._parse_shelfari_data()
-
-        if self.status is self.FAIL:
-            raise self.status_message
         
         if abort and abort.isSet():
             return
