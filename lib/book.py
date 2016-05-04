@@ -9,7 +9,7 @@ from shutil import copy, rmtree
 from urllib import urlencode
 from datetime import datetime
 from cStringIO import StringIO
-from httplib import HTTPConnection, BadStatusLine
+from httplib import HTTPConnection
 
 from calibre.ebooks.mobi import MobiError
 from calibre.ebooks.metadata.meta import get_metadata, set_metadata
@@ -63,7 +63,7 @@ class Book(object):
     # allowed formats
     FMTS = ['mobi', 'azw3']
 
-    def __init__(self, db, book_id, formats, spoilers=False, send_to_device=True, create_xray=True):
+    def __init__(self, db, book_id, formats, spoilers=False, send_to_device=True, create_xray=True, proxy=False, http_address=None, http_port=None):
         self._db = db
         self._book_id = book_id
         self._formats = formats
@@ -73,6 +73,9 @@ class Book(object):
         self._status = self.IN_PROGRESS
         self._status_message = None
         self._format_specific_info = None
+        self._proxy = proxy
+        self._http_address = http_address
+        self._http_port = http_port
 
         self._get_basic_information()
         if self.status is self.FAIL:
@@ -150,13 +153,22 @@ class Book(object):
     def _get_asin(self, connection):
         try:
             query = urlencode({'keywords': '%s - %s' % ( self._title, self._author)})
-            connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, None, self.HEADERS)
+            if self._proxy:
+                connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query)
+            else:
+                connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, None, self.HEADERS)
             response = connection.getresponse().read()
         except:
             try:
                 connection.close()
-                connection = HTTPConnection('www.amazon.com')
-                connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, None, self.HEADERS)
+                if self._proxy:
+                    connection = HTTPConnection(self._http_address, self._http_port)
+                    connection.set_tunnel('www.amazon.com', headers=self.HEADERS)
+                    connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query)
+                else:
+                    connection = HTTPConnection('www.amazon.com')
+                    connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, None, self.HEADERS)
+
                 response = connection.getresponse().read()
             except:
                 self._status = self.FAIL
@@ -165,6 +177,7 @@ class Book(object):
 
         # check to make sure there are results
         if 'did not match any products' in response and not 'Did you mean:' in response and not 'so we searched in All Departments' in response:
+            print '1'*100
             self._status = self.FAIL
             self._status_message = self.FAILED_COULD_NOT_FIND_AMAZON_PAGE
             raise Exception(self._status_message)
@@ -173,6 +186,7 @@ class Book(object):
         results = soup.findAll('div', {'id': 'resultsCol'})
        
         if not results or len(results) == 0:
+            print '2'*100
             self._status = self.FAIL
             self._status_message = self.FAILED_COULD_NOT_FIND_AMAZON_PAGE
             raise Exception(self._status_message)
@@ -196,13 +210,19 @@ class Book(object):
     def _get_shelfari_url(self, connection):
         self._shelfari_url = None
         query = urlencode ({'Keywords': self._asin})
-        connection.request('GET', '/search/books?' + query)
         try:
+            query = urlencode ({'Keywords': self._asin})
+            connection.request('GET', '/search/books?' + query)
             response = connection.getresponse().read()
         except:
             try:
                 connection.close()
-                connection = HTTPConnection('www.shelfari.com')
+                if self._proxy:
+                    connection = HTTPConnection(self._http_address, self._http_port)
+                    connection.set_tunnel('www.shelfari.com')
+                else:
+                    connection = HTTPConnection('www.shelfari.com')
+
                 connection.request('GET', '/search/books?' + query)
                 response = connection.getresponse().read()
             except:

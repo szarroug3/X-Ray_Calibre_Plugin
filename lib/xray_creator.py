@@ -3,9 +3,13 @@
 from datetime import datetime
 from httplib import HTTPConnection
 
+from calibre import get_proxies
+
 from calibre_plugins.xray_creator.lib.book import Book
 
 class XRayCreator(object):
+    HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain", "User-Agent": "Mozilla/5.0"}
+
     def __init__(self, db, book_ids, formats=[], spoilers=False, send_to_device=True, create_xray=True):
         self._db = db
         self._book_ids = book_ids
@@ -13,14 +17,36 @@ class XRayCreator(object):
         self._spoilers = spoilers
         self._send_to_device = send_to_device
         self._create_xray = create_xray
+        self._proxy = False
+        self._http_address = None
+        self._http_port = None
+
+        proxies = get_proxies(debug=False)
+        if proxies and 'http' in proxies:
+            self._proxy = True
+            http_proxy = proxies['http']
+            if http_proxy[:7] == 'http://':
+                http_proxy = http_proxy[7:]
+            if ':' in http_proxy:
+                self._http_address = ':'.join(http_proxy.split(':')[:-1])
+                self._http_port = int(http_proxy.split(':')[-1])
+
+            self._aConnection = HTTPConnection(self._http_address, self._http_port)
+            self._aConnection.set_tunnel('www.amazon.com', headers=self.HEADERS)
+            self._sConnection = HTTPConnection(self._http_address, self._http_port)
+            self._sConnection.set_tunnel('www.shelfari.com')
+        else:
+            self._aConnection = HTTPConnection('www.amazon.com')
+            self._sConnection = HTTPConnection('www.shelfari.com')
 
     def _initialize_books(self):
+
         self._books = []
         for book_id in self._book_ids:
-            self._books.append(Book(self._db, book_id, self._formats, spoilers=self._spoilers, send_to_device=self._send_to_device, create_xray=self._create_xray))
-
-        self._aConnection = HTTPConnection('www.amazon.com')
-        self._sConnection = HTTPConnection('www.shelfari.com')
+            self._books.append(Book(self._db, book_id, self._formats, spoilers=self._spoilers,
+                send_to_device=self._send_to_device, create_xray=self._create_xray, proxy=self._proxy,
+                http_address=self._http_address, http_port=self._http_port))
+        
         self._total_not_failing = sum([1 for book in self._books if book.status is not book.FAIL])
 
     def books_not_failing(self):
