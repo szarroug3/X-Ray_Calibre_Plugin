@@ -173,7 +173,6 @@ class Book(object):
 
         # check to make sure there are results
         if 'did not match any products' in response and not 'Did you mean:' in response and not 'so we searched in All Departments' in response:
-            print '1'*100
             self._status = self.FAIL
             self._status_message = self.FAILED_COULD_NOT_FIND_AMAZON_PAGE
             raise Exception(self._status_message)
@@ -182,7 +181,6 @@ class Book(object):
         results = soup.findAll('div', {'id': 'resultsCol'})
        
         if not results or len(results) == 0:
-            print '2'*100
             self._status = self.FAIL
             self._status_message = self.FAILED_COULD_NOT_FIND_AMAZON_PAGE
             raise Exception(self._status_message)

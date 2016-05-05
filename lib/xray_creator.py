@@ -31,7 +31,6 @@ class XRayCreator(object):
 
             self._aConnection = HTTPConnection(self._http_address, self._http_port)
             self._aConnection.set_tunnel('www.amazon.com', 80)
-            self._aConnection.set_debuglevel(1)
             self._sConnection = HTTPConnection(self._http_address, self._http_port)
             self._sConnection.set_tunnel('www.shelfari.com', 80)
         else:
