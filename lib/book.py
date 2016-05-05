@@ -203,9 +203,19 @@ class Book(object):
 
     def _get_shelfari_url(self, connection):
         self._shelfari_url = None
-        query = urlencode ({'Keywords': self._asin})
+        connection = self._search_shelfari(connection, self._asin)
+        if not self._shelfari_url:
+            connection = self._search_shelfari(connection, self.title_and_author)
+            if not self._shelfari_url:
+                self._status = self.FAIL
+                self._status_message = self.FAILED_COULD_NOT_FIND_SHELFARI_PAGE
+                raise Exception(self._status_message)
+
+        return connection
+
+    def _search_shelfari(self, connection, keywords):
+        query = urlencode ({'Keywords': keywords})
         try:
-            query = urlencode ({'Keywords': self._asin})
             connection.request('GET', '/search/books?' + query)
             response = connection.getresponse().read()
         except:
@@ -223,19 +233,20 @@ class Book(object):
                 self._status = self.FAIL
                 self._status_message = self.FAILED_COULD_NOT_CONNECT_TO_SHELFARI
                 raise Exception(self._status_message)
-
+        
         # check to make sure there are results
         if 'did not return any results' in response:
-            self._status = self.FAIL
-            self._status_message = self.FAILED_COULD_NOT_FIND_SHELFARI_PAGE
-            raise Exception(self._status_message)
+            return connection
         urlsearch = self.SHELFARI_URL_PAT.search(response)
         if not urlsearch:
-            self._status = self.FAIL
-            self._status_message = self.FAILED_COULD_NOT_FIND_SHELFARI_PAGE
-            raise Exception(self._status_message)
+            return connection
+
         self._shelfari_url = urlsearch.group(1)
         return connection
+
+
+
+
 
     def _parse_shelfari_data(self):
         try:
