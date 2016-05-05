@@ -17,29 +17,26 @@ class XRayCreator(object):
         self._spoilers = spoilers
         self._send_to_device = send_to_device
         self._create_xray = create_xray
+
+    def _initialize_books(self):
         self._proxy = False
         self._http_address = None
         self._http_port = None
 
-        proxies = get_proxies(debug=False)
-        if proxies and 'http' in proxies:
+        http_proxy = get_proxies().get('http', None)
+        if http_proxy:
             self._proxy = True
-            http_proxy = proxies['http']
-            if http_proxy[:7] == 'http://':
-                http_proxy = http_proxy[7:]
-            if ':' in http_proxy:
-                self._http_address = ':'.join(http_proxy.split(':')[:-1])
-                self._http_port = int(http_proxy.split(':')[-1])
+            self._http_address = ':'.join(http_proxy.split(':')[:-1])
+            self._http_port = int(http_proxy.split(':')[-1])
 
             self._aConnection = HTTPConnection(self._http_address, self._http_port)
-            self._aConnection.set_tunnel('www.amazon.com', headers=self.HEADERS)
+            self._aConnection.set_tunnel('www.amazon.com')
+            self._aConnection.set_debuglevel(1)
             self._sConnection = HTTPConnection(self._http_address, self._http_port)
             self._sConnection.set_tunnel('www.shelfari.com')
         else:
             self._aConnection = HTTPConnection('www.amazon.com')
             self._sConnection = HTTPConnection('www.shelfari.com')
-
-    def _initialize_books(self):
 
         self._books = []
         for book_id in self._book_ids:

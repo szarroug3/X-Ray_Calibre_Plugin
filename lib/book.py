@@ -151,30 +151,27 @@ class Book(object):
         self._author_in_filename = self._author_in_filename.replace(':', '_').replace('\"', '_')
 
     def _get_asin(self, connection):
+        query = urlencode({'keywords': '%s - %s' % (self._title, self._author)})
         try:
-            query = urlencode({'keywords': '%s - %s' % ( self._title, self._author)})
-            if self._proxy:
-                connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query)
-            else:
-                connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, None, self.HEADERS)
+            connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, headers=self.HEADERS)
             response = connection.getresponse().read()
         except:
             try:
                 connection.close()
                 if self._proxy:
                     connection = HTTPConnection(self._http_address, self._http_port)
-                    connection.set_tunnel('www.amazon.com', headers=self.HEADERS)
-                    connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query)
+                    connection.set_tunnel('www.amazon.com')
                 else:
                     connection = HTTPConnection('www.amazon.com')
-                    connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, None, self.HEADERS)
 
+                connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, headers=self.HEADERS)
                 response = connection.getresponse().read()
             except:
                 self._status = self.FAIL
                 self._status_message = self.FAILED_COULD_NOT_CONNECT_TO_AMAZON
                 raise Exception(self._status_message)
 
+        print response
         # check to make sure there are results
         if 'did not match any products' in response and not 'Did you mean:' in response and not 'so we searched in All Departments' in response:
             print '1'*100
