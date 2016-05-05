@@ -34,7 +34,7 @@ books_skipped = []
 class Book(object):
     AMAZON_ASIN_PAT = re.compile(r'data\-asin=\"([a-zA-z0-9]+)\"')
     SHELFARI_URL_PAT = re.compile(r'href="(.+/books/.+?)"')
-    HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain", "User-Agent": "Mozilla/5.0"}
+    HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/html", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0"}
 
     # Status'
     SUCCESS = 0
@@ -160,7 +160,7 @@ class Book(object):
                 connection.close()
                 if self._proxy:
                     connection = HTTPConnection(self._http_address, self._http_port)
-                    connection.set_tunnel('www.amazon.com')
+                    connection.set_tunnel('www.amazon.com', 80)
                 else:
                     connection = HTTPConnection('www.amazon.com')
 
@@ -171,7 +171,6 @@ class Book(object):
                 self._status_message = self.FAILED_COULD_NOT_CONNECT_TO_AMAZON
                 raise Exception(self._status_message)
 
-        print response
         # check to make sure there are results
         if 'did not match any products' in response and not 'Did you mean:' in response and not 'so we searched in All Departments' in response:
             print '1'*100
@@ -216,7 +215,7 @@ class Book(object):
                 connection.close()
                 if self._proxy:
                     connection = HTTPConnection(self._http_address, self._http_port)
-                    connection.set_tunnel('www.shelfari.com')
+                    connection.set_tunnel('www.shelfari.com', 80)
                 else:
                     connection = HTTPConnection('www.shelfari.com')
 

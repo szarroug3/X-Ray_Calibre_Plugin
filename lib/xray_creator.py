@@ -8,7 +8,7 @@ from calibre import get_proxies
 from calibre_plugins.xray_creator.lib.book import Book
 
 class XRayCreator(object):
-    HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain", "User-Agent": "Mozilla/5.0"}
+    HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/html", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0"}
 
     def __init__(self, db, book_ids, formats=[], spoilers=False, send_to_device=True, create_xray=True):
         self._db = db
@@ -30,10 +30,10 @@ class XRayCreator(object):
             self._http_port = int(http_proxy.split(':')[-1])
 
             self._aConnection = HTTPConnection(self._http_address, self._http_port)
-            self._aConnection.set_tunnel('www.amazon.com')
+            self._aConnection.set_tunnel('www.amazon.com', 80)
             self._aConnection.set_debuglevel(1)
             self._sConnection = HTTPConnection(self._http_address, self._http_port)
-            self._sConnection.set_tunnel('www.shelfari.com')
+            self._sConnection.set_tunnel('www.shelfari.com', 80)
         else:
             self._aConnection = HTTPConnection('www.amazon.com')
             self._sConnection = HTTPConnection('www.shelfari.com')
