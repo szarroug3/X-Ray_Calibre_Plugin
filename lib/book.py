@@ -80,7 +80,7 @@ class Book(object):
         self._get_basic_information()
         if self.status is self.FAIL:
             return
-
+    
     @property
     def status(self):
         return self._status
@@ -89,7 +89,6 @@ class Book(object):
     def status_message(self):
         return self._status_message
     
-
     @property
     def title(self):
         return self._title
@@ -98,10 +97,17 @@ class Book(object):
     def author(self):
         return self._author
     
-    
     @property
     def title_and_author(self):
         return self._title + ' - ' + self._author
+
+    @property
+    def asin(self):
+        return self._asin
+    
+    @property
+    def shelfari_url(self):
+        return self._shelfari_url
 
     @property
     def format_specific_info(self):
@@ -150,7 +156,7 @@ class Book(object):
             self._author_in_filename += '_'
         self._author_in_filename = self._author_in_filename.replace(':', '_').replace('\"', '_')
 
-    def _get_asin(self, connection):
+    def get_asin(self, connection):
         query = urlencode({'keywords': '%s - %s' % (self._title, self._author)})
         try:
             connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, headers=self.HEADERS)
@@ -201,7 +207,7 @@ class Book(object):
         self._status_message = self.FAILED_COULD_NOT_FIND_AMAZON_ASIN
         raise Exception(self._status_message)
 
-    def _get_shelfari_url(self, connection):
+    def get_shelfari_url(self, connection):
         self._shelfari_url = None
         connection = self._search_shelfari(connection, self._asin)
         if not self._shelfari_url:
@@ -355,19 +361,19 @@ class Book(object):
             return
         if log: log('%s \t\t\tGetting ASIN...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         if not self._asin or len(self._asin) != 10:
-            aConnection = self._get_asin(aConnection)
+            aConnection = self.get_asin(aConnection)
 
         if abort and abort.isSet():
             return
         if log: log('%s \t\t\tGetting shelfari url...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         try:
-            sConnection = self._get_shelfari_url(sConnection)
+            sConnection = self.get_shelfari_url(sConnection)
         except:
             # try to get our own asin and try again if the one in mobi-asin doesn't work out
             self._status = self.IN_PROGRESS
             self._status_message = None
-            aConnection = self._get_asin(aConnection)
-            sConnection = self._get_shelfari_url(sConnection)
+            aConnection = self.get_asin(aConnection)
+            sConnection = self.get_shelfari_url(sConnection)
 
         if abort and abort.isSet():
             return
@@ -496,7 +502,7 @@ class Book(object):
             if not self._asin or len(self._asin) != 10:
                 if notifications: notifications.put((perc/(total * actions), 'Getting %s ASIN' % self.title_and_author))
                 if log: log('%s \tGetting ASIN...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-                aConnection = self._get_asin(aConnection)
+                aConnection = self.get_asin(aConnection)
             perc += 1
 
             if abort and abort.isSet():
@@ -505,13 +511,13 @@ class Book(object):
             if log: log('%s \tGetting shelfari url...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
             perc += 1
             try:
-                sConnection = self._get_shelfari_url(sConnection)
+                sConnection = self.get_shelfari_url(sConnection)
             except:
                 # try to get our own asin and try again if the one in mobi-asin doesn't work out
                 self._status = self.IN_PROGRESS
                 self._status_message = None
-                aConnection = self._get_asin(aConnection)
-                sConnection = self._get_shelfari_url(sConnection)
+                aConnection = self.get_asin(aConnection)
+                sConnection = self.get_shelfari_url(sConnection)
 
             if abort and abort.isSet():
                 return

@@ -18,6 +18,10 @@ class XRayCreator(object):
         self._send_to_device = send_to_device
         self._create_xray = create_xray
 
+    @property
+    def books(self):
+        return self._books
+    
     def _initialize_books(self):
         self._proxy = False
         self._http_address = None

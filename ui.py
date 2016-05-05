@@ -8,13 +8,14 @@ __license__   = 'GPL v3'
 __copyright__ = '2016, Samreen Zarroug & Alex Mayer'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import QMenu, QToolButton
+from PyQt5.Qt import QMenu, QToolButton, QDialog
 
 from calibre.gui2 import Dispatcher
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2.threaded_jobs import ThreadedJob
 
 from calibre_plugins.xray_creator.config import prefs
+from calibre_plugins.xray_creator.book_config import BookConfigWidget
 from calibre_plugins.xray_creator.lib.xray_creator import *
 
 class XRayCreatorInterfacePlugin(InterfaceAction):
@@ -38,13 +39,18 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         icon = get_icons('images/icon.png')
 
         self.menu = QMenu(self.gui)
+        self.create_menu_action(self.menu, 'Book Specific Preferences',
+                'Book Specific Preferences', None, 'CTRL+SHIFT+ALT+Z',
+                'Set preferences specific to the book', self.book_config)
         self.create_menu_action(self.menu, 'X-Ray Creator Create/Update Button',
                 'Create/Update X-Rays', None, 'CTRL+SHIFT+ALT+X',
-                'Create/Update X-Rays for Chosen Books', self.create_xrays)
+                'Create/Update x-rays for chosen books', self.create_xrays)
         self.create_menu_action(self.menu, 'Send Local X-Rays to Device',
-                'Send X-Ray files to Device', None, 'CTRL+SHIFT+ALT+C',
-                'Sends X-Ray files to Device', self.send_xrays)
+                'Sends X-Ray Files to Device', None, 'CTRL+SHIFT+ALT+C',
+                'Sends x-Ray files to device', self.send_xrays)
+
         self.menu.addSeparator()
+
         self.create_menu_action(self.menu, 'X-Ray Creator Preferences Button',
                 'Preferences', None, None,
                 'Create X-Rays for Chosen Books', self.config)
@@ -71,6 +77,18 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         if xray_creator:
             job = ThreadedJob('create_xray', 'Sending X-Ray Files to Device', xray_creator.send_xrays_event, (), {}, Dispatcher(self.sent_xrays))
             self.gui.job_manager.run_threaded_job(job)
+
+    def book_config(self):
+        db = self.gui.current_db
+        rows = self.gui.library_view.selectionModel().selectedRows()
+        if not rows or len(rows) == 0:
+            error_dialog(self.gui, error_msg,
+                         'No books selected', show=True)
+
+        ids = list(map(self.gui.library_view.model().id, rows))
+        db = db.new_api
+
+        book_configs = BookConfigWidget(db, ids, QDialog(self.gui))
 
     def created_xrays(self, job):
         pass
