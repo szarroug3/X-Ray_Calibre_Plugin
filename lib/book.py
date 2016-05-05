@@ -244,10 +244,6 @@ class Book(object):
         self._shelfari_url = urlsearch.group(1)
         return connection
 
-
-
-
-
     def _parse_shelfari_data(self):
         try:
             self._parsed_shelfari_data = ShelfariParser(self._shelfari_url, spoilers=self._spoilers)
