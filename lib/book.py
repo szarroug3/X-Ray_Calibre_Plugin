@@ -63,7 +63,7 @@ class Book(object):
     # allowed formats
     FMTS = ['mobi', 'azw3']
 
-    def __init__(self, db, book_id, formats, spoilers=False, send_to_device=True, create_xray=True, proxy=False, http_address=None, http_port=None):
+    def __init__(self, db, book_id, formats=None, spoilers=False, send_to_device=True, create_xray=True, proxy=False, http_address=None, http_port=None):
         self._db = db
         self._book_id = book_id
         self._formats = formats

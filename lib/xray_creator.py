@@ -43,7 +43,7 @@ class XRayCreator(object):
 
         self._books = []
         for book_id in self._book_ids:
-            self._books.append(Book(self._db, book_id, self._formats, spoilers=self._spoilers,
+            self._books.append(Book(self._db, book_id, format=self._formats, spoilers=self._spoilers,
                 send_to_device=self._send_to_device, create_xray=self._create_xray, proxy=self._proxy,
                 http_address=self._http_address, http_port=self._http_port))
         

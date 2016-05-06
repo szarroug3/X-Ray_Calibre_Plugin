@@ -8,65 +8,89 @@ __copyright__ = '2016, Samreen Zarroug & Alex Mayer'
 __docformat__ = 'restructuredtext en'
 
 import os
+from PyQt5.QtCore import *
 from PyQt5.Qt import QDialog, QWidget, QVBoxLayout, QHBoxLayout
-from PyQt5.Qt import QLabel, QLineEdit, QPushButton
+from PyQt5.Qt import QLabel, QLineEdit, QPushButton, QScrollArea
+
+from calibre_plugins.xray_creator.lib.book import Book
 
 from calibre.library import current_library_path
 from calibre.utils.config import JSONConfig
 
-class BookConfigWidget(QWidget):
-    def __init__(self, db, ids, dialog):
-        QWidget.__init__(self)
-        self._dialog = dialog
+class BookConfigWidget(QDialog):
+    def __init__(self, db, ids, parent):
+        QDialog.__init__(self, parent)
+        self.resize(500,500)
         self._index = 0
 
         self._book_settings = []
         for book_id in ids:
             self._book_settings.append(BookSettings(db, book_id))
 
-        self.v_layout = QVBoxLayout(self._dialog)
+        self.v_layout = QVBoxLayout(self)
 
-        self._dialog.setWindowTitle('title - author')
+        self.setWindowTitle('title - author')
 
+        # add asin and shelfari url text boxes
         self.asin_label = QLabel('ASIN:')
         self.asin_edit = QLineEdit('')
+        self.asin_edit.textChanged.connect(self.edit_asin)
         self.v_layout.addWidget(self.asin_label)
         self.v_layout.addWidget(self.asin_edit)
 
         self.shelfari_url = QLabel('Shelfari URL:')
         self.shelfari_url_edit = QLineEdit('')
+        self.shelfari_url_edit.textChanged.connect(self.edit_shelfari_url)
         self.v_layout.addWidget(self.shelfari_url)
         self.v_layout.addWidget(self.shelfari_url_edit)
 
-        self.buttons_layout = QHBoxLayout(self._dialog)
+        # add scrollable area for aliases
+        self.scroll_area = QScrollArea()
+        self.scroll_area_layout = QVBoxLayout(self.scroll_area)
+        self.scroll_area_layout.setAlignment(Qt.AlignTop)
+        self.v_layout.addWidget(self.scroll_area)
+        self.alias_tuples = []
+
+        # add previous, ok, cancel, and next buttons
+        self.buttons_layout = QHBoxLayout(self)
+        self.buttons_layout.setAlignment(Qt.AlignRight)
 
         if len(ids) > 1:
             self.previous_button = QPushButton("Previous")
-            self.buttons_layout.addWidget(self.previous_button)
+            self.previous_button.setEnabled(False)
+            self.previous_button.setFixedWidth(100)
             self.previous_button.clicked.connect(self.previous)
+            self.buttons_layout.addWidget(self.previous_button)
 
         self.OK_button = QPushButton("OK")
+        self.OK_button.setFixedWidth(100)
         self.OK_button.clicked.connect(self.ok)
         self.buttons_layout.addWidget(self.OK_button)
 
         self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.setFixedWidth(100)
         self.cancel_button.clicked.connect(self.cancel)
         self.buttons_layout.addWidget(self.cancel_button)
 
-
         if len(ids) > 1:
             self.next_button = QPushButton("Next")
+            self.next_button.setFixedWidth(100)
             self.next_button.clicked.connect(self.next)
             self.buttons_layout.addWidget(self.next_button)
 
         self.v_layout.addLayout(self.buttons_layout)
-        self._dialog.setLayout(self.v_layout)
+        self.setLayout(self.v_layout)
 
         self.show_book_prefs(self._book_settings[self._index])
-        self._dialog.show()
+        self.show()
+
+    def edit_asin(self, val):
+        self._book_settings[self._index].asin = val
+
+    def edit_shelfari_url(self, val):
+        self._book_settings[self._index].shelfari_url = val
 
     def previous(self):
-        print ('-'*100)
         self._index -= 1
         self.next_button.setEnabled(True)
         if self._index == 0:
@@ -74,10 +98,12 @@ class BookConfigWidget(QWidget):
         self.show_book_prefs(self._book_settings[self._index])
 
     def ok(self):
-        raise NotImplementedError()
+        for book in self._book_settings:
+            book.save()
+        self.close()
 
     def cancel(self):
-        raise NotImplementedError()
+        self.close()
 
     def next(self):
         self._index += 1
@@ -87,15 +113,31 @@ class BookConfigWidget(QWidget):
         self.show_book_prefs(self._book_settings[self._index])
 
     def show_book_prefs(self, book):
-        self._dialog.setWindowTitle(book.title_and_author)
-        self.asin_edit.setText(book.prefs['asin'])
-        self.shelfari_url_edit.setText(book.prefs['shelfari_url'])
+        self.setWindowTitle(book.title_and_author)
+        self.asin_edit.setText(book.asin)
+        self.shelfari_url_edit.setText(book.shelfari_url)
 
-    def save_settings(self):
-        raise NotImplementedError()
+        book.aliases = ('Vin', 'Vin Venture, The Heiress')
+        book.aliases = ('Elend', 'Elend Venture, Lord Venture')
+        #add aliases
+        self.alias_tuples = []
+        for term in sorted(book.aliases.keys()):
+            layout = QHBoxLayout(self)
+            
+            label = QLabel(term + ':')
+            label.setFixedWidth(75)
+            layout.addWidget(label)
+
+            aliases = QLineEdit(', '.join(book.aliases[term]))
+            layout.addWidget(aliases)
+
+            self.scroll_area_layout.addLayout(layout)
+            self.alias_tuples.append((layout, label, aliases))
+
 
 class BookSettings(object):
     LIBRARY = current_library_path()
+
     def __init__(self, db, book_id):
         self._book_id = book_id
         book_path = db.field_for('path', book_id).replace('/', os.sep)
@@ -107,6 +149,9 @@ class BookSettings(object):
 
         self._title = db.field_for('title', book_id)
         self._author = ' & '.join(db.field_for('authors', self._book_id))
+        self.asin = self._prefs['asin']
+        self.shelfari_url = self._prefs['shelfari_url']
+        self._aliases = self._prefs['aliases']
 
     @property
     def prefs(self):
@@ -123,5 +168,32 @@ class BookSettings(object):
     @property
     def title_and_author(self):
         return '%s - %s' % (self.title, self.author)
+
+    @property
+    def asin(self):
+        return self._asin
     
+    @asin.setter
+    def asin(self, val):
+        self._asin = val
+
+    @property
+    def shelfari_url(self):
+        return self._shelfari_url
     
+    @shelfari_url.setter
+    def shelfari_url(self, val):
+        self._shelfari_url = val
+
+    @property
+    def aliases(self):
+        return self._aliases
+
+    @aliases.setter
+    def aliases(self, val):
+        self._aliases[val[0]] =  val[1].replace(', ', ',').split(',')
+
+    def save(self):
+        self._prefs['asin'] = self.asin
+        self._prefs['shelfari_url'] = self.shelfari_url
+        self._prefs['aliases'] = self.aliases

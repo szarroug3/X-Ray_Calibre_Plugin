@@ -88,7 +88,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         ids = list(map(self.gui.library_view.model().id, rows))
         db = db.new_api
 
-        book_configs = BookConfigWidget(db, ids, QDialog(self.gui))
+        book_configs = BookConfigWidget(db, ids, self.gui)
 
     def created_xrays(self, job):
         pass
