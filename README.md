@@ -27,8 +27,10 @@ It also has a notable clips section which show quotes from shelfari. If there ar
 Github Page: https://github.com/szarroug3/X-Ray_Calibre_Plugin
 
 ----------------------------------------------------------------------------------------------------------------------------------
-	1. Create/Update x-ray files for selected books
-	2. Send previously generated x-ray files to device
+	1. Book specific preferences
+		- Use "," or ", " as a separator for words in aliases list
+	2. Create/Update x-ray files for selected books
+	3. Send previously generated x-ray files to device
 
 	Note: Creating an x-ray file using this plugin will automatically search for and use the correct ASIN so you don't need to
 		search for it.
