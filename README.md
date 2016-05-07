@@ -30,6 +30,8 @@ Github Page: https://github.com/szarroug3/X-Ray_Calibre_Plugin
 
 ----------------------------------------------------------------------------------------------------------------------------------
 	1. Book specific preferences
+		- This screen may take a while to open if doesn't have the ASIN and shelfari url set in the settings already as it will be
+			searching for them
 		- Use "," or ", " as a separator for words in aliases list
 	2. Create/Update x-ray files for selected books
 	3. Send previously generated x-ray files to device
