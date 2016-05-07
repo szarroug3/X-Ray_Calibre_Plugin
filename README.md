@@ -52,6 +52,6 @@ Preferences:
 
 Testing:
 ----------------------------------------------------------------------------------------------------------------------------------
-	This plugin has been tested using a Kindle PW2 on Windows 8 and 10.
+	This plugin has been tested using a Kindle PW2 on Windows 10.
 	I am still working on testing some portions of it so if you do find a bug or want to request a feature, please let me know via
 		Github or Mobileread.
