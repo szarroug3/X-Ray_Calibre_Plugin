@@ -194,7 +194,7 @@ class BookConfigWidget(QDialog):
             self.shelfari_url_edit.setText('Shelfari url not found.')
 
     def update_aliases(self):
-        self.book.update_aliases()
+        self.book.update_aliases(overwrite=True)
         self.update_aliases_on_gui()
 
     def edit_aliases(self, term, val):
@@ -408,10 +408,14 @@ class BookSettings(object):
 
         return urlsearch.group(1)
 
-    def update_aliases(self):
+    def update_aliases(self, overwrite=False):
         shelfari_parser = ShelfariParser(self.shelfari_url)
         shelfari_parser.get_characters()
         shelfari_parser.get_terms()
+
+        if overwrite:
+            self._prefs['aliases'] = {}
+            self._aliases = {}
         
         for char in shelfari_parser.characters.items():
             if char[1]['label'] not in self.aliases.keys():
