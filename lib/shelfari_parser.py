@@ -1,13 +1,13 @@
 # shelfari_parser.py
 
+import re
 from urllib2 import build_opener
 from lxml import html
-import re
 
 # Parses shelfari page for characters, terms, and quotes
 class ShelfariParser(object):
     # ShelfariBookWikiSession {"SpoilerBookId":51683,"SpoilerShowCharacters":true,"SpoilerShowSettings":true
-    DESC_PAT = re.compile(r'([a-zA-Z0-9\'"].+)')
+    DESC_PAT = re.compile(r'([a-zA-Z0-9\'"\(].+)')
 
     def __init__(self, url, spoilers=False):
         opener = build_opener()

@@ -55,19 +55,44 @@ class BookConfigWidget(QDialog):
         self.setWindowTitle('title - author')
 
         # add asin and shelfari url text boxes
+        self.asin_layout = QHBoxLayout(None)
         self.asin_label = QLabel('ASIN:')
+        self.asin_label.setFixedWidth(75)
         self.asin_edit = QLineEdit('')
         self.asin_edit.textEdited.connect(self.edit_asin)
-        self.v_layout.addWidget(self.asin_label)
-        self.v_layout.addWidget(self.asin_edit)
+        self.asin_layout.addWidget(self.asin_label)
+        self.asin_layout.addWidget(self.asin_edit)
+        self.v_layout.addLayout(self.asin_layout)
 
+        self.shelfari_layout = QHBoxLayout(None)
         self.shelfari_url = QLabel('Shelfari URL:')
+        self.shelfari_url.setFixedWidth(75)
         self.shelfari_url_edit = QLineEdit('')
         self.shelfari_url_edit.textEdited.connect(self.edit_shelfari_url)
-        self.v_layout.addWidget(self.shelfari_url)
-        self.v_layout.addWidget(self.shelfari_url_edit)
+        self.shelfari_layout.addWidget(self.shelfari_url)
+        self.shelfari_layout.addWidget(self.shelfari_url_edit)
+        self.v_layout.addLayout(self.shelfari_layout)
+
+        self.update_buttons_layout = QHBoxLayout(None)
+        self.update_asin_button = QPushButton('Search for ASIN')
+        self.update_asin_button.setFixedWidth(150)
+        self.update_asin_button.clicked.connect(self.search_for_asin)
+        self.update_buttons_layout.addWidget(self.update_asin_button)
+
+        self.update_shelfari_url_button = QPushButton('Search for Shelfari URL')
+        self.update_shelfari_url_button.setFixedWidth(150)
+        self.update_shelfari_url_button.clicked.connect(self.search_for_shelfari_url)
+        self.update_buttons_layout.addWidget(self.update_shelfari_url_button)
+
+        self.update_aliases_button = QPushButton('Update Aliases from URL')
+        self.update_aliases_button.setFixedWidth(150)
+        self.update_aliases_button.clicked.connect(self.update_aliases)
+        self.update_buttons_layout.addWidget(self.update_aliases_button)
+        self.v_layout.addLayout(self.update_buttons_layout)
 
         # add scrollable area for aliases
+        self.aliases_label = QLabel('Aliases:')
+        self.v_layout.addWidget(self.aliases_label)
         self.scroll_area = QScrollArea()
         self.v_layout.addWidget(self.scroll_area)
 
@@ -101,24 +126,86 @@ class BookConfigWidget(QDialog):
         self.v_layout.addLayout(self.buttons_layout)
         self.setLayout(self.v_layout)
 
-        self.show_book_prefs(self._book_settings[self._index])
+        self.show_book_prefs()
         self.show()
 
+    @property
+    def book(self):
+        return self._book_settings[self._index]
+    
     def edit_asin(self, val):
-        self._book_settings[self._index].asin = val
+        self.book.asin = val
 
     def edit_shelfari_url(self, val):
-        self._book_settings[self._index].shelfari_url = val
+        http_string = 'http://www.'
+        index = 0
+        if val[:len(http_string)] != http_string:
+            for i, letter in enumerate(val):
+                if i < len(http_string):
+                    if letter == http_string[i]:
+                            index += 1
+                    else:
+                        break
+                else:
+                    break
+            self.shelfari_url_edit.setText(http_string + val[index:])
+
+        self.book.shelfari_url = val
+        try:
+            domain_end_index = val[7:].find('/') + 7
+            if domain_end_index == -1: domain_end_index = len(val)
+            test_url = HTTPConnection(val[7:domain_end_index])
+            test_url.request('HEAD', val[domain_end_index:])
+            if test_url.getresponse().status == 200:
+                self.update_aliases_button.setEnabled(True)
+            else:
+                self.update_aliases_button.setEnabled(False)
+        except:
+            self.update_aliases_button.setEnabled(False)
+
+    def search_for_asin(self):
+        asin = None
+        asin = self.book.get_asin()
+        if not asin:
+            if self.book.prefs['asin'] != '':
+                self._asin_edit = self.book.prefs['asin']
+            else:
+                self._asin_edit.setText('ASIN not found.')
+        else:
+            self.book.asin = asin
+            self.asin_edit.setText(asin)
+
+    def search_for_shelfari_url(self):
+        url = None
+        if self.asin_edit.text != '' and self.asin_edit.text != 'ASIN not found':
+            url = self.book.search_shelfari(self.asin_edit.text)
+        if not url:
+            if self.book._prefs['asin'] != '':
+                url = self.book.search_shelfari(self.book._prefs['asin'])
+        if not url:
+            if self.book.title != 'Unknown' and self.book.author != 'Unknown':
+                url = self.book.search_shelfari(self.title_and_author)
+        if url:
+            self.update_aliases_button.setEnabled(True)
+            self.book.shelfari_url = url
+            self.shelfari_url_edit.setText(url)
+        else:
+            self.update_aliases_button.setEnabled(False)
+            self.shelfari_url_edit.setText('Shelfari url not found.')
+
+    def update_aliases(self):
+        self.book.update_aliases()
+        self.update_aliases_on_gui()
 
     def edit_aliases(self, term, val):
-        self._book_settings[self._index].aliases = (term, val)
+        self.book.aliases = (term, val)
 
     def previous(self):
         self._index -= 1
         self.next_button.setEnabled(True)
         if self._index == 0:
             self.previous_button.setEnabled(False)
-        self.show_book_prefs(self._book_settings[self._index])
+        self.show_book_prefs()
 
     def ok(self):
         for book in self._book_settings:
@@ -133,19 +220,21 @@ class BookConfigWidget(QDialog):
         self.previous_button.setEnabled(True)
         if self._index == len(self._book_settings) - 1:
             self.next_button.setEnabled(False)
-        self.show_book_prefs(self._book_settings[self._index])
+        self.show_book_prefs()
 
-    def show_book_prefs(self, book):
-        self.setWindowTitle(book.title_and_author)
-        self.asin_edit.setText(book.asin)
-        self.shelfari_url_edit.setText(book.shelfari_url)
+    def show_book_prefs(self):
+        self.setWindowTitle(self.book.title_and_author)
+        self.asin_edit.setText(self.book.asin)
+        self.shelfari_url_edit.setText(self.book.shelfari_url)
+        self.update_aliases_on_gui()
 
+    def update_aliases_on_gui(self):
         self.aliases_widget = QWidget()
         self.aliases_layout = QGridLayout(self.aliases_widget)
         self.aliases_layout.setAlignment(Qt.AlignTop)
 
         # add aliases for current book
-        for index, aliases in enumerate(sorted(book.aliases.items())):
+        for index, aliases in enumerate(sorted(self.book.aliases.items())):
             label = QLabel(aliases[0] + ':')
             label.setFixedWidth(125)
             self.aliases_layout.addWidget(label, index, 0)
@@ -185,16 +274,16 @@ class BookSettings(object):
             identifiers = self._db.field_for('identifiers', self._book_id)
             self.asin = self._db.field_for('identifiers', self._book_id)['mobi-asin'].decode('ascii') if 'mobi-asin' in identifiers.keys() else None
             if not self.asin:
-                self.asin = self._get_asin()
+                self.asin = self.get_asin()
             if self.asin:
                 self._prefs['asin'] = self.asin
 
         self.shelfari_url = self._prefs['shelfari_url']
         if self.shelfari_url == '':
             if self._prefs['asin'] != '':
-                url = self._search_shelfari(self._prefs['asin'])
+                url = self.search_shelfari(self._prefs['asin'])
             if not url and self.title != 'Unknown' and self.author != 'Unknown':
-                url = self._search_shelfari(self.title_and_author)
+                url = self.search_shelfari(self.title_and_author)
 
             if url:
                 self.shelfari_url = url
@@ -202,17 +291,7 @@ class BookSettings(object):
 
         self._aliases = self._prefs['aliases']
         if len(self._aliases.keys()) == 0 and self.shelfari_url != '':
-            shelfari_parser = ShelfariParser(self.shelfari_url)
-            shelfari_parser.get_characters()
-            shelfari_parser.get_terms()
-            
-            for char in shelfari_parser.characters.items():
-                self.aliases = (char[1]['label'], '')
-            
-            for term in shelfari_parser.terms.items():
-                self.aliases = (term[1]['label'], '')
-
-            self._prefs['aliases'] = self.aliases
+            self.update_aliases()
 
     @property
     def prefs(self):
@@ -259,7 +338,7 @@ class BookSettings(object):
         self._prefs['shelfari_url'] = self.shelfari_url
         self._prefs['aliases'] = self.aliases
 
-    def _get_asin(self):
+    def get_asin(self):
         query = urlencode({'keywords': '%s' % self.title_and_author})
         try:
             self._aConnection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, headers=self.HEADERS)
@@ -300,7 +379,7 @@ class BookSettings(object):
                     self._db.set_metadata(self._book_id, mi)
                     return asin
 
-    def _search_shelfari(self, keywords):
+    def search_shelfari(self, keywords):
         query = urlencode ({'Keywords': keywords})
         try:
             self._sConnection.request('GET', '/search/books?' + query)
@@ -328,3 +407,18 @@ class BookSettings(object):
             return None
 
         return urlsearch.group(1)
+
+    def update_aliases(self):
+        shelfari_parser = ShelfariParser(self.shelfari_url)
+        shelfari_parser.get_characters()
+        shelfari_parser.get_terms()
+        
+        for char in shelfari_parser.characters.items():
+            if char[1]['label'] not in self.aliases.keys():
+                self.aliases = (char[1]['label'], '')
+        
+        for term in shelfari_parser.terms.items():
+            if term[1]['label'] not in self.aliases.keys():
+                self.aliases = (term[1]['label'], '')
+
+        self._prefs['aliases'] = self.aliases
