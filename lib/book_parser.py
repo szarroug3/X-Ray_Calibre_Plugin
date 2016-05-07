@@ -14,12 +14,13 @@ class BookParser(object):
     PARAGRAPH_PAT = re.compile(r'<p.*?>.+?(?:<\/p>)', re.I)
     PLAIN_TEXT_PAT = re.compile(r'>([^<]+?)<', re.I)
 
-    def __init__(self, book_type, book_path, shelfari_data):
+    def __init__(self, book_type, book_path, shelfari_data, aliases):
         self._book_path = book_path
         self._excerpt_data = {}
         self._entity_data = {}
         self._quotes = shelfari_data.quotes
         self._notable_clips = []
+        self._aliases = {}
 
         self._offset = 0
         if book_type.lower() == 'azw3':
@@ -37,8 +38,15 @@ class BookParser(object):
             desc = term[1]['description'] if term[1]['description'] else ''
             self._entity_data[label] = {'original_label': original, 'entity_id': term[0], 'description': desc, 'type': 2, 'mentions': 0, 'excerpt_ids': [], 'occurrence': []}
 
+        for term, alias_list in aliases.items():
+            if term.lower() in self.entity_data.keys():
+                for alias in alias_list:
+                    self._aliases[alias.lower()] = term.lower()
+
+        words_list = self._aliases.keys() + self.entity_data.keys()
+
         # named this way to keep same format as other regex's above
-        escaped_word_list = [re.escape(word) for word in self.entity_data.keys()]
+        escaped_word_list = [re.escape(word) for word in words_list]
         self.WORD_PAT = re.compile(r'(\b' + r'\b|\b'.join(escaped_word_list) + r'\b)', re.I)
 
     @property
@@ -93,10 +101,14 @@ class BookParser(object):
             # for each match found, fill in entity_data and excerpt_data information
                 for match in re.finditer(self.WORD_PAT, word_loc['words']):
                     matched_word = match.group(1).decode(self.codec).lower()
-                    entity_id = self._entity_data[matched_word]['entity_id']
-                    self._entity_data[matched_word]['mentions'] += 1
-                    self._entity_data[matched_word]['excerpt_ids'].append(excerpt_id)
-                    self._entity_data[matched_word]['occurrence'].append({'loc': word_loc['locs'][self._find_start(match.start(0), word_loc['words'])],
+                    if matched_word in self.entity_data.keys():
+                        term = matched_word
+                    elif matched_word in self._aliases.keys():
+                        term = self._aliases[matched_word]
+                    entity_id = self._entity_data[term]['entity_id']
+                    self._entity_data[term]['mentions'] += 1
+                    self._entity_data[term]['excerpt_ids'].append(excerpt_id)
+                    self._entity_data[term]['occurrence'].append({'loc': word_loc['locs'][self._find_start(match.start(0), word_loc['words'])],
                                 'len': self._find_len_word(match.start(0), match.end(0), word_loc)})
                     if entity_id not in rel_ent:
                         rel_ent.append(entity_id)

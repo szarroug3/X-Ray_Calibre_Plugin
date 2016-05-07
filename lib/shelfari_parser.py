@@ -61,9 +61,9 @@ class ShelfariParser(object):
         return self._quotes
 
     def parse(self):
-        self._get_characters()
-        self._get_terms()
-        self._get_quotes()
+        self.get_characters()
+        self.get_terms()
+        self.get_quotes()
 
     def _get_data_from_ul(self, type):
         results = {}
@@ -95,14 +95,14 @@ class ShelfariParser(object):
             self._entity_counter += 1
         return results
     
-    def _get_characters(self):
+    def get_characters(self):
         self._characters = self._get_data_from_ul('Characters')
         
-    def _get_terms(self):
+    def get_terms(self):
         self._terms = self._get_data_from_ul('Settings')
         self._terms.update(self._get_data_from_ul('Glossary'))
 
-    def _get_quotes(self):
+    def get_quotes(self):
         if self._quotations_html_source:
             quoteList = self._quotations_html_source.xpath('//ul[@class="li_6"]//li//blockquote/text()')
             self._quotes = [quote[1:-1].lower() for quote in quoteList]

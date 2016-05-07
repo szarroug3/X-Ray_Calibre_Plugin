@@ -11,6 +11,9 @@ from datetime import datetime
 from cStringIO import StringIO
 from httplib import HTTPConnection
 
+from calibre.utils.config import JSONConfig
+from calibre.library import current_library_path
+
 from calibre.ebooks.mobi import MobiError
 from calibre.ebooks.metadata.meta import get_metadata, set_metadata
 from calibre.ebooks.BeautifulSoup import BeautifulSoup
@@ -20,14 +23,9 @@ from calibre_plugins.xray_creator.lib.book_parser import BookParser
 from calibre_plugins.xray_creator.lib.xray_db_writer import XRayDBWriter
 from calibre_plugins.xray_creator.lib.shelfari_parser import ShelfariParser
 
+
 # Drive types
-DRIVE_UNKNOWN     = 0  # The drive type cannot be determined.
-DRIVE_NO_ROOT_DIR = 1  # The root path is invalbookID; for example, there is no volume mounted at the specified path.
 DRIVE_REMOVABLE   = 2  # The drive has removable media; for example, a floppy drive, thumb drive, or flash card reader.
-DRIVE_FIXED       = 3  # The drive has fixed media; for example, a hard disk drive or flash drive.
-DRIVE_REMOTE      = 4  # The drive is a remote (network) drive.
-DRIVE_CDROM       = 5  # The drive is a CD-ROM drive.
-DRIVE_RAMDISK     = 6  # The drive is a RAM disk.
 books_updated = []
 books_skipped = []
 
@@ -35,6 +33,7 @@ class Book(object):
     AMAZON_ASIN_PAT = re.compile(r'data\-asin=\"([a-zA-z0-9]+)\"')
     SHELFARI_URL_PAT = re.compile(r'href="(.+/books/.+?)"')
     HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/html", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0"}
+    LIBRARY = current_library_path()
 
     # Status'
     SUCCESS = 0
@@ -76,6 +75,14 @@ class Book(object):
         self._proxy = proxy
         self._http_address = http_address
         self._http_port = http_port
+
+        book_path = self._db.field_for('path', book_id).replace('/', os.sep)
+        self._prefs = JSONConfig(os.path.join(book_path, 'book_settings'), base_path=self.LIBRARY)
+        self._prefs.setdefault('asin', '')
+        self._prefs.setdefault('shelfari_url', '')
+        self._prefs.setdefault('aliases', {})
+        self._prefs.commit()
+
 
         self._get_basic_information()
         if self.status is self.FAIL:
@@ -132,8 +139,16 @@ class Book(object):
             self._status_message = self.FAILED_BASIC_INFORMATION_MISSING
             return
 
-        identifiers = self._db.field_for('identifiers', self._book_id)
-        self._asin = self._db.field_for('identifiers', self._book_id)['mobi-asin'].decode('ascii') if 'mobi-asin' in identifiers.keys() else None
+
+        self._asin = self._prefs['asin'] if self._prefs['asin'] != '' else None
+        if not self._asin:
+            identifiers = self._db.field_for('identifiers', self._book_id)
+            self._asin = self._db.field_for('identifiers', self._book_id)['mobi-asin'].decode('ascii') if 'mobi-asin' in identifiers.keys() else None
+            if self._asin:
+                self._prefs['asin'] = self._asin
+
+        self._shelfari_url = self._prefs['shelfari_url'] if self._prefs['shelfari_url'] != '' else None
+        self._aliases = self._prefs['aliases']
 
         # if all basic information is available, sanitize information
         if self._author_sort[-1] == '.': self._author_sort = self._author_sort[:-1] + '_'
@@ -201,6 +216,7 @@ class Book(object):
                     identifiers['mobi-asin'] = self._asin
                     mi.set_identifiers(identifiers)
                     self._db.set_metadata(self._book_id, mi)
+                    self._prefs['asin'] = self._asin
                     return connection
 
         self._status = self.FAIL
@@ -217,6 +233,7 @@ class Book(object):
                 self._status_message = self.FAILED_COULD_NOT_FIND_SHELFARI_PAGE
                 raise Exception(self._status_message)
 
+        self._prefs['shelfari_url'] = self._shelfari_url
         return connection
 
     def _search_shelfari(self, connection, keywords):
@@ -254,7 +271,17 @@ class Book(object):
         try:
             self._parsed_shelfari_data = ShelfariParser(self._shelfari_url, spoilers=self._spoilers)
             self._parsed_shelfari_data.parse()
-        except Exception:
+
+            for char in self._parsed_shelfari_data.characters.items():
+                if char[1]['label'] not in self._aliases.keys():
+                    self._aliases[char[1]['label']] = ''
+            
+            for term in self._parsed_shelfari_data.terms.items():
+                if term[1]['label'] not in self._aliases.keys():
+                    self._aliases[term[1]['label']] = ''
+
+            self._prefs['aliases'] = self._aliases
+        except:
             self._status = self.FAIL
             self._status_message = self.FAILED_COULD_NOT_PARSE_SHELFARI_DATA
             raise Exception(self._status_message)
@@ -289,9 +316,9 @@ class Book(object):
     def _parse_book(self, info=None):
         def _parse(info):
             try:
-                info['parsed_book_data'] = BookParser(info['format'], info['local_book'], self._parsed_shelfari_data)
+                info['parsed_book_data'] = BookParser(info['format'], info['local_book'], self._parsed_shelfari_data, self._aliases)
                 info['parsed_book_data'].parse()
-            except Exception:
+            except:
                 info['status'] = self.FAIL
                 info['status_message'] = self.FAILED_UNABLE_TO_PARSE_BOOK
 
@@ -359,35 +386,36 @@ class Book(object):
     def create_xray(self, aConnection, sConnection, info, log=None, abort=None, remove_files_from_dir=False):
         if abort and abort.isSet():
             return
-        if log: log('%s \t\t\tGetting ASIN...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         if not self._asin or len(self._asin) != 10:
+            if log: log('%s \t\tGetting ASIN...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
             aConnection = self.get_asin(aConnection)
 
         if abort and abort.isSet():
             return
-        if log: log('%s \t\t\tGetting shelfari url...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        try:
-            sConnection = self.get_shelfari_url(sConnection)
-        except:
-            # try to get our own asin and try again if the one in mobi-asin doesn't work out
-            self._status = self.IN_PROGRESS
-            self._status_message = None
-            aConnection = self.get_asin(aConnection)
-            sConnection = self.get_shelfari_url(sConnection)
+        if not self._shelfari_url:
+            if log: log('%s \t\tGetting shelfari url...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+            try:
+                sConnection = self.get_shelfari_url(sConnection)
+            except:
+                # try to get our own asin and try again if the one in mobi-asin doesn't work out
+                self._status = self.IN_PROGRESS
+                self._status_message = None
+                aConnection = self.get_asin(aConnection)
+                sConnection = self.get_shelfari_url(sConnection)
 
         if abort and abort.isSet():
             return
-        if log: log('%s \t\t\tParsing shelfari data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        if log: log('%s \t\tParsing shelfari data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         self._parse_shelfari_data()
         
         if abort and abort.isSet():
             return
-        if log: log('%s \t\t\tParsing book data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        if log: log('%s \t\tParsing book data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         self._parse_book(info=info)
         
         if abort and abort.isSet():
             return
-        if log: log('%s \t\t\tCreating x-ray...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        if log: log('%s \t\tCreating x-ray...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         self._write_xray(info, remove_files_from_dir=remove_files_from_dir)
         return (aConnection, sConnection)
 
@@ -507,17 +535,18 @@ class Book(object):
 
             if abort and abort.isSet():
                 return
-            if notifications: notifications.put((perc/(total * actions), 'Getting %s shelfari url' % self.title_and_author))
-            if log: log('%s \tGetting shelfari url...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-            perc += 1
             try:
-                sConnection = self.get_shelfari_url(sConnection)
+                if not self._shelfari_url:
+                    if notifications: notifications.put((perc/(total * actions), 'Getting %s shelfari url' % self.title_and_author))
+                    if log: log('%s \tGetting shelfari url...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+                    sConnection = self.get_shelfari_url(sConnection)
             except:
                 # try to get our own asin and try again if the one in mobi-asin doesn't work out
                 self._status = self.IN_PROGRESS
                 self._status_message = None
                 aConnection = self.get_asin(aConnection)
                 sConnection = self.get_shelfari_url(sConnection)
+            perc += 1
 
             if abort and abort.isSet():
                 return
@@ -566,14 +595,15 @@ class Book(object):
         if abort and abort.isSet():
             return
         if notifications: notifications.put((perc/(total * actions), 'Getting %s format specific data' % self.title_and_author))
-        if log: log('%s \t\tGetting format specific data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        print 'TEST '*100
+        if log: log('%s \tGetting format specific data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         perc += 1
         self._get_format_specific_information()
 
         if abort and abort.isSet():
             return
         if notifications: notifications.put((perc/(total * actions), 'Sending %s x-ray to device' % self.title_and_author))
-        if log: log('%s \t\tSending x-ray to device...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        if log: log('%s \tSending x-ray to device...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         return self.send_xray(overwrite=False, already_created=False, log=log, abort=abort, aConnection=aConnection, sConnection=sConnection)
 
 class ASINUpdater(MetadataUpdater):

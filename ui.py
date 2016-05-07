@@ -10,13 +10,14 @@ __docformat__ = 'restructuredtext en'
 
 from PyQt5.Qt import QMenu, QToolButton, QDialog
 
+from calibre.gui2 import error_dialog
 from calibre.gui2 import Dispatcher
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2.threaded_jobs import ThreadedJob
 
 from calibre_plugins.xray_creator.config import prefs
-from calibre_plugins.xray_creator.book_config import BookConfigWidget
 from calibre_plugins.xray_creator.lib.xray_creator import *
+from calibre_plugins.xray_creator.book_config import BookConfigWidget
 
 class XRayCreatorInterfacePlugin(InterfaceAction):
 
@@ -82,8 +83,9 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         db = self.gui.current_db
         rows = self.gui.library_view.selectionModel().selectedRows()
         if not rows or len(rows) == 0:
-            error_dialog(self.gui, error_msg,
+            error_dialog(self.gui, 'Cannot set book preferences',
                          'No books selected', show=True)
+            return
 
         ids = list(map(self.gui.library_view.model().id, rows))
         db = db.new_api
@@ -98,7 +100,6 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
     def _get_books(self, error_msg):
         from calibre.ebooks.metadata.meta import get_metadata, set_metadata
-        from calibre.gui2 import error_dialog
 
         db = self.gui.current_db
         rows = self.gui.library_view.selectionModel().selectedRows()
