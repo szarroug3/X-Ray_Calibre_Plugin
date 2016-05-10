@@ -13,7 +13,7 @@ from calibre.customize import InterfaceActionBase
 class XRayCreatorPlugin(InterfaceActionBase):
     name                = 'X-Ray Creator'
     description         = 'A plugin to create X-Ray files for MOBI books'
-    supported_platforms = ['windows', 'osx', 'linux']
+    supported_platforms = ['windows']
     author              = 'Samreen Zarroug & Alex Mayer'
     version             = (2, 1, 1)
     minimum_calibre_version = (2, 0, 0)
