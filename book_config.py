@@ -168,9 +168,9 @@ class BookConfigWidget(QDialog):
         asin = self.book.get_asin()
         if not asin:
             if self.book.prefs['asin'] != '':
-                self._asin_edit = self.book.prefs['asin']
+                self.asin_edit.setText(self.book.prefs['asin'])
             else:
-                self._asin_edit.setText('ASIN not found.')
+                self.asin_edit.setText('ASIN not found.')
         else:
             self.book.asin = asin
             self.asin_edit.setText(asin)
