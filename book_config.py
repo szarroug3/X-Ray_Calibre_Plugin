@@ -177,14 +177,14 @@ class BookConfigWidget(QDialog):
 
     def search_for_shelfari_url(self):
         url = None
-        if self.asin_edit.text != '' and self.asin_edit.text != 'ASIN not found':
-            url = self.book.search_shelfari(self.asin_edit.text)
+        if self.asin_edit.text() != '' and self.asin_edit.text() != 'ASIN not found':
+            url = self.book.search_shelfari(self.asin_edit.text())
         if not url:
             if self.book._prefs['asin'] != '':
                 url = self.book.search_shelfari(self.book._prefs['asin'])
         if not url:
             if self.book.title != 'Unknown' and self.book.author != 'Unknown':
-                url = self.book.search_shelfari(self.title_and_author)
+                url = self.book.search_shelfari(self.book.title_and_author)
         if url:
             self.update_aliases_button.setEnabled(True)
             self.book.shelfari_url = url
@@ -330,6 +330,7 @@ class BookSettings(object):
     def aliases(self):
         return self._aliases
 
+    @aliases.setter
     def aliases(self, val):
         # 'aliases' is a string containing a comma separated list of aliases.  
         #
