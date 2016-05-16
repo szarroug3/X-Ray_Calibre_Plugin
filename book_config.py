@@ -151,17 +151,6 @@ class BookConfigWidget(QDialog):
             self.shelfari_url_edit.setText(http_string + val[index:])
 
         self.book.shelfari_url = val
-        try:
-            domain_end_index = val[7:].find('/') + 7
-            if domain_end_index == -1: domain_end_index = len(val)
-            test_url = HTTPConnection(val[7:domain_end_index])
-            test_url.request('HEAD', val[domain_end_index:])
-            if test_url.getresponse().status == 200:
-                self.update_aliases_button.setEnabled(True)
-            else:
-                self.update_aliases_button.setEnabled(False)
-        except:
-            self.update_aliases_button.setEnabled(False)
 
     def search_for_asin(self):
         asin = None
@@ -194,8 +183,16 @@ class BookConfigWidget(QDialog):
             self.shelfari_url_edit.setText('Shelfari url not found.')
 
     def update_aliases(self):
-        self.book.update_aliases(overwrite=True)
-        self.update_aliases_on_gui()
+        url = self.shelfari_url_edit.text()
+        domain_end_index = url[7:].find('/') + 7
+        if domain_end_index == -1: domain_end_index = len(url)
+
+        test_url = HTTPConnection(url[7:domain_end_index])
+        test_url.request('HEAD', url[domain_end_index:])
+
+        if test_url.getresponse().status == 200:
+            self.book.update_aliases(overwrite=True)
+            self.update_aliases_on_gui()
 
     def edit_aliases(self, term, val):
         self.book.aliases = (term, val)
