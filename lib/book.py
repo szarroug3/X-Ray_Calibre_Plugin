@@ -456,12 +456,13 @@ class Book(object):
                     info['send_status'] = self.FAIL
                     info['status_message'] = self.FAILED_NO_CONNECTED_DEVICE
                     continue
-
+                    
                 info['device_book'] = os.path.join(device, info['device_book'])
                 info['device_xray'] = os.path.join(device, info['device_xray'])
 
                 # check to make sure book is on the device
                 if not os.path.exists(info['device_book']):
+                    print info["device_book"]
                     info['send_status'] = self.FAIL
                     info['status_message'] = self.FAILED_BOOK_NOT_ON_DEVICE
                     continue
