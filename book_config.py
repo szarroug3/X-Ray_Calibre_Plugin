@@ -96,6 +96,10 @@ class BookConfigWidget(QDialog):
         self.scroll_area = QScrollArea()
         self.v_layout.addWidget(self.scroll_area)
 
+        # add status box
+        self.status = QLabel('')
+        self.v_layout.addWidget(self.status)
+
         # add previous, ok, cancel, and next buttons
         self.buttons_layout = QHBoxLayout(None)
         self.buttons_layout.setAlignment(Qt.AlignRight)
@@ -151,27 +155,19 @@ class BookConfigWidget(QDialog):
             self.shelfari_url_edit.setText(http_string + val[index:])
 
         self.book.shelfari_url = val
-        try:
-            domain_end_index = val[7:].find('/') + 7
-            if domain_end_index == -1: domain_end_index = len(val)
-            test_url = HTTPConnection(val[7:domain_end_index])
-            test_url.request('HEAD', val[domain_end_index:])
-            if test_url.getresponse().status == 200:
-                self.update_aliases_button.setEnabled(True)
-            else:
-                self.update_aliases_button.setEnabled(False)
-        except:
-            self.update_aliases_button.setEnabled(False)
 
     def search_for_asin(self):
         asin = None
         asin = self.book.get_asin()
         if not asin:
             if self.book.prefs['asin'] != '':
+                self.status.setText('ASIN not found. Using original asin.')
                 self.asin_edit.setText(self.book.prefs['asin'])
             else:
-                self.asin_edit.setText('ASIN not found.')
+                self.status.setText('ASIN not found.')
+                self.asin_edit.setText('')
         else:
+            self.status.setText('ASIN found.')
             self.book.asin = asin
             self.asin_edit.setText(asin)
 
@@ -186,21 +182,35 @@ class BookConfigWidget(QDialog):
             if self.book.title != 'Unknown' and self.book.author != 'Unknown':
                 url = self.book.search_shelfari(self.book.title_and_author)
         if url:
+            self.status.setText('Shelfari url found.')
             self.update_aliases_button.setEnabled(True)
             self.book.shelfari_url = url
             self.shelfari_url_edit.setText(url)
         else:
+            self.status.setText('Shelfari url not found.')
             self.update_aliases_button.setEnabled(False)
-            self.shelfari_url_edit.setText('Shelfari url not found.')
+            self.shelfari_url_edit.setText('')
 
     def update_aliases(self):
-        self.book.update_aliases(overwrite=True)
-        self.update_aliases_on_gui()
+        url = self.shelfari_url_edit.text()
+        domain_end_index = url[7:].find('/') + 7
+        if domain_end_index == -1: domain_end_index = len(url)
+
+        test_url = HTTPConnection(url[7:domain_end_index])
+        test_url.request('HEAD', url[domain_end_index:])
+
+        if test_url.getresponse().status == 200:
+            self.book.update_aliases(overwrite=True)
+            self.update_aliases_on_gui()
+            self.status.setText('Aliases updated.')
+        else:
+            self.status.setText('Invalid shelfari url.')
 
     def edit_aliases(self, term, val):
         self.book.aliases = (term, val)
 
     def previous(self):
+        self.status.setText('')
         self._index -= 1
         self.next_button.setEnabled(True)
         if self._index == 0:
@@ -216,6 +226,7 @@ class BookConfigWidget(QDialog):
         self.close()
 
     def next(self):
+        self.status.setText('')
         self._index += 1
         self.previous_button.setEnabled(True)
         if self._index == len(self._book_settings) - 1:
