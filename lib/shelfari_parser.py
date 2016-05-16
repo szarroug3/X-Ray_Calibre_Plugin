@@ -69,18 +69,18 @@ class ShelfariParser(object):
         results = {}
         xpath = '//ul[@class="li_6"]'
         if type == 'Characters':
-            if self._characters_html_source:
+            if self._characters_html_source is not None:
                 ul = self._characters_html_source.xpath(xpath)
             else:
                 return results
         elif type == 'Settings':
-            if self._settings_html_source:
+            if self._settings_html_source is not None:
                 ul = self._settings_html_source.xpath(xpath)
             else:
                 return results
 
         elif type == 'Glossary':
-            if self._glossary_html_source:
+            if self._glossary_html_source is not None:
                 ul = self._glossary_html_source.xpath(xpath)
             else:
                 return results
