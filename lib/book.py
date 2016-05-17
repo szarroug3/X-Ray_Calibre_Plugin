@@ -274,13 +274,13 @@ class Book(object):
             self._parsed_shelfari_data = ShelfariParser(self._shelfari_url, spoilers=self._spoilers)
             self._parsed_shelfari_data.parse()
 
-            for char in self._parsed_shelfari_data.characters.items():
-                if char[1]['label'] not in self._aliases.keys():
-                    self._aliases[char[1]['label']] = ''
+            for char in self._parsed_shelfari_data.characters.values():
+                if char['label'] not in self._aliases.keys():
+                    self._aliases[char['label']] = []
             
-            for term in self._parsed_shelfari_data.terms.items():
-                if term[1]['label'] not in self._aliases.keys():
-                    self._aliases[term[1]['label']] = ''
+            for term in self._parsed_shelfari_data.terms.values():
+                if term['label'] not in self._aliases.keys():
+                    self._aliases[term['label']] = []
 
             self._prefs['aliases'] = self._aliases
         except:
