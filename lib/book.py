@@ -87,7 +87,6 @@ class Book(object):
         self._prefs.setdefault('aliases', {})
         self._prefs.commit()
 
-
         self._get_basic_information()
         if self.status is self.FAIL:
             return
@@ -142,7 +141,6 @@ class Book(object):
             self._status = self.FAIL
             self._status_message = self.FAILED_BASIC_INFORMATION_MISSING
             return
-
 
         self._asin = self._prefs['asin'] if self._prefs['asin'] != '' else None
         if not self._asin:
@@ -458,13 +456,12 @@ class Book(object):
                     info['send_status'] = self.FAIL
                     info['status_message'] = self.FAILED_NO_CONNECTED_DEVICE
                     continue
-    
+
                 info['device_book'] = os.path.join(device, info['device_book'])
                 info['device_xray'] = os.path.join(device, info['device_xray'])
 
                 # check to make sure book is on the device
                 if not os.path.exists(info['device_book']):
-                    print info["device_book"]
                     info['send_status'] = self.FAIL
                     info['status_message'] = self.FAILED_BOOK_NOT_ON_DEVICE
                     continue
@@ -510,6 +507,7 @@ class Book(object):
                     with open(info['device_book'], 'r+b') as stream:
                         mu = ASINUpdater(stream)
                         info['original_asin'], info['asin'] = mu.update(self._asin, info['format'])
+
                     if info['original_asin'] is not info['asin']:
                         # if we changed the asin, update the image file name
                         for dirName, subDirList, fileList in os.walk(info['device_book'].split(os.sep)[0]):
@@ -627,7 +625,6 @@ class Book(object):
         if abort and abort.isSet():
             return
         if notifications: notifications.put((perc/(total * actions), 'Getting %s format specific data' % self.title_and_author))
-        print 'TEST '*100
         if log: log('%s \tGetting format specific data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         perc += 1
         self._get_format_specific_information()
