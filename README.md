@@ -1,6 +1,8 @@
 # X-Ray Calibre Plugin
 Downloads:
 ----------------------------------------------------------------------------------------------------------------------------------
+[2.1.1](https://github.com/szarroug3/X-Ray_Calibre_Plugin/files/269324/xray_creator_calibre_plugin_2_1_1.zip)
+
 [2.1.0](https://github.com/szarroug3/X-Ray_Calibre_Plugin/files/267017/xray_creator_calibre_plugin_2_1_0.zip)
 
 [2.0.0](https://github.com/szarroug3/X-Ray_Calibre_Plugin/files/267014/xray_creator_calibre_plugin_2_0_0.zip)
