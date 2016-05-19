@@ -508,13 +508,16 @@ class Book(object):
                     with open(info['device_book'], 'r+b') as stream:
                         mu = ASINUpdater(stream)
                         info['original_asin'], info['asin'] = mu.update(self._asin, info['format'])
+<<<<<<< 086585565dca4be81b0ca27b72f91f828bd49315
 
                     if info['original_asin'] is not info['asin']:
+=======
+                    if info['original_asin'] != info['asin']:
+>>>>>>> Fixes #20 - use existing 'device' variable to find the Kindle
                         # if we changed the asin, update the image file name
-                        for dirName, subDirList, fileList in os.walk(info['device_book'].split(os.sep)[0]):
-                            for file in glob(os.path.join(dirName, '*%s*.jpg' % info['original_asin'])):
-                                new_name = file.replace(info['original_asin'], info['asin'])
-                                os.rename(file, new_name)
+                        thumbname_orig = os.path.join(device, "system", "thumbnails", "thumbnail_%s_EBOK_portrait.jpg" % (info['original_asin']))
+                        thumbname_new = thumbname_orig.replace(info['original_asin'], info['asin'])
+                        os.rename(thumbname_orig, thumbname_new)
                 except:
                     info['send_status'] = self.FAIL
                     info['status_message'] = self.FAILED_UNABLE_TO_UPDATE_ASIN
