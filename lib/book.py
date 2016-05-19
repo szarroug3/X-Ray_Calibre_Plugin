@@ -276,13 +276,13 @@ class Book(object):
             self._parsed_shelfari_data = ShelfariParser(self._shelfari_url, spoilers=self._spoilers)
             self._parsed_shelfari_data.parse()
 
-            for char in self._parsed_shelfari_data.characters.items():
-                if char[1]['label'] not in self._aliases.keys():
-                    self._aliases[char[1]['label']] = ''
+            for char in self._parsed_shelfari_data.characters.values():
+                if char['label'] not in self._aliases.keys():
+                    self._aliases[char['label']] = []
             
-            for term in self._parsed_shelfari_data.terms.items():
-                if term[1]['label'] not in self._aliases.keys():
-                    self._aliases[term[1]['label']] = ''
+            for term in self._parsed_shelfari_data.terms.values():
+                if term['label'] not in self._aliases.keys():
+                    self._aliases[term['label']] = []
 
             self._prefs['aliases'] = self._aliases
         except:
@@ -510,12 +510,11 @@ class Book(object):
                     with open(info['device_book'], 'r+b') as stream:
                         mu = ASINUpdater(stream)
                         info['original_asin'], info['asin'] = mu.update(self._asin, info['format'])
-                    if info['original_asin'] is not info['asin']:
+                    if info['original_asin'] != info['asin']:
                         # if we changed the asin, update the image file name
-                        for dirName, subDirList, fileList in os.walk(info['device_book'].split(os.sep)[0]):
-                            for file in glob(os.path.join(dirName, '*%s*.jpg' % info['original_asin'])):
-                                new_name = file.replace(info['original_asin'], info['asin'])
-                                os.rename(file, new_name)
+                        thumbname_orig = os.path.join(device, "system", "thumbnails", "thumbnail_%s_EBOK_portrait.jpg" % (info['original_asin']))
+                        thumbname_new = thumbname_orig.replace(info['original_asin'], info['asin'])
+                        os.rename(thumbname_orig, thumbname_new)
                 except:
                     info['send_status'] = self.FAIL
                     info['status_message'] = self.FAILED_UNABLE_TO_UPDATE_ASIN
