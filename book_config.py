@@ -450,7 +450,7 @@ class BookSettings(object):
 
         self._prefs['aliases'] = self.aliases
 
-    def auto_expland_aliases(self, fullname, characters):
+    def auto_expand_aliases(self, fullname, characters):
         possible_aliases = fullname_to_possible_aliases(fullname.lower())
         actual_aliases = []
         for alias in possible_aliases:
