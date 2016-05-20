@@ -4,7 +4,7 @@ from __future__ import (unicode_literals, division, absolute_import,
                         print_function)
 
 __license__   = 'GPL v3'
-__copyright__ = '2016, Samreen Zarroug & Alex Mayer'
+__copyright__ = '2016, Samreen Zarroug, Anthony Toole, & Alex Mayer'
 __docformat__ = 'restructuredtext en'
 
 # The class that all Interface Action plugin wrappers must inherit from
@@ -15,7 +15,7 @@ class XRayCreatorPlugin(InterfaceActionBase):
     description         = 'A plugin to create X-Ray files for MOBI books'
     supported_platforms = ['windows', 'osx', 'linux']
     author              = 'Samreen Zarroug & Alex Mayer'
-    version             = (1, 1, 0)
+    version             = (2, 2, 0)
     minimum_calibre_version = (2, 0, 0)
     actual_plugin       = 'calibre_plugins.xray_creator.ui:XRayCreatorInterfacePlugin'
 

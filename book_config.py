@@ -262,6 +262,8 @@ class BookSettings(object):
     SHELFARI_URL_PAT = re.compile(r'href="(.+/books/.+?)"')
     HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/html", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0"}
     LIBRARY = current_library_path()
+    HONORIFICS = "Mr Mrs Ms Miss Master Sir Madam Lord Dame Lady Prof Professor Doctor Dr Father Reverend".split()
+    HONORIFICS.extend([x + "." for x in HONORIFICS])
 
     def __init__(self, db, book_id, aConnection, sConnection):
         self._db = db
@@ -436,12 +438,58 @@ class BookSettings(object):
             self._prefs['aliases'] = {}
             self._aliases = {}
         
-        for char in shelfari_parser.characters.items():
-            if char[1]['label'] not in self.aliases.keys():
-                self.aliases = (char[1]['label'], '')
+        characters = [char[1]['label'] for char in shelfari_parser.characters.items()]
+        for char in characters:
+            if char not in self.aliases.keys():
+                self.aliases = (char, '')
         
-        for term in shelfari_parser.terms.items():
-            if term[1]['label'] not in self.aliases.keys():
-                self.aliases = (term[1]['label'], '')
+        terms = [term[1]['label'] for term in shelfari_parser.terms.items()]
+        for term in terms:
+            if term not in self.aliases.keys():
+                self.aliases = (term, '')
 
         self._prefs['aliases'] = self.aliases
+
+    def auto_expland_aliases(self, fullname, characters):
+        possible_aliases = fullname_to_possible_aliases(fullname.lower())
+        actual_aliases = []
+        for alias in possible_aliases:
+
+
+
+    def fullname_to_possible_aliases(self, fullname):
+        """
+        Given a full name ("{Title} ChristianName {Middle Names} {Surname}"), return a list of possible aliases
+        
+        ie. Title Surname, ChristianName Surname, Title ChristianName, {the full name}
+        
+        The returned aliases are in the order they should match
+        """
+        aliases = []        
+        parts = fullname.split()
+        
+        if parts[0] in self.HONORIFICS:
+            title = parts.pop(0)
+        else:
+            title = None
+            
+        if len(parts) >= 2:
+            # Assume: {Title} Firstname {Middlenames} Lastname
+            # Already added the full form, also add Title Lastname, and for some Title Firstname
+            surname = parts.pop() # This will cover double barrel surnames, we split on whitespace only
+            christian_name = parts.pop(0)
+            middlenames = parts
+            
+            if title:
+                aliases.append("%s %s" % (title, surname))
+                if title in "Lord":
+                    aliases.append("%s %s" % (title, christian_name))
+            aliases.append(christian_name)
+            aliases.append(surname)   
+        elif title:
+            # Odd, but got Title Name (eg. Lord Buttsworth), so see if we can alias
+            aliases.append(parts[0])
+        else:
+            # We've got no title, so just a single word name.  No alias needed
+            pass
+        return aliases
