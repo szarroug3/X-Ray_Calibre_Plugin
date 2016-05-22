@@ -15,8 +15,8 @@ class XRayCreatorPlugin(InterfaceActionBase):
     description         = 'A plugin to create X-Ray files for MOBI books'
     supported_platforms = ['windows']
     author              = 'Samreen Zarroug & Alex Mayer'
-    version             = (2, 0, 0)
-    minimum_calibre_version = (0, 9, 29)
+    version             = (2, 1, 0)
+    minimum_calibre_version = (2, 0, 0)
     actual_plugin       = 'calibre_plugins.xray_creator.ui:XRayCreatorInterfacePlugin'
 
     def is_customizable(self):
