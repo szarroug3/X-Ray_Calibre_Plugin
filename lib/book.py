@@ -462,7 +462,6 @@ class Book(object):
 
                 # check to make sure book is on the device
                 if not os.path.exists(info['device_book']):
-                    print info["device_book"]
                     info['send_status'] = self.FAIL
                     info['status_message'] = self.FAILED_BOOK_NOT_ON_DEVICE
                     continue
@@ -508,12 +507,8 @@ class Book(object):
                     with open(info['device_book'], 'r+b') as stream:
                         mu = ASINUpdater(stream)
                         info['original_asin'], info['asin'] = mu.update(self._asin, info['format'])
-<<<<<<< 086585565dca4be81b0ca27b72f91f828bd49315
 
-                    if info['original_asin'] is not info['asin']:
-=======
                     if info['original_asin'] != info['asin']:
->>>>>>> Fixes #20 - use existing 'device' variable to find the Kindle
                         # if we changed the asin, update the image file name
                         thumbname_orig = os.path.join(device, "system", "thumbnails", "thumbnail_%s_EBOK_portrait.jpg" % (info['original_asin']))
                         thumbname_new = thumbname_orig.replace(info['original_asin'], info['asin'])
