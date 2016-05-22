@@ -456,7 +456,7 @@ class Book(object):
                     info['send_status'] = self.FAIL
                     info['status_message'] = self.FAILED_NO_CONNECTED_DEVICE
                     continue
-                    
+
                 info['device_book'] = os.path.join(device, info['device_book'])
                 info['device_xray'] = os.path.join(device, info['device_xray'])
 
@@ -507,7 +507,7 @@ class Book(object):
                     with open(info['device_book'], 'r+b') as stream:
                         mu = ASINUpdater(stream)
                         info['original_asin'], info['asin'] = mu.update(self._asin, info['format'])
-
+                        
                     if info['original_asin'] != info['asin']:
                         # if we changed the asin, update the image file name
                         thumbname_orig = os.path.join(device, "system", "thumbnails", "thumbnail_%s_EBOK_portrait.jpg" % (info['original_asin']))
