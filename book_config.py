@@ -262,7 +262,10 @@ class BookSettings(object):
     SHELFARI_URL_PAT = re.compile(r'href="(.+/books/.+?)"')
     HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/html", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0"}
     LIBRARY = current_library_path()
-    HONORIFICS = "Mr Mrs Ms Miss Master Sir Madam Lord Dame Lady Prof Professor Doctor Dr Father Reverend".split()
+    HONORIFICS = "mr mrs ms miss master sir madam lord dame lady prof professor doctor dr father reverend"
+    HONORIFICS += "atty attorney hon honoroable president pres gov governor sen senator"
+    HONORIFICS += "ofc officer pvt private cpl corporal sgt sargent maj major capt captain cmdr commander lt lieutenant col colonel gen general"
+    HONORIFICS = HONORIFICS.split()
     HONORIFICS.extend([x + "." for x in HONORIFICS])
 
     def __init__(self, db, book_id, aConnection, sConnection):
@@ -306,6 +309,7 @@ class BookSettings(object):
         self._aliases = self._prefs['aliases']
         if len(self._aliases.keys()) == 0 and self.shelfari_url != '':
             self.update_aliases()
+        self.save()
 
     @property
     def prefs(self):
@@ -448,14 +452,29 @@ class BookSettings(object):
             if term not in self.aliases.keys():
                 self.aliases = (term, '')
 
-        self._prefs['aliases'] = self.aliases
+        aliases = self.auto_expand_aliases(characters)
+        for alias, fullname in aliases.items():
+            self.aliases = (fullname, alias + ',' + ','.join(self.aliases[fullname]))
 
-    def auto_expand_aliases(self, fullname, characters):
-        possible_aliases = fullname_to_possible_aliases(fullname.lower())
-        actual_aliases = []
-        for alias in possible_aliases:
+    def auto_expand_aliases(self, characters):
+        actual_aliases = {}
+        duplicates = []
+        for fullname in characters:
+            aliases = self.fullname_to_possible_aliases(fullname.lower())
+            for alias in aliases:
+                # if this alias has already been flagged as a duplicate, skip it
+                if alias in duplicates:
+                    continue
+                # check if this alias is a duplicate but isn't in the duplicates list
+                if actual_aliases.has_key(alias):
+                    duplicates.append(alias)
+                    actual_aliases.pop(alias)
+                    continue
 
+                # at this point, the alias is new -- add it to the dict with the alias as the key and fullname as the value
+                actual_aliases[alias] = fullname
 
+        return actual_aliases
 
     def fullname_to_possible_aliases(self, fullname):
         """
@@ -467,9 +486,13 @@ class BookSettings(object):
         """
         aliases = []        
         parts = fullname.split()
-        
-        if parts[0] in self.HONORIFICS:
+        print ('-'*100)
+        print ('FULLNAME', fullname)
+        print ('PARTS', parts)
+        if parts[0].lower() in self.HONORIFICS:
             title = parts.pop(0)
+            print ('TITLE', title)
+            print ('PARTS AFTER TITLE POP', parts)
         else:
             title = None
             
@@ -492,4 +515,5 @@ class BookSettings(object):
         else:
             # We've got no title, so just a single word name.  No alias needed
             pass
+        print ('ALIASES', aliases)
         return aliases
