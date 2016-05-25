@@ -22,6 +22,7 @@ from calibre.ebooks.BeautifulSoup import BeautifulSoup
 from calibre.ebooks.metadata.mobi import MetadataUpdater
 
 from calibre_plugins.xray_creator.lib.book_parser import BookParser
+from calibre_plugins.xray_creator.lib.book_settings import BookSettings
 from calibre_plugins.xray_creator.lib.xray_db_writer import XRayDBWriter
 from calibre_plugins.xray_creator.lib.shelfari_parser import ShelfariParser
 
@@ -66,7 +67,7 @@ class Book(object):
     # allowed formats
     FMTS = ['mobi', 'azw3']
 
-    def __init__(self, db, book_id, formats=None, spoilers=False, send_to_device=True, create_xray=True, proxy=False, http_address=None, http_port=None):
+    def __init__(self, db, book_id, aConnection, sConnection, formats=None, spoilers=False, send_to_device=True, create_xray=True, proxy=False, http_address=None, http_port=None):
         self._db = db
         self._book_id = book_id
         self._formats = formats
@@ -81,11 +82,7 @@ class Book(object):
         self._http_port = http_port
 
         book_path = self._db.field_for('path', book_id).replace('/', os.sep)
-        self._prefs = JSONConfig(os.path.join(book_path, 'book_settings'), base_path=self.LIBRARY)
-        self._prefs.setdefault('asin', '')
-        self._prefs.setdefault('shelfari_url', '')
-        self._prefs.setdefault('aliases', {})
-        self._prefs.commit()
+        self._book_settings = BookSettings(self._db, self._book_id, aConnection, sConnection)
 
         self._get_basic_information()
         if self.status is self.FAIL:
@@ -142,15 +139,15 @@ class Book(object):
             self._status_message = self.FAILED_BASIC_INFORMATION_MISSING
             return
 
-        self._asin = self._prefs['asin'] if self._prefs['asin'] != '' else None
+        self._asin = self._book_settings.prefs['asin'] if self._book_settings.prefs['asin'] != '' else None
         if not self._asin:
             identifiers = self._db.field_for('identifiers', self._book_id)
             self._asin = self._db.field_for('identifiers', self._book_id)['mobi-asin'].decode('ascii') if 'mobi-asin' in identifiers.keys() else None
             if self._asin:
-                self._prefs['asin'] = self._asin
+                self._book_settings.prefs['asin'] = self._asin
 
-        self._shelfari_url = self._prefs['shelfari_url'] if self._prefs['shelfari_url'] != '' else None
-        self._aliases = self._prefs['aliases']
+        self._shelfari_url = self._book_settings.prefs['shelfari_url'] if self._book_settings.prefs['shelfari_url'] != '' else None
+        self._aliases = self._book_settings.prefs['aliases']
 
         # if all basic information is available, sanitize information
         if self._author_sort[-1] == '.': self._author_sort = self._author_sort[:-1] + '_'
@@ -218,7 +215,7 @@ class Book(object):
                     identifiers['mobi-asin'] = self._asin
                     mi.set_identifiers(identifiers)
                     self._db.set_metadata(self._book_id, mi)
-                    self._prefs['asin'] = self._asin
+                    self._book_settings.prefs['asin'] = self._asin
                     return connection
 
         self._status = self.FAIL
@@ -235,7 +232,7 @@ class Book(object):
                 self._status_message = self.FAILED_COULD_NOT_FIND_SHELFARI_PAGE
                 raise Exception(self._status_message)
 
-        self._prefs['shelfari_url'] = self._shelfari_url
+        self._book_settings.prefs['shelfari_url'] = self._shelfari_url
         return connection
 
     def _search_shelfari(self, connection, keywords):
@@ -282,7 +279,7 @@ class Book(object):
                 if term['label'] not in self._aliases.keys():
                     self._aliases[term['label']] = []
 
-            self._prefs['aliases'] = self._aliases
+            self._book_settings.prefs['aliases'] = self._aliases
         except:
             self._status = self.FAIL
             self._status_message = self.FAILED_COULD_NOT_PARSE_SHELFARI_DATA
