@@ -241,13 +241,8 @@ class BookSettings(object):
         """
         aliases = []        
         parts = fullname.split()
-        print ('-'*100)
-        print ('FULLNAME', fullname)
-        print ('PARTS', parts)
         if parts[0].lower() in self.HONORIFICS:
             title = parts.pop(0)
-            print ('TITLE', title)
-            print ('PARTS AFTER TITLE POP', parts)
         else:
             title = None
             
@@ -257,9 +252,6 @@ class BookSettings(object):
             surname = parts.pop() # This will cover double barrel surnames, we split on whitespace only
             christian_name = parts.pop(0)
             middlenames = parts
-            print ('SURNAME', surname)
-            print ('CHRISTIAN NAME', christian_name)
-            print ('MIDDLENAMES', middlenames)
             if title:
                 aliases.append("%s %s" % (title, surname))
                 if "lord" in title:
@@ -274,5 +266,4 @@ class BookSettings(object):
         else:
             # We've got no title, so just a single word name.  No alias needed
             pass
-        print ('ALIASES', aliases)
         return aliases

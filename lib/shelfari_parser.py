@@ -103,7 +103,7 @@ class ShelfariParser(object):
         self._terms.update(self._get_data_from_ul('Glossary'))
 
     def get_quotes(self):
-        if self._quotations_html_source:
+        if self._quotations_html_source is not None:
             quoteList = self._quotations_html_source.xpath('//ul[@class="li_6"]//li//blockquote/text()')
             self._quotes = [quote[1:-1].lower() for quote in quoteList]
         else:
