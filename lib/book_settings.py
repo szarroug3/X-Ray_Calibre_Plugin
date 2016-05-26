@@ -17,11 +17,15 @@ class BookSettings(object):
     SHELFARI_URL_PAT = re.compile(r'href="(.+/books/.+?)"')
     HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/html", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0"}
     LIBRARY = current_library_path()
-    HONORIFICS = "mr mrs ms miss master sir madam lord dame lady prof professor doctor dr father reverend"
-    HONORIFICS += "atty attorney hon honoroable president pres gov governor sen senator"
-    HONORIFICS += "ofc officer pvt private cpl corporal sgt sargent maj major capt captain cmdr commander lt lieutenant col colonel gen general"
+    HONORIFICS = 'mr mrs ms esq prof dr fr rev pr atty adv hon pres gov sen ofc pvt cpl sgt maj capt cmdr lt col gen'
     HONORIFICS = HONORIFICS.split()
-    HONORIFICS.extend([x + "." for x in HONORIFICS])
+    HONORIFICS.extend([x + '.' for x in HONORIFICS])
+    HONORIFICS += 'miss master sir madam lord dame lady esquire professor doctor father mother brother sister reverend pastor elder rabbi sheikh'.split()
+    HONORIFICS += 'attorney advocate honorable president governor senator officer private corporal sargent major captain commander lieutenant colonel general'.split()
+    RELIGIOUS_HONORIFICS = 'fr br sr rev pr'
+    RELIGIOUS_HONORIFICS = RELIGIOUS_HONORIFICS.split()
+    RELIGIOUS_HONORIFICS.extend([x + '.' for x in RELIGIOUS_HONORIFICS])
+    RELIGIOUS_HONORIFICS += 'father mother brother sister reverend pastor elder rabbi sheikh'.split()
 
     def __init__(self, db, book_id, aConnection, sConnection):
         self._db = db
@@ -241,8 +245,12 @@ class BookSettings(object):
         """
         aliases = []        
         parts = fullname.split()
+
         if parts[0].lower() in self.HONORIFICS:
-            title = parts.pop(0)
+            title = []
+            while len(parts) > 0 and parts[0].lower() in self.HONORIFICS:
+                title.append(parts.pop(0))
+            title = ' '.join(title)
         else:
             title = None
             
@@ -253,16 +261,18 @@ class BookSettings(object):
             christian_name = parts.pop(0)
             middlenames = parts
             if title:
-                aliases.append("%s %s" % (title, surname))
-                if "lord" in title:
+                if title in self.RELIGIOUS_HONORIFICS:
                     aliases.append("%s %s" % (title, christian_name))
+                else:
+                    aliases.append("%s %s" % (title, surname))
             aliases.append(christian_name)
             aliases.append(surname)
             aliases.append("%s %s" % (christian_name, surname))
 
         elif title:
             # Odd, but got Title Name (eg. Lord Buttsworth), so see if we can alias
-            aliases.append(parts[0])
+            if len(parts) > 0:
+                aliases.append(parts[0])
         else:
             # We've got no title, so just a single word name.  No alias needed
             pass
