@@ -26,6 +26,10 @@ class BookSettings(object):
     RELIGIOUS_HONORIFICS = RELIGIOUS_HONORIFICS.split()
     RELIGIOUS_HONORIFICS.extend([x + '.' for x in RELIGIOUS_HONORIFICS])
     RELIGIOUS_HONORIFICS += 'father mother brother sister reverend pastor elder rabbi sheikh'.split()
+    DOUBLE_HONORIFICS = 'lord'
+    # We want all the honorifics to be in the general honorifics list so when we're checking if a word is an honorifics, we only need to search in one list
+    HONORIFICS += RELIGIOUS_HONORIFICS
+    HONORIFICS += DOUBLE_HONORIFICS
 
     def __init__(self, db, book_id, aConnection, sConnection):
         self._db = db
@@ -261,8 +265,17 @@ class BookSettings(object):
             christian_name = parts.pop(0)
             middlenames = parts
             if title:
+                # Religious Honorifics usually only use {Title} {ChristianName}
+                # ie. John Doe could be Father John but usually not Father Doe
                 if title in self.RELIGIOUS_HONORIFICS:
                     aliases.append("%s %s" % (title, christian_name))
+                # Some titles work as both {Title} {ChristianName} and {Title} {Lastname}
+                # ie. John Doe could be Lord John or Lord Doe
+                elif title in self.DOUBLE_HONORIFICS:
+                    aliases.append("%s %s" % (title, christian_name))
+                    aliases.append("%s %s" % (title, surname))
+                # Everything else usually goes {Title} {Lastname}
+                # ie. John Doe could be Captain Doe but usually not Captain John
                 else:
                     aliases.append("%s %s" % (title, surname))
             aliases.append(christian_name)
