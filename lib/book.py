@@ -75,6 +75,40 @@ class Book(object):
         self._https_address = https_address
         self._https_port = https_port
 
+        from calibre.customize.ui import device_plugins
+        from calibre.devices.scanner import DeviceScanner
+        dev = None
+        scanner = DeviceScanner()
+        scanner.scan()
+        connected_devices = []
+        for d in device_plugins():
+            dev_connected = scanner.is_device_connected(d)
+            if isinstance(dev_connected, tuple):
+                ok, det = dev_connected
+                if ok:
+                    dev = d
+                    dev.reset(log_packets=False, detected_device=det)
+                    connected_devices.append((det, dev))
+
+        if dev is None:
+            print >>sys.stderr, 'Unable to find a connected ebook reader.'
+            return
+
+        for det, d in connected_devices:
+            try:
+                d.open(det, None)
+            except:
+                continue
+            else:
+                dev = d
+                break
+        print '-'*100
+        print dev
+        for book in dev.books():
+            print book.path
+            print book
+        print '-'*100
+
         book_path = self._db.field_for('path', book_id).replace('/', os.sep)
         self._book_settings = BookSettings(self._db, self._book_id, connection)
 
