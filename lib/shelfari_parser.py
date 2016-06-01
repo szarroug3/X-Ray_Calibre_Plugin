@@ -88,6 +88,10 @@ class ShelfariParser(object):
 
         for li in ul[0]:
             label = li.getchildren()[0].text
+            if not label:
+                # Shelfari can have glossary entries with a definition but no term.
+                # Not much we can do but skip it.
+                continue
             labelAndDesc = li.xpath("string()")[len(label):]
             descSearch = self.DESC_PAT.search(labelAndDesc)
             desc = descSearch.group(1) if descSearch else None

@@ -59,13 +59,13 @@ class BookSettings(object):
 
         self.shelfari_url = self._prefs['shelfari_url']
         if self.shelfari_url == '':
-            url = ''
+            url = None
             if self._prefs['asin'] != '':
                 url = self.search_shelfari(self._prefs['asin'])
-            if url != '' and self.title != 'Unknown' and self.author != 'Unknown':
+            if not url and self.title != 'Unknown' and self.author != 'Unknown':
                 url = self.search_shelfari(self.title_and_author)
 
-            if url != '':
+            if url:
                 self.shelfari_url = url
                 self._prefs['shelfari_url'] = self.shelfari_url
 
