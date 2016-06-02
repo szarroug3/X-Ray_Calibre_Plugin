@@ -4,7 +4,6 @@ import os
 import re
 from struct import unpack
 from random import randrange
-from datetime import datetime
 
 from calibre.ebooks.mobi.huffcdic import HuffReader
 from calibre.ebooks.mobi.reader.mobi6 import MobiReader

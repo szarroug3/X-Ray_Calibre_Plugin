@@ -1,10 +1,8 @@
 # xray_creator.py
 
-from datetime import datetime
 from httplib import HTTPSConnection
 
 from calibre import get_proxies
-
 from calibre_plugins.xray_creator.lib.book import Book
 
 class XRayCreator(object):

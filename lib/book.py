@@ -1,35 +1,23 @@
 # Book.py
 
 import os
-import sys
-import re
 import struct
-import ctypes
-import subprocess
 from glob import glob
-from shutil import copy, rmtree
 from urllib import urlencode
 from datetime import datetime
 from cStringIO import StringIO
 from httplib import HTTPSConnection
 
-from calibre.utils.config import JSONConfig
-from calibre.library import current_library_path
-
 from calibre.ebooks.mobi import MobiError
-from calibre.ebooks.BeautifulSoup import BeautifulSoup
+from calibre.customize.ui import device_plugins
+from calibre.library import current_library_path
+from calibre.devices.scanner import DeviceScanner
 from calibre.ebooks.metadata.mobi import MetadataUpdater
-from calibre.ebooks.metadata.meta import get_metadata, set_metadata
 
 from calibre_plugins.xray_creator.lib.book_parser import BookParser
 from calibre_plugins.xray_creator.lib.book_settings import BookSettings
 from calibre_plugins.xray_creator.lib.xray_db_writer import XRayDBWriter
 from calibre_plugins.xray_creator.lib.goodreads_parser import GoodreadsParser
-
-
-# Drive types - mirror's what Window's GetDriveType() API returns, for convenience
-DRIVE_REMOVABLE   = 2
-DRIVE_FIXED       = 3
 
 books_updated = []
 books_skipped = []
@@ -75,40 +63,6 @@ class Book(object):
         self._https_address = https_address
         self._https_port = https_port
 
-        from calibre.customize.ui import device_plugins
-        from calibre.devices.scanner import DeviceScanner
-        dev = None
-        scanner = DeviceScanner()
-        scanner.scan()
-        connected_devices = []
-        for d in device_plugins():
-            dev_connected = scanner.is_device_connected(d)
-            if isinstance(dev_connected, tuple):
-                ok, det = dev_connected
-                if ok:
-                    dev = d
-                    dev.reset(log_packets=False, detected_device=det)
-                    connected_devices.append((det, dev))
-
-        if dev is None:
-            print >>sys.stderr, 'Unable to find a connected ebook reader.'
-            return
-
-        for det, d in connected_devices:
-            try:
-                d.open(det, None)
-            except:
-                continue
-            else:
-                dev = d
-                break
-        print '-'*100
-        print dev
-        for book in dev.books():
-            print book.path
-            print book
-        print '-'*100
-
         book_path = self._db.field_for('path', book_id).replace('/', os.sep)
         self._book_settings = BookSettings(self._db, self._book_id, connection)
 
@@ -152,13 +106,12 @@ class Book(object):
     # get book's title, title sort, author and author sort if it exists
     def _get_basic_information(self):
         self._title = self._db.field_for('title', self._book_id)
-        self._title_sort = self._db.field_for('sort', self._book_id)
 
         self._author = self._db.field_for('authors', self._book_id)
+        self._author_list = self._author
         if len(self._author) > 0:
             self._author = ' & '.join(self._author)
-        self._author_sort = self._db.field_for('author_sort', self._book_id)
-        if self._title is 'Unknown' or self._title_sort is 'Unknown' or not self._author or not self._author_sort:
+        if self._title is 'Unknown' or not self._author:
             self._status = self.FAIL
             self._status_message = self.FAILED_BASIC_INFORMATION_MISSING
             return
@@ -265,8 +218,6 @@ class Book(object):
 
             info['local_book'] = local_book
             info['local_xray'] = os.path.join('.'.join(local_book.split('.')[:-1]) + '.sdr', fmt.lower())
-            info['device_book'] = os.path.join('documents', self._author_sort, self._title_sort + ' - ' + self._author_in_filename + '.' + fmt.lower())
-            info['device_xray'] = '.'.join(info['device_book'].split('.')[:-1]) + '.sdr'
             info['status'] = self.IN_PROGRESS
             info['status_message'] = None
             self._format_specific_info.append(info)
@@ -318,55 +269,37 @@ class Book(object):
         if info['status'] is self.FAIL:
             raise Exception(info['status_message'])
 
-    def _find_device(self):
+    def _find_device_books(self):
         """
-        Look for the Kindle and return the device drive (for Windows) or mount point (for OS X/Linux)
+        Look for the Kindle and return the list of books on it
         """
-        drive_info = self._get_drive_info()
-        removable_drives = [drive_letter for drive_letter, drive_type in drive_info if drive_type == DRIVE_REMOVABLE]
-        for drive in removable_drives:
-            magic_file = os.path.join(drive, "system", "version.txt")
-            if os.path.exists(magic_file):
-                if open(magic_file).readline().startswith("Kindle"):
-                    return drive
-        return None
+        dev = None
+        scanner = DeviceScanner()
+        scanner.scan()
+        connected_devices = []
+        for d in device_plugins():
+            dev_connected = scanner.is_device_connected(d)
+            if isinstance(dev_connected, tuple):
+                ok, det = dev_connected
+                if ok:
+                    dev = d
+                    dev.reset(log_packets=False, detected_device=det)
+                    connected_devices.append((det, dev))
 
-    # Return list of tuples mapping drive letters to drive types
-    def _get_drive_info(self):
-        """
-        Return a list of tuples, each tuple containing drive letter/path and drive type
-        
-        eg. ("C:", DRIVE_FIXED) or ("/Volumes/Kindle", DRIVE_REMOVABLE)
-        """
-        result = []
-        if sys.platform == "win32":    
-            bitmask = ctypes.windll.kernel32.GetLogicalDrives()
-            for i in range(26):
-                bit = 2 ** i
-                if bit & bitmask:
-                    drive_letter = '%s:' % chr(65 + i)
-                    drive_type = ctypes.windll.kernel32.GetDriveTypeA('%s\\' % drive_letter)
-                    result.append((drive_letter, drive_type))
-        elif sys.platform == "darwin" or "linux" in sys.platform:
-            # mount output shows us what is attached
-            # Ignore anything that isn't a device, which will start with slash (eg. /dev/disk1)
-            # Only interested in device name and mountpoint
-            stdout, stderr = subprocess.Popen("mount", stdout=subprocess.PIPE).communicate()            
-            for mount_entry in [x.split() for x in stdout.split('\n') if x.startswith("/")]:
-                device = mount_entry[0]
-                mountpoint = mount_entry[2]
-                if mountpoint == "/":
-                    result.append((mountpoint, DRIVE_FIXED))
-                else:
-                    # This is a slight lie - non-Windows systems don't have such an obvious
-                    # split between fixed + removeable, so with the exception of the root device
-                    # (which I'm pretty certain isn't a Kindle!), claim everything is removable
-                    result.append((mountpoint, DRIVE_REMOVABLE))
-        else:
-            import errno
-            raise EnvironmentError(errno.EINVAL, "Unknown platform %s" % (sys.platform))
-            
-        return result
+        if dev is None:
+            return None
+
+        for det, d in connected_devices:
+            try:
+                d.open(det, None)
+            except:
+                continue
+            else:
+                dev = d
+                break
+
+        return dev.books()
+
 
     def create_xray(self, connection, info, log=None, abort=None, remove_files_from_dir=False):
         if abort and abort.isSet():
@@ -395,19 +328,24 @@ class Book(object):
         return connection
 
     def send_xray(self, overwrite=True, already_created=True, log=None, abort=None, connection=None):
-        device = self._find_device()
+        device_books = self._find_device_books()
         for info in self.formats_not_failing():
             try:
-                if not device:
+                if not device_books:
                     info['send_status'] = self.FAIL
                     info['status_message'] = self.FAILED_NO_CONNECTED_DEVICE
                     continue
+                for device_book in device_books:
+                    if device_book._data['title'] == self.title and device_book.path.split('.')[-1].lower() == info['format'].lower():
+                        for author in device_book._data['authors']:
+                            if author not in self._author_list:
+                                continue
 
-                info['device_book'] = os.path.join(device, info['device_book'])
-                info['device_xray'] = os.path.join(device, info['device_xray'])
+                        info['device_book'] = device_book.path
+                        info['device_xray'] = '.'.join(device_book.path.split('.')[:-1]) + '.sdr'
 
                 # check to make sure book is on the device
-                if not os.path.exists(info['device_book']):
+                if not info.has_key('device_book'):
                     info['send_status'] = self.FAIL
                     info['status_message'] = self.FAILED_BOOK_NOT_ON_DEVICE
                     continue
@@ -487,7 +425,10 @@ class Book(object):
                     info['send_status'] = self.FAIL
                     info['status_message'] = self.FAILED_FAILED_TO_SEND_XRAY
                     continue
-            except:
+            except Exception as e:
+                print e
+                import traceback
+                print traceback.print_exc()
                 info['send_status'] = self.FAIL
                 info['status_message'] = self.FAILED_FAILED_TO_SEND_XRAY
 

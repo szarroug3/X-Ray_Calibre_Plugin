@@ -2,8 +2,6 @@
 
 import os
 import re
-import functools
-from urllib import urlencode
 from httplib import HTTPSConnection
 
 from calibre_plugins.xray_creator.lib.goodreads_parser import GoodreadsParser

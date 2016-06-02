@@ -8,7 +8,7 @@ __license__   = 'GPL v3'
 __copyright__ = '2016, Samreen Zarroug, Anthony Toole, & Alex Mayer'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import QMenu, QToolButton, QDialog
+from PyQt5.Qt import QMenu, QToolButton
 
 from calibre.gui2 import error_dialog
 from calibre.gui2 import Dispatcher

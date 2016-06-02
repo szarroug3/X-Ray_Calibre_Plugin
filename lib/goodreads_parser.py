@@ -1,6 +1,5 @@
 # goodreads_parser.py
 
-import re
 from lxml import html
 from httplib import HTTPSConnection
 

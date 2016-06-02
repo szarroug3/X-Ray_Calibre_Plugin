@@ -7,7 +7,6 @@ __license__   = 'GPL v3'
 __copyright__ = '2016, Samreen Zarroug & Alex Mayer'
 __docformat__ = 'restructuredtext en'
 
-import os
 import functools
 from PyQt5.QtCore import *
 from httplib import HTTPSConnection
@@ -15,9 +14,9 @@ from httplib import HTTPSConnection
 from PyQt5.Qt import QDialog, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout
 from PyQt5.Qt import QLabel, QLineEdit, QPushButton, QScrollArea
 
+from calibre import get_proxies
 from calibre_plugins.xray_creator.lib.book_settings import BookSettings
 
-from calibre import get_proxies
 
 class BookConfigWidget(QDialog):
     def __init__(self, db, ids, parent):
