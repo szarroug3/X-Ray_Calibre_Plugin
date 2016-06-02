@@ -17,14 +17,14 @@ from calibre.utils.config import JSONConfig
 from calibre.library import current_library_path
 
 from calibre.ebooks.mobi import MobiError
-from calibre.ebooks.metadata.meta import get_metadata, set_metadata
 from calibre.ebooks.BeautifulSoup import BeautifulSoup
 from calibre.ebooks.metadata.mobi import MetadataUpdater
+from calibre.ebooks.metadata.meta import get_metadata, set_metadata
 
 from calibre_plugins.xray_creator.lib.book_parser import BookParser
 from calibre_plugins.xray_creator.lib.book_settings import BookSettings
 from calibre_plugins.xray_creator.lib.xray_db_writer import XRayDBWriter
-from calibre_plugins.xray_creator.lib.shelfari_parser import ShelfariParser
+from calibre_plugins.xray_creator.lib.goodreads_parser import GoodreadsParser
 
 
 # Drive types - mirror's what Window's GetDriveType() API returns, for convenience
@@ -36,7 +36,6 @@ books_skipped = []
 
 class Book(object):
     AMAZON_ASIN_PAT = re.compile(r'data\-asin=\"([a-zA-z0-9]+)\"')
-    SHELFARI_URL_PAT = re.compile(r'href="(.+/books/.+?)"')
     HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/html", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0"}
     LIBRARY = current_library_path()
 
@@ -47,12 +46,12 @@ class Book(object):
 
     # Status Messages
     FAILED_BASIC_INFORMATION_MISSING = 'Missing title, title sort, author, and/or author sort.'
-    FAILED_COULD_NOT_CONNECT_TO_AMAZON = 'Had a problem connecting to amazon.'
-    FAILED_COULD_NOT_CONNECT_TO_SHELFARI = 'Had a problem connecting to shelfari.'
+    FAILED_COULD_NOT_CONNECT_TO_AMAZON = 'Had a problem connecting to Amazon.'
+    FAILED_COULD_NOT_CONNECT_TO_GOODREADS = 'Had a problem connecting to Goodreads.'
     FAILED_COULD_NOT_FIND_AMAZON_PAGE = 'Could not find amazon page.'
-    FAILED_COULD_NOT_FIND_AMAZON_ASIN = 'Could not find asin on amazon page.'
-    FAILED_COULD_NOT_FIND_SHELFARI_PAGE = 'Could not find shelfari page.'
-    FAILED_COULD_NOT_PARSE_SHELFARI_DATA = 'Could not parse shelfari data.'
+    FAILED_COULD_NOT_FIND_AMAZON_ASIN = 'Could not find asin on Amazon page.'
+    FAILED_COULD_NOT_FIND_GOODREADS_PAGE = 'Could not find Goodreads page.'
+    FAILED_COULD_NOT_PARSE_GOODREADS_DATA = 'Could not parse Goodreads data.'
     FAILED_UNSUPPORTED_FORMAT = 'Chosen format is unsupported.'
     FAILED_LOCAL_BOOK_NOT_FOUND = 'Local book not found.'
     FAILED_UNABLE_TO_PARSE_BOOK = 'Unable to parse book.'
@@ -67,11 +66,10 @@ class Book(object):
     # allowed formats
     FMTS = ['mobi', 'azw3']
 
-    def __init__(self, db, book_id, aConnection, sConnection, formats=None, spoilers=False, send_to_device=True, create_xray=True, proxy=False, http_address=None, http_port=None):
+    def __init__(self, db, book_id, aConnection, gConnection, formats=None, send_to_device=True, create_xray=True, proxy=False, http_address=None, http_port=None):
         self._db = db
         self._book_id = book_id
         self._formats = formats
-        self._spoilers = spoilers
         self._send_to_device = send_to_device
         self._create_xray = create_xray
         self._status = self.IN_PROGRESS
@@ -82,7 +80,7 @@ class Book(object):
         self._http_port = http_port
 
         book_path = self._db.field_for('path', book_id).replace('/', os.sep)
-        self._book_settings = BookSettings(self._db, self._book_id, aConnection, sConnection)
+        self._book_settings = BookSettings(self._db, self._book_id, aConnection, gConnection)
 
         self._get_basic_information()
         if self.status is self.FAIL:
@@ -113,8 +111,8 @@ class Book(object):
         return self._asin
     
     @property
-    def shelfari_url(self):
-        return self._shelfari_url
+    def goodreads_url(self):
+        return self._goodreads_url
 
     @property
     def format_specific_info(self):
@@ -146,7 +144,7 @@ class Book(object):
             if self._asin:
                 self._book_settings.prefs['asin'] = self._asin
 
-        self._shelfari_url = self._book_settings.prefs['shelfari_url'] if self._book_settings.prefs['shelfari_url'] != '' else None
+        self._goodreads_url = self._book_settings.prefs['goodreads_url'] if self._book_settings.prefs['goodreads_url'] != '' else None
         self._aliases = self._book_settings.prefs['aliases']
 
         # if all basic information is available, sanitize information
@@ -222,20 +220,20 @@ class Book(object):
         self._status_message = self.FAILED_COULD_NOT_FIND_AMAZON_ASIN
         raise Exception(self._status_message)
 
-    def get_shelfari_url(self, connection):
-        self._shelfari_url = None
-        connection = self._search_shelfari(connection, self._asin)
-        if not self._shelfari_url:
-            connection = self._search_shelfari(connection, self.title_and_author)
-            if not self._shelfari_url:
+    def get_goodreads_url(self, connection):
+        self._goodreads_url = None
+        connection = self._search_goodreads(connection, self._asin)
+        if not self._goodreads_url:
+            connection = self._search_goodreads(connection, self.title_and_author)
+            if not self._goodreads_url:
                 self._status = self.FAIL
-                self._status_message = self.FAILED_COULD_NOT_FIND_SHELFARI_PAGE
+                self._status_message = self.FAILED_COULD_NOT_FIND_GOODREADS_PAGE
                 raise Exception(self._status_message)
 
-        self._book_settings.prefs['shelfari_url'] = self._shelfari_url
+        self._book_settings.prefs['goodreads_url'] = self._goodreads_url
         return connection
 
-    def _search_shelfari(self, connection, keywords):
+    def _search_goodreads(self, connection, keywords):
         query = urlencode ({'Keywords': keywords})
         try:
             connection.request('GET', '/search/books?' + query)
@@ -245,44 +243,44 @@ class Book(object):
                 connection.close()
                 if self._proxy:
                     connection = HTTPConnection(self._http_address, self._http_port)
-                    connection.set_tunnel('www.shelfari.com', 80)
+                    connection.set_tunnel('www.goodreads.com', 80)
                 else:
-                    connection = HTTPConnection('www.shelfari.com')
+                    connection = HTTPConnection('www.goodreads.com')
 
                 connection.request('GET', '/search/books?' + query)
                 response = connection.getresponse().read()
             except:
                 self._status = self.FAIL
-                self._status_message = self.FAILED_COULD_NOT_CONNECT_TO_SHELFARI
+                self._status_message = self.FAILED_COULD_NOT_CONNECT_TO_GOODREADS
                 raise Exception(self._status_message)
         
         # check to make sure there are results
         if 'did not return any results' in response:
             return connection
-        urlsearch = self.SHELFARI_URL_PAT.search(response)
+        urlsearch = self.GOODREADS_URL_PAT.search(response)
         if not urlsearch:
             return connection
 
-        self._shelfari_url = urlsearch.group(1)
+        self._goodreads_url = urlsearch.group(1)
         return connection
 
-    def _parse_shelfari_data(self):
+    def _parse_goodreads_data(self):
         try:
-            self._parsed_shelfari_data = ShelfariParser(self._shelfari_url, spoilers=self._spoilers)
-            self._parsed_shelfari_data.parse()
+            self._parsed_goodreads_data = GoodreadsParser(self._goodreads_url)
+            self._parsed_goodreads_data.parse()
 
-            for char in self._parsed_shelfari_data.characters.values():
+            for char in self._parsed_goodreads_data.characters.values():
                 if char['label'] not in self._aliases.keys():
                     self._aliases[char['label']] = []
             
-            for term in self._parsed_shelfari_data.terms.values():
+            for term in self._parsed_goodreads_data.terms.values():
                 if term['label'] not in self._aliases.keys():
                     self._aliases[term['label']] = []
 
             self._book_settings.prefs['aliases'] = self._aliases
         except:
             self._status = self.FAIL
-            self._status_message = self.FAILED_COULD_NOT_PARSE_SHELFARI_DATA
+            self._status_message = self.FAILED_COULD_NOT_PARSE_GOODREADS_DATA
             raise Exception(self._status_message)
 
     def _get_format_specific_information(self):
@@ -315,7 +313,7 @@ class Book(object):
     def _parse_book(self, info=None):
         def _parse(info):
             try:
-                info['parsed_book_data'] = BookParser(info['format'], info['local_book'], self._parsed_shelfari_data, self._aliases)
+                info['parsed_book_data'] = BookParser(info['format'], info['local_book'], self._parsed_goodreads_data, self._aliases)
                 info['parsed_book_data'].parse()
             except:
                 info['status'] = self.FAIL
@@ -343,7 +341,7 @@ class Book(object):
                     for file in glob(os.path.join(info['local_xray'], '*.asc')):
                         os.remove(file)
 
-                xray_db_writer = XRayDBWriter(info['local_xray'], self._asin, self._shelfari_url, info['parsed_book_data'])
+                xray_db_writer = XRayDBWriter(info['local_xray'], self._asin, self._goodreads_url, info['parsed_book_data'])
                 xray_db_writer.create_xray()
                 info['status'] = self.SUCCESS
                 info['status_message'] = None
@@ -409,7 +407,7 @@ class Book(object):
             
         return result
 
-    def create_xray(self, aConnection, sConnection, info, log=None, abort=None, remove_files_from_dir=False):
+    def create_xray(self, aConnection, gConnection, info, log=None, abort=None, remove_files_from_dir=False):
         if abort and abort.isSet():
             return
         if not self._asin or len(self._asin) != 10:
@@ -418,21 +416,21 @@ class Book(object):
 
         if abort and abort.isSet():
             return
-        if not self._shelfari_url:
-            if log: log('%s \t\tGetting shelfari url...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        if not self._goodreads_url:
+            if log: log('%s \t\tGetting Goodreads url...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
             try:
-                sConnection = self.get_shelfari_url(sConnection)
+                gConnection = self.get_goodreads_url(gConnection)
             except:
                 # try to get our own asin and try again if the one in mobi-asin doesn't work out
                 self._status = self.IN_PROGRESS
                 self._status_message = None
                 aConnection = self.get_asin(aConnection)
-                sConnection = self.get_shelfari_url(sConnection)
+                gConnection = self.get_goodreads_url(gConnection)
 
         if abort and abort.isSet():
             return
-        if log: log('%s \t\tParsing shelfari data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        self._parse_shelfari_data()
+        if log: log('%s \t\tParsing Goodreads data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        self._parse_goodreads_data()
         
         if abort and abort.isSet():
             return
@@ -443,9 +441,9 @@ class Book(object):
             return
         if log: log('%s \t\tCreating x-ray...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         self._write_xray(info, remove_files_from_dir=remove_files_from_dir)
-        return (aConnection, sConnection)
+        return (aConnection, gConnection)
 
-    def send_xray(self, overwrite=True, already_created=True, log=None, abort=None, aConnection=None, sConnection=None):
+    def send_xray(self, overwrite=True, already_created=True, log=None, abort=None, aConnection=None, gConnection=None):
         device = self._find_device()
         for info in self.formats_not_failing():
             try:
@@ -476,7 +474,7 @@ class Book(object):
                         continue
 
                     try:
-                        aConnection, sConnection = self.create_xray(aConnection, sConnection, info=info, log=log, abort=abort)
+                        aConnection, gConnection = self.create_xray(aConnection, gConnection, info=info, log=log, abort=abort)
                     except Exception as e:
                         info['send_status'] = self.FAIL
                         info['status_message'] = e
@@ -543,9 +541,9 @@ class Book(object):
                 info['send_status'] = self.FAIL
                 info['status_message'] = self.FAILED_FAILED_TO_SEND_XRAY
 
-        return (aConnection, sConnection)
+        return (aConnection, gConnection)
 
-    def create_xray_event(self, aConnection, sConnection, log=None, notifications=None, abort=None, book_num=None, total=None):
+    def create_xray_event(self, aConnection, gConnection, log=None, notifications=None, abort=None, book_num=None, total=None):
         actions = 6.0
         if self._send_to_device:
             actions += 1
@@ -562,24 +560,24 @@ class Book(object):
             if abort and abort.isSet():
                 return
             try:
-                if not self._shelfari_url:
-                    if notifications: notifications.put((perc/(total * actions), 'Getting %s shelfari url' % self.title_and_author))
-                    if log: log('%s \tGetting shelfari url...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-                    sConnection = self.get_shelfari_url(sConnection)
+                if not self._goodreads_url:
+                    if notifications: notifications.put((perc/(total * actions), 'Getting %s Goodreads url' % self.title_and_author))
+                    if log: log('%s \tGetting Goodreads url...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+                    gConnection = self.get_goodreads_url(gConnection)
             except:
                 # try to get our own asin and try again if the one in mobi-asin doesn't work out
                 self._status = self.IN_PROGRESS
                 self._status_message = None
                 aConnection = self.get_asin(aConnection)
-                sConnection = self.get_shelfari_url(sConnection)
+                gConnection = self.get_goodreads_url(gConnection)
             perc += 1
 
             if abort and abort.isSet():
                 return
-            if notifications: notifications.put((perc/(total * actions), 'Parsing %s shelfari data' % self.title_and_author))
-            if log: log('%s \tParsing shelfari data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+            if notifications: notifications.put((perc/(total * actions), 'Parsing %s Goodreads data' % self.title_and_author))
+            if log: log('%s \tParsing Goodreads data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
             perc += 1
-            self._parse_shelfari_data()
+            self._parse_goodreads_data()
 
             if abort and abort.isSet():
                 return
@@ -611,11 +609,11 @@ class Book(object):
                 if log: log('%s \tSending x-ray to device...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
                 perc += 1
                 self.send_xray()
-            return (aConnection, sConnection)
+            return (aConnection, gConnection)
         except:
-            return (aConnection, sConnection)
+            return (aConnection, gConnection)
 
-    def send_xray_event(self, aConnection, sConnection, log=None, notifications=None, abort=None, book_num=None, total=None):
+    def send_xray_event(self, aConnection, gConnection, log=None, notifications=None, abort=None, book_num=None, total=None):
         actions = 2.0
         perc = book_num * actions
         if abort and abort.isSet():
@@ -629,7 +627,7 @@ class Book(object):
             return
         if notifications: notifications.put((perc/(total * actions), 'Sending %s x-ray to device' % self.title_and_author))
         if log: log('%s \tSending x-ray to device...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        return self.send_xray(overwrite=False, already_created=False, log=log, abort=abort, aConnection=aConnection, sConnection=sConnection)
+        return self.send_xray(overwrite=False, already_created=False, log=log, abort=abort, aConnection=aConnection, gConnection=gConnection)
 
 class ASINUpdater(MetadataUpdater):
     def update(self, asin, fmt):

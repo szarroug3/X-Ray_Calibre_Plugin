@@ -6,7 +6,7 @@ import functools
 from urllib import urlencode
 from httplib import HTTPConnection
 
-from calibre_plugins.xray_creator.lib.shelfari_parser import ShelfariParser
+from calibre_plugins.xray_creator.lib.goodreads_parser import GoodreadsParser
 
 from calibre.utils.config import JSONConfig
 from calibre.library import current_library_path
@@ -14,7 +14,8 @@ from calibre.ebooks.BeautifulSoup import BeautifulSoup
 
 class BookSettings(object):
     AMAZON_ASIN_PAT = re.compile(r'data\-asin=\"([a-zA-z0-9]+)\"')
-    SHELFARI_URL_PAT = re.compile(r'href="(.+/books/.+?)"')
+    GOODREADS_URL_PAT = re.compile(r'href="(/book/show/.+?)"')
+
     HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/html", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0"}
     LIBRARY = current_library_path()
     HONORIFICS = 'mr mrs ms esq prof dr fr rev pr atty adv hon pres gov sen ofc pvt cpl sgt maj capt cmdr lt col gen'
@@ -31,17 +32,17 @@ class BookSettings(object):
     HONORIFICS += RELIGIOUS_HONORIFICS
     HONORIFICS += DOUBLE_HONORIFICS
 
-    def __init__(self, db, book_id, aConnection, sConnection):
+    def __init__(self, db, book_id, aConnection, gConnection):
         self._db = db
         self._book_id = book_id
         self._aConnection = aConnection
-        self._sConnection = sConnection
+        self._gConnection = gConnection
 
         book_path = self._db.field_for('path', book_id).replace('/', os.sep)
 
         self._prefs = JSONConfig(os.path.join(book_path, 'book_settings'), base_path=self.LIBRARY)
         self._prefs.setdefault('asin', '')
-        self._prefs.setdefault('shelfari_url', '')
+        self._prefs.setdefault('goodreads_url', '')
         self._prefs.setdefault('aliases', {})
         self._prefs.commit()
 
@@ -57,20 +58,20 @@ class BookSettings(object):
             if self.asin:
                 self._prefs['asin'] = self.asin
 
-        self.shelfari_url = self._prefs['shelfari_url']
-        if self.shelfari_url == '':
+        self.goodreads_url = self._prefs['goodreads_url']
+        if self.goodreads_url == '':
             url = None
             if self._prefs['asin'] != '':
-                url = self.search_shelfari(self._prefs['asin'])
+                url = self.search_goodreads(self._prefs['asin'])
             if not url and self.title != 'Unknown' and self.author != 'Unknown':
-                url = self.search_shelfari(self.title_and_author)
+                url = self.search_goodreads(self.title_and_author)
 
             if url:
-                self.shelfari_url = url
-                self._prefs['shelfari_url'] = self.shelfari_url
+                self.goodreads_url = url
+                self._prefs['goodreads_url'] = self.goodreads_url
 
         self._aliases = self._prefs['aliases']
-        if len(self._aliases.keys()) == 0 and self.shelfari_url != '':
+        if len(self._aliases.keys()) == 0 and self.goodreads_url != '':
             self.update_aliases()
         self.save()
 
@@ -99,12 +100,12 @@ class BookSettings(object):
         self._asin = val
 
     @property
-    def shelfari_url(self):
-        return self._shelfari_url
+    def goodreads_url(self):
+        return self._goodreads_url
     
-    @shelfari_url.setter
-    def shelfari_url(self, val):
-        self._shelfari_url = val
+    @goodreads_url.setter
+    def goodreads_url(self, val):
+        self._goodreads_url = val
 
     @property
     def aliases(self):
@@ -123,7 +124,7 @@ class BookSettings(object):
 
     def save(self):
         self._prefs['asin'] = self.asin
-        self._prefs['shelfari_url'] = self.shelfari_url
+        self._prefs['goodreads_url'] = self.goodreads_url
         self._prefs['aliases'] = self.aliases
 
     def get_asin(self):
@@ -167,57 +168,59 @@ class BookSettings(object):
                     self._db.set_metadata(self._book_id, mi)
                     return asin
 
-    def search_shelfari(self, keywords):
-        query = urlencode ({'Keywords': keywords})
+    def search_goodreads(self, keywords):
+        query = urlencode ({'q': keywords})
         try:
-            self._sConnection.request('GET', '/search/books?' + query)
-            response = self._sConnection.getresponse().read()
+            self._gConnection.request('GET', '/search?' + query)
+            response = self._gConnection.getresponse().read()
         except:
             try:
-                self._sConnection.close()
+                self._gConnection.close()
                 if self._proxy:
-                    self._sConnection = HTTPConnection(self._http_address, self._http_port)
-                    self._sConnection.set_tunnel('www.shelfari.com', 80)
+                    self._gConnection = HTTPConnection(self._http_address, self._http_port)
+                    self._gConnection.set_tunnel('www.goodreads.com', 80)
                 else:
-                    self._sConnection = HTTPConnection('www.shelfari.com')
+                    self._gConnection = HTTPConnection('www.goodreads.com')
 
-                self._sConnection.request('GET', '/search/books?' + query)
-                response = self._sConnection.getresponse().read()
+                self._gConnection.request('GET', '/search?' + query)
+                response = self._gConnection.getresponse().read()
             except:
                 return None
         
         # check to make sure there are results
-        if 'did not return any results' in response:
+        if 'No results' in response:
             return None
 
-        urlsearch = self.SHELFARI_URL_PAT.search(response)
+        with open('test.html', 'w+') as f:
+            f.write(response)
+        urlsearch = self.GOODREADS_URL_PAT.search(response)
         if not urlsearch:
             return None
 
-        return urlsearch.group(1)
+        return 'https://www.goodreads.com' + urlsearch.group(1)
 
     def update_aliases(self, overwrite=False):
-        shelfari_parser = ShelfariParser(self.shelfari_url)
-        shelfari_parser.get_characters()
-        shelfari_parser.get_terms()
+        goodreads_parser = GoodreadsParser(self.goodreads_url)
+        goodreads_parser.get_characters()
 
         if overwrite:
             self._prefs['aliases'] = {}
             self._aliases = {}
         
-        characters = [char[1]['label'] for char in shelfari_parser.characters.items()]
+        characters = [char[1]['label'] for char in goodreads_parser.characters.items()]
         for char in characters:
             if char not in self.aliases.keys():
                 self.aliases = (char, '')
-        
-        terms = [term[1]['label'] for term in shelfari_parser.terms.items()]
-        for term in terms:
-            if term not in self.aliases.keys():
-                self.aliases = (term, '')
+
+        alias_lookup = {char: char for char in characters}
+        for char in goodreads_parser.characters.items():
+            for alias in char[1]['aliases']:
+                characters.append(alias)
+                alias_lookup[alias] = char[1]['label']
 
         aliases = self.auto_expand_aliases(characters)
         for alias, fullname in aliases.items():
-            self.aliases = (fullname, alias + ',' + ','.join(self.aliases[fullname]))
+            self.aliases = (alias_lookup[alias], alias + ',' + ','.join(self.aliases[fullname]))
 
     def auto_expand_aliases(self, characters):
         actual_aliases = {}
