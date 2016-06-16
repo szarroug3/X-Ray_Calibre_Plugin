@@ -11,7 +11,7 @@ from shutil import copy, rmtree
 from urllib import urlencode
 from datetime import datetime
 from cStringIO import StringIO
-from httplib import HTTPConnection
+from httplib import HTTPSConnection
 
 from calibre.utils.config import JSONConfig
 from calibre.library import current_library_path
@@ -66,7 +66,7 @@ class Book(object):
     # allowed formats
     FMTS = ['mobi', 'azw3']
 
-    def __init__(self, db, book_id, aConnection, gConnection, formats=None, send_to_device=True, create_xray=True, proxy=False, http_address=None, http_port=None):
+    def __init__(self, db, book_id, aConnection, gConnection, formats=None, send_to_device=True, create_xray=True, proxy=False, https_address=None, https_port=None):
         self._db = db
         self._book_id = book_id
         self._formats = formats
@@ -76,8 +76,8 @@ class Book(object):
         self._status_message = None
         self._format_specific_info = None
         self._proxy = proxy
-        self._http_address = http_address
-        self._http_port = http_port
+        self._https_address = https_address
+        self._https_port = https_port
 
         book_path = self._db.field_for('path', book_id).replace('/', os.sep)
         self._book_settings = BookSettings(self._db, self._book_id, aConnection, gConnection)
@@ -173,14 +173,14 @@ class Book(object):
         try:
             connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, headers=self.HEADERS)
             response = connection.getresponse().read()
-        except:
+        except Exception as e:
             try:
                 connection.close()
                 if self._proxy:
-                    connection = HTTPConnection(self._http_address, self._http_port)
-                    connection.set_tunnel('www.amazon.com', 80)
+                    connection = HTTPSConnection(self._https_address, self._https_port)
+                    connection.set_tunnel('www.amazon.com', 443)
                 else:
-                    connection = HTTPConnection('www.amazon.com')
+                    connection = HTTPSConnection('www.amazon.com')
 
                 connection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, headers=self.HEADERS)
                 response = connection.getresponse().read()
@@ -242,10 +242,10 @@ class Book(object):
             try:
                 connection.close()
                 if self._proxy:
-                    connection = HTTPConnection(self._http_address, self._http_port)
-                    connection.set_tunnel('www.goodreads.com', 80)
+                    connection = HTTPSConnection(self._https_address, self._https_port)
+                    connection.set_tunnel('www.goodreads.com', 443)
                 else:
-                    connection = HTTPConnection('www.goodreads.com')
+                    connection = HTTPSConnection('www.goodreads.com')
 
                 connection.request('GET', '/search/books?' + query)
                 response = connection.getresponse().read()

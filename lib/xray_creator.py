@@ -1,7 +1,7 @@
 # xray_creator.py
 
 from datetime import datetime
-from httplib import HTTPConnection
+from httplib import HTTPSConnection
 
 from calibre import get_proxies
 
@@ -23,28 +23,28 @@ class XRayCreator(object):
     
     def _initialize_books(self):
         self._proxy = False
-        self._http_address = None
-        self._http_port = None
+        self._https_address = None
+        self._https_port = None
 
-        http_proxy = get_proxies(debug=False).get('http', None)
-        if http_proxy:
+        https_proxy = get_proxies(debug=False).get('https', None)
+        if https_proxy:
             self._proxy = True
-            self._http_address = ':'.join(http_proxy.split(':')[:-1])
-            self._http_port = int(http_proxy.split(':')[-1])
+            self._https_address = ':'.join(https_proxy.split(':')[:-1])
+            self._https_port = int(https_proxy.split(':')[-1])
 
-            self._aConnection = HTTPConnection(self._http_address, self._http_port)
-            self._aConnection.set_tunnel('www.amazon.com', 80)
-            self._gConnection = HTTPConnection(self._http_address, self._http_port)
-            self._gConnection.set_tunnel('www.goodreads.com', 80)
+            self._aConnection = HTTPSConnection(self._https_address, self._https_port)
+            self._aConnection.set_tunnel('www.amazon.com', 443)
+            self._gConnection = HTTPSConnection(self._https_address, self._https_port)
+            self._gConnection.set_tunnel('www.goodreads.com', 443)
         else:
-            self._aConnection = HTTPConnection('www.amazon.com')
-            self._gConnection = HTTPConnection('www.goodreads.com')
+            self._aConnection = HTTPSConnection('www.amazon.com')
+            self._gConnection = HTTPSConnection('www.goodreads.com')
 
         self._books = []
         for book_id in self._book_ids:
             self._books.append(Book(self._db, book_id, self._aConnection, self._gConnection, formats=self._formats,
                 send_to_device=self._send_to_device, create_xray=self._create_xray, proxy=self._proxy,
-                http_address=self._http_address, http_port=self._http_port))
+                https_address=self._https_address, https_port=self._https_port))
         
         self._total_not_failing = sum([1 for book in self._books if book.status is not book.FAIL])
 
