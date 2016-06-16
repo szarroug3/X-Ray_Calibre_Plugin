@@ -202,25 +202,28 @@ class BookSettings(object):
     def update_aliases(self, overwrite=False):
         goodreads_parser = GoodreadsParser(self.goodreads_url)
         goodreads_parser.get_characters()
+        goodreads_chars =  goodreads_parser.characters
 
         if overwrite:
             self._prefs['aliases'] = {}
             self._aliases = {}
         
-        characters = [char[1]['label'] for char in goodreads_parser.characters.items()]
-        for char in characters:
-            if char not in self.aliases.keys():
-                self.aliases = (char, '')
+        characters = []
+        alias_lookup = {}
+        for char, char_data in goodreads_chars.items():
+            characters.append(char_data['label'])
+            alias_lookup[char_data['label']] = char_data['label']
 
-        alias_lookup = {char: char for char in characters}
-        for char in goodreads_parser.characters.items():
-            for alias in char[1]['aliases']:
+            if char_data['label'] not in self.aliases.keys():
+                self.aliases = (char_data['label'], ','.join(goodreads_chars[char]['aliases']))
+
+            for alias in char_data['aliases']:
                 characters.append(alias)
-                alias_lookup[alias] = char[1]['label']
+                alias_lookup[alias] = char_data['label']
 
         aliases = self.auto_expand_aliases(characters)
         for alias, fullname in aliases.items():
-            self.aliases = (alias_lookup[alias], alias + ',' + ','.join(self.aliases[fullname]))
+            self.aliases = (alias_lookup[fullname], alias + ',' + ','.join(self.aliases[alias_lookup[fullname]]))
 
     def auto_expand_aliases(self, characters):
         actual_aliases = {}
