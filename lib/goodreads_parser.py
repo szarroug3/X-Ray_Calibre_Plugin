@@ -59,7 +59,7 @@ class GoodreadsParser(object):
             label = char.text
             char_page = html.fromstring(self.open_url(char.get('href')))
             desc = char_page.xpath('//div[@class="workCharacterAboutClear"]/text()')
-            desc = desc[0].strip() if len(desc) > 0 else ''
+            desc = desc[0].strip() if len(desc) > 0 and desc[0].strip() else 'No description found on Goodreads.'
             aliases = [x.strip() for x in char_page.xpath('//div[@class="grey500BoxContent" and contains(.,"aliases")]/text()') if x.strip()]
             self._characters[entity_id] = {'label': label, 'description': desc, 'aliases': aliases}
             self._entity_id += 1
@@ -72,7 +72,7 @@ class GoodreadsParser(object):
             label = setting.text
             setting_page = html.fromstring(self.open_url(setting.get('href')))
             desc = setting_page.xpath('//div[@class="mainContentContainer "]/div[@class="mainContent"]/div[@class="mainContentFloat"]/div[@class="leftContainer"]/span/text()')
-            desc = desc[0] if len(desc) > 0 else ''
+            desc = desc[0] if len(desc) > 0 and desc[0].strip() else 'No description found on Goodreads.'
             self._settings[entity_id] = {'label': label, 'description': desc, 'aliases': []}
             self._entity_id += 1
 

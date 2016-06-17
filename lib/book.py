@@ -202,7 +202,7 @@ class Book(object):
 
             for char in self._parsed_goodreads_data.characters.values():
                 if char['label'] not in self._aliases.keys():
-                    self._aliases[char['label']] = []
+                    self._aliases[char['label']] = char['aliases']
 
             self._book_settings.prefs['aliases'] = self._aliases
         except:
