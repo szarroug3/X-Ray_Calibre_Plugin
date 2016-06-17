@@ -21,7 +21,7 @@ Mobileread Page: http://www.mobileread.com/forums/showthread.php?p=3301947#post3
 
 Some background information on X-Ray:
 ----------------------------------------------------------------------------------------------------------------------------------
-X-Ray files allow you to get information on key characters and terms from goodreads. You can do this in one of a few ways.
+X-Ray files allow you to get information on key characters and terms from Goodreads. You can do this in one of a few ways.
 1. You can highlight the word in question and if the x-ray file has information on it, a popup with a brief description will
 	show. It will also show you where this character has been mentioned in the past (will show page number and excerpt where
 	mention occurred).
@@ -30,7 +30,7 @@ X-Ray files allow you to get information on key characters and terms from goodre
 
 Note: X-Ray files work only work on Amazon products such as the Kindle PW. For more information on X-Ray files, see here:
 	http://www.amazon.com/gp/help/custom...7-239A35EB4119
-It also has a notable clips section which show quotes from goodreads. If there are not enough Goodreads quotes found, the plugin
+It also has a notable clips section which show quotes from Goodreads. If there are not enough Goodreads quotes found, the plugin
 	will add more random excerpts so there are least 20 notable clips.
 Github Page: https://github.com/szarroug3/X-Ray_Calibre_Plugin
 
