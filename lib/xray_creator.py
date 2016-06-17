@@ -31,18 +31,14 @@ class XRayCreator(object):
             self._proxy = True
             self._https_address = ':'.join(https_proxy.split(':')[:-1])
             self._https_port = int(https_proxy.split(':')[-1])
-
-            self._aConnection = HTTPSConnection(self._https_address, self._https_port)
-            self._aConnection.set_tunnel('www.amazon.com', 443)
-            self._gConnection = HTTPSConnection(self._https_address, self._https_port)
-            self._gConnection.set_tunnel('www.goodreads.com', 443)
+            self._connection = HTTPSConnection(self._https_address, self._https_port)
+            self._connection.set_tunnel('www.goodreads.com', 443)
         else:
-            self._aConnection = HTTPSConnection('www.amazon.com')
-            self._gConnection = HTTPSConnection('www.goodreads.com')
+            self._connection = HTTPSConnection('www.goodreads.com')
 
         self._books = []
         for book_id in self._book_ids:
-            self._books.append(Book(self._db, book_id, self._aConnection, self._gConnection, formats=self._formats,
+            self._books.append(Book(self._db, book_id, self._connection, formats=self._formats,
                 send_to_device=self._send_to_device, create_xray=self._create_xray, proxy=self._proxy,
                 https_address=self._https_address, https_port=self._https_port))
         
@@ -114,7 +110,7 @@ class XRayCreator(object):
             if abort.isSet():
                 return
             if log: log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
-            self._aConnection, self._gConnection = book.create_xray_event(self._aConnection, self._gConnection, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
+            self._connection = book.create_xray_event(self._connection, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
 
         self.get_results_create()
         log('\nX-Ray Creation:')
@@ -148,7 +144,7 @@ class XRayCreator(object):
             if abort.isSet():
                 return
             if log: log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
-            self._aConnection, self._gConnection = book.send_xray_event(self._aConnection, self._gConnection, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
+            self._connection = book.send_xray_event(self._connection, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
 
         self.get_results_send()
         if len(self._send_completed) > 0:

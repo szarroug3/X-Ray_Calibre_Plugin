@@ -36,14 +36,11 @@ Github Page: https://github.com/szarroug3/X-Ray_Calibre_Plugin
 
 ----------------------------------------------------------------------------------------------------------------------------------
 	1. Book specific preferences
-		- This screen may take a while to open if doesn't have the ASIN and Goodreads url set in the settings already as it will be
-			searching for them
 		- Use "," or ", " as a separator for words in aliases list
 	2. Create/Update x-ray files for selected books
 	3. Send previously generated x-ray files to device
 
-	Note: Creating an x-ray file using this plugin will automatically search for and use the correct ASIN so you don't need to
-		search for it.
+	Note: Creating an x-ray file using this plugin will use the ASIN already in the book so you don't need to update it.
 	Note: Highlighting words should work but I have not tested with a book that has DRM so I don't know if it will work for them.
 
 Preferences:
