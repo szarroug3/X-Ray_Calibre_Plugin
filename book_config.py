@@ -32,13 +32,13 @@ class BookConfigWidget(QDialog):
             self._proxy = True
             self._http_address = ':'.join(http_proxy.split(':')[:-1])
             self._http_port = int(http_proxy.split(':')[-1])
-            connection = HTTPSConnection(self._http_address, self._http_port)
-            connection.set_tunnel('www.goodreads.com', 443)
+            self._connection = HTTPSConnection(self._http_address, self._http_port)
+            self._connection.set_tunnel('www.goodreads.com', 443)
         else:
-            connection = HTTPSConnection('www.goodreads.com')
+            self._connection = HTTPSConnection('www.goodreads.com')
 
         for book_id in ids:
-            self._book_settings.append(BookSettings(db, book_id, connection))
+            self._book_settings.append(BookSettings(db, book_id, self._connection))
 
         self.v_layout = QVBoxLayout(self)
 
@@ -56,12 +56,12 @@ class BookConfigWidget(QDialog):
 
         self.update_buttons_layout = QHBoxLayout(None)
         self.update_goodreads_url_button = QPushButton('Search for Goodreads URL')
-        self.update_goodreads_url_button.setFixedWidth(150)
+        self.update_goodreads_url_button.setFixedWidth(175)
         self.update_goodreads_url_button.clicked.connect(self.search_for_goodreads_url)
         self.update_buttons_layout.addWidget(self.update_goodreads_url_button)
 
         self.update_aliases_button = QPushButton('Update Aliases from URL')
-        self.update_aliases_button.setFixedWidth(150)
+        self.update_aliases_button.setFixedWidth(175)
         self.update_aliases_button.clicked.connect(self.update_aliases)
         self.update_buttons_layout.addWidget(self.update_aliases_button)
         self.v_layout.addLayout(self.update_buttons_layout)
@@ -143,18 +143,11 @@ class BookConfigWidget(QDialog):
             self.goodreads_url_edit.setText('')
 
     def update_aliases(self):
-        url = self.goodreads_url_edit.text()
-        domain_end_index = url[8:].find('/') + 8
-        if domain_end_index == -1: domain_end_index = len(url)
-
-        test_url = HTTPSConnection(url[8:domain_end_index])
-        test_url.request('HEAD', url[domain_end_index:])
-
-        if test_url.getresponse().status == 200:
-            self.book.update_aliases(overwrite=True)
+        try:
+            self.book.update_aliases(self.goodreads_url_edit.text(), overwrite=True)
             self.update_aliases_on_gui()
             self.status.setText('Aliases updated.')
-        else:
+        except:
             self.status.setText('Invalid Goodreads url.')
 
     def edit_aliases(self, term, val):

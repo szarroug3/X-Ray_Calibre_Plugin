@@ -2,11 +2,9 @@
 <html class="desktop">
 
 <head>
-<script type="text/javascript">window.NREUM||(NREUM={});NREUM.info={"beacon":"bam.nr-data.net","errorBeacon":"bam.nr-data.net","licenseKey":"d81cb9ea53","applicationID":"10183184","transactionName":"JVteFRNcXwpRSxxKUgdGUwlOWl0CUUFsSl4BWlUFPlxGEg==","queueTime":1,"applicationTime":310,"agent":""}</script>
-<script type="text/javascript">(window.NREUM||(NREUM={})).loader_config={xpid:"Ug8DUVVACQMBXFJTDwU="};window.NREUM||(NREUM={}),__nr_require=function(t,e,n){function r(n){if(!e[n]){var o=e[n]={exports:{}};t[n][0].call(o.exports,function(e){var o=t[n][1][e];return r(o||e)},o,o.exports)}return e[n].exports}if("function"==typeof __nr_require)return __nr_require;for(var o=0;o<n.length;o++)r(n[o]);return r}({1:[function(t,e,n){function r(t){try{s.console&&console.log(t)}catch(e){}}var o,i=t("ee"),a=t(15),s={};try{o=localStorage.getItem("__nr_flags").split(","),console&&"function"==typeof console.log&&(s.console=!0,-1!==o.indexOf("dev")&&(s.dev=!0),-1!==o.indexOf("nr_dev")&&(s.nrDev=!0))}catch(c){}s.nrDev&&i.on("internal-error",function(t){r(t.stack)}),s.dev&&i.on("fn-err",function(t,e,n){r(n.stack)}),s.dev&&(r("NR AGENT IN DEVELOPMENT MODE"),r("flags: "+a(s,function(t,e){return t}).join(", ")))},{}],2:[function(t,e,n){function r(t,e,n,r,o){try{d?d-=1:i("err",[o||new UncaughtException(t,e,n)])}catch(s){try{i("ierr",[s,(new Date).getTime(),!0])}catch(c){}}return"function"==typeof f?f.apply(this,a(arguments)):!1}function UncaughtException(t,e,n){this.message=t||"Uncaught error with no additional information",this.sourceURL=e,this.line=n}function o(t){i("err",[t,(new Date).getTime()])}var i=t("handle"),a=t(16),s=t("ee"),c=t("loader"),f=window.onerror,u=!1,d=0;c.features.err=!0,t(1),window.onerror=r;try{throw new Error}catch(l){"stack"in l&&(t(8),t(7),"addEventListener"in window&&t(5),c.xhrWrappable&&t(9),u=!0)}s.on("fn-start",function(t,e,n){u&&(d+=1)}),s.on("fn-err",function(t,e,n){u&&(this.thrown=!0,o(n))}),s.on("fn-end",function(){u&&!this.thrown&&d>0&&(d-=1)}),s.on("internal-error",function(t){i("ierr",[t,(new Date).getTime(),!0])})},{}],3:[function(t,e,n){t("loader").features.ins=!0},{}],4:[function(t,e,n){function r(t){}if(window.performance&&window.performance.timing&&window.performance.getEntriesByType){var o=t("ee"),i=t("handle"),a=t(8),s=t(7),c="learResourceTimings",f="addEventListener",u="resourcetimingbufferfull",d="bstResource",l="resource",p="-start",h="-end",m="fn"+p,w="fn"+h,v="bstTimer",y="pushState";t("loader").features.stn=!0,t(6);var g=NREUM.o.EV;o.on(m,function(t,e){var n=t[0];n instanceof g&&(this.bstStart=Date.now())}),o.on(w,function(t,e){var n=t[0];n instanceof g&&i("bst",[n,e,this.bstStart,Date.now()])}),a.on(m,function(t,e,n){this.bstStart=Date.now(),this.bstType=n}),a.on(w,function(t,e){i(v,[e,this.bstStart,Date.now(),this.bstType])}),s.on(m,function(){this.bstStart=Date.now()}),s.on(w,function(t,e){i(v,[e,this.bstStart,Date.now(),"requestAnimationFrame"])}),o.on(y+p,function(t){this.time=Date.now(),this.startPath=location.pathname+location.hash}),o.on(y+h,function(t){i("bstHist",[location.pathname+location.hash,this.startPath,this.time])}),f in window.performance&&(window.performance["c"+c]?window.performance[f](u,function(t){i(d,[window.performance.getEntriesByType(l)]),window.performance["c"+c]()},!1):window.performance[f]("webkit"+u,function(t){i(d,[window.performance.getEntriesByType(l)]),window.performance["webkitC"+c]()},!1)),document[f]("scroll",r,!1),document[f]("keypress",r,!1),document[f]("click",r,!1)}},{}],5:[function(t,e,n){function r(t){for(var e=t;e&&!e.hasOwnProperty(u);)e=Object.getPrototypeOf(e);e&&o(e)}function o(t){s.inPlace(t,[u,d],"-",i)}function i(t,e){return t[1]}var a=t("ee").get("events"),s=t(17)(a),c=t("gos"),f=XMLHttpRequest,u="addEventListener",d="removeEventListener";e.exports=a,"getPrototypeOf"in Object?(r(document),r(window),r(f.prototype)):f.prototype.hasOwnProperty(u)&&(o(window),o(f.prototype)),a.on(u+"-start",function(t,e){if(t[1]){var n=t[1];if("function"==typeof n){var r=c(n,"nr@wrapped",function(){return s(n,"fn-",null,n.name||"anonymous")});this.wrapped=t[1]=r}else"function"==typeof n.handleEvent&&s.inPlace(n,["handleEvent"],"fn-")}}),a.on(d+"-start",function(t){var e=this.wrapped;e&&(t[1]=e)})},{}],6:[function(t,e,n){var r=t("ee").get("history"),o=t(17)(r);e.exports=r,o.inPlace(window.history,["pushState","replaceState"],"-")},{}],7:[function(t,e,n){var r=t("ee").get("raf"),o=t(17)(r),i="equestAnimationFrame";e.exports=r,o.inPlace(window,["r"+i,"mozR"+i,"webkitR"+i,"msR"+i],"raf-"),r.on("raf-start",function(t){t[0]=o(t[0],"fn-")})},{}],8:[function(t,e,n){function r(t,e,n){t[0]=a(t[0],"fn-",null,n)}function o(t,e,n){this.method=n,this.timerDuration="number"==typeof t[1]?t[1]:0,t[0]=a(t[0],"fn-",this,n)}var i=t("ee").get("timer"),a=t(17)(i),s="setTimeout",c="setInterval",f="clearTimeout",u="-start",d="-";e.exports=i,a.inPlace(window,[s,"setImmediate"],s+d),a.inPlace(window,[c],c+d),a.inPlace(window,[f,"clearImmediate"],f+d),i.on(c+u,r),i.on(s+u,o)},{}],9:[function(t,e,n){function r(t,e){d.inPlace(e,["onreadystatechange"],"fn-",s)}function o(){var t=this,e=u.context(t);t.readyState>3&&!e.resolved&&(e.resolved=!0,u.emit("xhr-resolved",[],t)),d.inPlace(t,w,"fn-",s)}function i(t){v.push(t),h&&(g=-g,b.data=g)}function a(){for(var t=0;t<v.length;t++)r([],v[t]);v.length&&(v=[])}function s(t,e){return e}function c(t,e){for(var n in t)e[n]=t[n];return e}t(5);var f=t("ee"),u=f.get("xhr"),d=t(17)(u),l=NREUM.o,p=l.XHR,h=l.MO,m="readystatechange",w=["onload","onerror","onabort","onloadstart","onloadend","onprogress","ontimeout"],v=[];e.exports=u;var y=window.XMLHttpRequest=function(t){var e=new p(t);try{u.emit("new-xhr",[e],e),e.addEventListener(m,o,!1)}catch(n){try{u.emit("internal-error",[n])}catch(r){}}return e};if(c(p,y),y.prototype=p.prototype,d.inPlace(y.prototype,["open","send"],"-xhr-",s),u.on("send-xhr-start",function(t,e){r(t,e),i(e)}),u.on("open-xhr-start",r),h){var g=1,b=document.createTextNode(g);new h(a).observe(b,{characterData:!0})}else f.on("fn-end",function(t){t[0]&&t[0].type===m||a()})},{}],10:[function(t,e,n){function r(t){var e=this.params,n=this.metrics;if(!this.ended){this.ended=!0;for(var r=0;d>r;r++)t.removeEventListener(u[r],this.listener,!1);if(!e.aborted){if(n.duration=(new Date).getTime()-this.startTime,4===t.readyState){e.status=t.status;var i=o(t,this.lastSize);if(i&&(n.rxSize=i),this.sameOrigin){var a=t.getResponseHeader("X-NewRelic-App-Data");a&&(e.cat=a.split(", ").pop())}}else e.status=0;n.cbTime=this.cbTime,f.emit("xhr-done",[t],t),s("xhr",[e,n,this.startTime])}}}function o(t,e){var n=t.responseType;if("json"===n&&null!==e)return e;var r="arraybuffer"===n||"blob"===n||"json"===n?t.response:t.responseText;return h(r)}function i(t,e){var n=c(e),r=t.params;r.host=n.hostname+":"+n.port,r.pathname=n.pathname,t.sameOrigin=n.sameOrigin}var a=t("loader");if(a.xhrWrappable){var s=t("handle"),c=t(11),f=t("ee"),u=["load","error","abort","timeout"],d=u.length,l=t("id"),p=t(14),h=t(13),m=window.XMLHttpRequest;a.features.xhr=!0,t(9),f.on("new-xhr",function(t){var e=this;e.totalCbs=0,e.called=0,e.cbTime=0,e.end=r,e.ended=!1,e.xhrGuids={},e.lastSize=null,p&&(p>34||10>p)||window.opera||t.addEventListener("progress",function(t){e.lastSize=t.loaded},!1)}),f.on("open-xhr-start",function(t){this.params={method:t[0]},i(this,t[1]),this.metrics={}}),f.on("open-xhr-end",function(t,e){"loader_config"in NREUM&&"xpid"in NREUM.loader_config&&this.sameOrigin&&e.setRequestHeader("X-NewRelic-ID",NREUM.loader_config.xpid)}),f.on("send-xhr-start",function(t,e){var n=this.metrics,r=t[0],o=this;if(n&&r){var i=h(r);i&&(n.txSize=i)}this.startTime=(new Date).getTime(),this.listener=function(t){try{"abort"===t.type&&(o.params.aborted=!0),("load"!==t.type||o.called===o.totalCbs&&(o.onloadCalled||"function"!=typeof e.onload))&&o.end(e)}catch(n){try{f.emit("internal-error",[n])}catch(r){}}};for(var a=0;d>a;a++)e.addEventListener(u[a],this.listener,!1)}),f.on("xhr-cb-time",function(t,e,n){this.cbTime+=t,e?this.onloadCalled=!0:this.called+=1,this.called!==this.totalCbs||!this.onloadCalled&&"function"==typeof n.onload||this.end(n)}),f.on("xhr-load-added",function(t,e){var n=""+l(t)+!!e;this.xhrGuids&&!this.xhrGuids[n]&&(this.xhrGuids[n]=!0,this.totalCbs+=1)}),f.on("xhr-load-removed",function(t,e){var n=""+l(t)+!!e;this.xhrGuids&&this.xhrGuids[n]&&(delete this.xhrGuids[n],this.totalCbs-=1)}),f.on("addEventListener-end",function(t,e){e instanceof m&&"load"===t[0]&&f.emit("xhr-load-added",[t[1],t[2]],e)}),f.on("removeEventListener-end",function(t,e){e instanceof m&&"load"===t[0]&&f.emit("xhr-load-removed",[t[1],t[2]],e)}),f.on("fn-start",function(t,e,n){e instanceof m&&("onload"===n&&(this.onload=!0),("load"===(t[0]&&t[0].type)||this.onload)&&(this.xhrCbStart=(new Date).getTime()))}),f.on("fn-end",function(t,e){this.xhrCbStart&&f.emit("xhr-cb-time",[(new Date).getTime()-this.xhrCbStart,this.onload,e],e)})}},{}],11:[function(t,e,n){e.exports=function(t){var e=document.createElement("a"),n=window.location,r={};e.href=t,r.port=e.port;var o=e.href.split("://");!r.port&&o[1]&&(r.port=o[1].split("/")[0].split("@").pop().split(":")[1]),r.port&&"0"!==r.port||(r.port="https"===o[0]?"443":"80"),r.hostname=e.hostname||n.hostname,r.pathname=e.pathname,r.protocol=o[0],"/"!==r.pathname.charAt(0)&&(r.pathname="/"+r.pathname);var i=!e.protocol||":"===e.protocol||e.protocol===n.protocol,a=e.hostname===document.domain&&e.port===n.port;return r.sameOrigin=i&&(!e.hostname||a),r}},{}],12:[function(t,e,n){function r(t,e){return function(){o(t,[(new Date).getTime()].concat(a(arguments)),null,e)}}var o=t("handle"),i=t(15),a=t(16);"undefined"==typeof window.newrelic&&(newrelic=NREUM);var s=["setPageViewName","setCustomAttribute","finished","addToTrace","inlineHit"],c=["addPageAction"],f="api-";i(s,function(t,e){newrelic[e]=r(f+e,"api")}),i(c,function(t,e){newrelic[e]=r(f+e)}),e.exports=newrelic,newrelic.noticeError=function(t){"string"==typeof t&&(t=new Error(t)),o("err",[t,(new Date).getTime()])}},{}],13:[function(t,e,n){e.exports=function(t){if("string"==typeof t&&t.length)return t.length;if("object"==typeof t){if("undefined"!=typeof ArrayBuffer&&t instanceof ArrayBuffer&&t.byteLength)return t.byteLength;if("undefined"!=typeof Blob&&t instanceof Blob&&t.size)return t.size;if(!("undefined"!=typeof FormData&&t instanceof FormData))try{return JSON.stringify(t).length}catch(e){return}}}},{}],14:[function(t,e,n){var r=0,o=navigator.userAgent.match(/Firefox[\/\s](\d+\.\d+)/);o&&(r=+o[1]),e.exports=r},{}],15:[function(t,e,n){function r(t,e){var n=[],r="",i=0;for(r in t)o.call(t,r)&&(n[i]=e(r,t[r]),i+=1);return n}var o=Object.prototype.hasOwnProperty;e.exports=r},{}],16:[function(t,e,n){function r(t,e,n){e||(e=0),"undefined"==typeof n&&(n=t?t.length:0);for(var r=-1,o=n-e||0,i=Array(0>o?0:o);++r<o;)i[r]=t[e+r];return i}e.exports=r},{}],17:[function(t,e,n){function r(t){return!(t&&"function"==typeof t&&t.apply&&!t[a])}var o=t("ee"),i=t(16),a="nr@original",s=Object.prototype.hasOwnProperty,c=!1;e.exports=function(t){function e(t,e,n,o){function nrWrapper(){var r,a,s,c;try{a=this,r=i(arguments),s="function"==typeof n?n(r,a):n||{}}catch(u){d([u,"",[r,a,o],s])}f(e+"start",[r,a,o],s);try{return c=t.apply(a,r)}catch(l){throw f(e+"err",[r,a,l],s),l}finally{f(e+"end",[r,a,c],s)}}return r(t)?t:(e||(e=""),nrWrapper[a]=t,u(t,nrWrapper),nrWrapper)}function n(t,n,o,i){o||(o="");var a,s,c,f="-"===o.charAt(0);for(c=0;c<n.length;c++)s=n[c],a=t[s],r(a)||(t[s]=e(a,f?s+o:o,i,s))}function f(e,n,r){if(!c){c=!0;try{t.emit(e,n,r)}catch(o){d([o,e,n,r])}c=!1}}function u(t,e){if(Object.defineProperty&&Object.keys)try{var n=Object.keys(t);return n.forEach(function(n){Object.defineProperty(e,n,{get:function(){return t[n]},set:function(e){return t[n]=e,e}})}),e}catch(r){d([r])}for(var o in t)s.call(t,o)&&(e[o]=t[o]);return e}function d(e){try{t.emit("internal-error",e)}catch(n){}}return t||(t=o),e.inPlace=n,e.flag=a,e}},{}],ee:[function(t,e,n){function r(){}function o(t){function e(t){return t&&t instanceof r?t:t?s(t,a,i):i()}function n(n,r,o){t&&t(n,r,o);for(var i=e(o),a=l(n),s=a.length,c=0;s>c;c++)a[c].apply(i,r);var u=f[w[n]];return u&&u.push([v,n,r,i]),i}function d(t,e){m[t]=l(t).concat(e)}function l(t){return m[t]||[]}function p(t){return u[t]=u[t]||o(n)}function h(t,e){c(t,function(t,n){e=e||"feature",w[n]=e,e in f||(f[e]=[])})}var m={},w={},v={on:d,emit:n,get:p,listeners:l,context:e,buffer:h};return v}function i(){return new r}var a="nr@context",s=t("gos"),c=t(15),f={},u={},d=e.exports=o();d.backlog=f},{}],gos:[function(t,e,n){function r(t,e,n){if(o.call(t,e))return t[e];var r=n();if(Object.defineProperty&&Object.keys)try{return Object.defineProperty(t,e,{value:r,writable:!0,enumerable:!1}),r}catch(i){}return t[e]=r,r}var o=Object.prototype.hasOwnProperty;e.exports=r},{}],handle:[function(t,e,n){function r(t,e,n,r){o.buffer([t],r),o.emit(t,e,n)}var o=t("ee").get("handle");e.exports=r,r.ee=o},{}],id:[function(t,e,n){function r(t){var e=typeof t;return!t||"object"!==e&&"function"!==e?-1:t===window?0:a(t,i,function(){return o++})}var o=1,i="nr@id",a=t("gos");e.exports=r},{}],loader:[function(t,e,n){function r(){if(!g++){var t=y.info=NREUM.info,e=u.getElementsByTagName("script")[0];if(t&&t.licenseKey&&t.applicationID&&e){c(w,function(e,n){t[e]||(t[e]=n)});var n="https"===m.split(":")[0]||t.sslForHttp;y.proto=n?"https://":"http://",s("mark",["onload",a()],null,"api");var r=u.createElement("script");r.src=y.proto+t.agent,e.parentNode.insertBefore(r,e)}}}function o(){"complete"===u.readyState&&i()}function i(){s("mark",["domContent",a()],null,"api")}function a(){return(new Date).getTime()}var s=t("handle"),c=t(15),f=window,u=f.document,d="addEventListener",l="attachEvent",p=f.XMLHttpRequest,h=p&&p.prototype;NREUM.o={ST:setTimeout,CT:clearTimeout,XHR:p,REQ:f.Request,EV:f.Event,PR:f.Promise,MO:f.MutationObserver},t(12);var m=""+location,w={beacon:"bam.nr-data.net",errorBeacon:"bam.nr-data.net",agent:"js-agent.newrelic.com/nr-952.min.js"},v=p&&h&&h[d]&&!/CriOS/.test(navigator.userAgent),y=e.exports={offset:a(),origin:m,features:{},xhrWrappable:v};u[d]?(u[d]("DOMContentLoaded",i,!1),f[d]("load",r,!1)):(u[l]("onreadystatechange",o),f[l]("onload",r)),s("mark",["firstbyte",a()],null,"api");var g=0},{}]},{},["loader",2,10,4,3]);</script>
   <title>
 
-Search results for &quot;The Final Empire - Brandon Sanderson&quot; (showing 1-6 of 6 books)
+Search results for &quot;A Christmas Carol - Charles Dickens&quot; (showing 1-20 of 338 books)
 </title>
 
 
@@ -72,11 +70,9 @@ Search results for &quot;The Final Empire - Brandon Sanderson&quot; (showing 1-6
     })();
     // page settings
     googletag.cmd.push(function() {
-      googletag.pubads().setTargeting("sid", "fec00b947173983cb99cf84504cdb2e3");
-    googletag.pubads().setTargeting("grsession", "fec00b947173983cb99cf84504cdb2e3");
+      googletag.pubads().setTargeting("sid", "fa78eab4ea4d99c9e93003f8ee4c3585");
+    googletag.pubads().setTargeting("grsession", "fa78eab4ea4d99c9e93003f8ee4c3585");
     googletag.pubads().setTargeting("author", []);
-    googletag.pubads().setTargeting("shelf", ["fiction","fantasy","youngadult","adult","adventure","magic","sciencefictionfantasy","highfantasy","epic","epicfantasy"]);
-    googletag.pubads().setTargeting("gtargeting", "5x3c5xl");
       googletag.pubads().enableSingleRequest();
       googletag.pubads().collapseEmptyDivs(true);
       googletag.enableServices();
@@ -87,9 +83,9 @@ Search results for &quot;The Final Empire - Brandon Sanderson&quot; (showing 1-6
   
 
   <meta name="csrf-param" content="authenticity_token" />
-<meta name="csrf-token" content="5RLXsBVGOszfK1t6ynasgxZcz90ptIslgnQRy1n3VOxDW/dux1OregRfz+sxNA8mBtmGwnCZV8+htLogxd3GvA==" />
+<meta name="csrf-token" content="XpkLYFQ/Avwlg1ISj9vGoRDkDnlrHs3ieXjUNWAOdzIvYz0vwFgb5GVCbwtN6SiIEeubt4P32H4qp6x2l6nljQ==" />
 
-  <meta name="request-id" content="0TV3PDC43DD43N22G1FN" />
+  <meta name="request-id" content="1K85QJ5RH79R26049JXY" />
 
       <meta name="robots" content="noindex" />
 
@@ -102,19 +98,19 @@ Search results for &quot;The Final Empire - Brandon Sanderson&quot; (showing 1-6
   //<![CDATA[
     if (typeof isShowingBuyableFeatures === 'undefined' || isShowingBuyableFeatures()) {
       googletag.cmd.push(function() {
-        googletag.defineSlot("/4215/goodr.search.top.300x250", [300, 250], "div-gpt-ad-a294489337")
+        googletag.defineSlot("/4215/goodr.search.top.300x250", [300, 250], "div-gpt-ad-b22e5ebdf3")
                  .addService(googletag.pubads()).setCollapseEmptyDiv(true);
     
         googletag.pubads().addEventListener('slotRenderEnded', function(event) {
-          if (event.slot.getSlotId().getDomId() == "div-gpt-ad-a294489337") {
+          if (event.slot.getSlotId().getDomId() == "div-gpt-ad-b22e5ebdf3") {
             var attrs = $gr.shared.dfpAd.imageAdAttrs();
             attrs.dfpEvent = event;
             attrs.adDeviceType = "desktop";
             attrs.pmetImpressionTrackUrl = "https://www.goodreads.com/dfp/impression";
             attrs.pmetClickTrackUrl = "https://www.goodreads.com/dfp/click";
-            $gr.shared.dfpAd.attachTo("#div-gpt-ad-a294489337", attrs);
+            $gr.shared.dfpAd.attachTo("#div-gpt-ad-b22e5ebdf3", attrs);
     
-            if (false && document.getElementById("div-gpt-ad-a294489337").style.display != "none") {
+            if (false && document.getElementById("div-gpt-ad-b22e5ebdf3").style.display != "none") {
               var css = document.createElement("link");
               css.rel  = 'stylesheet';
               css.type = 'text/css';
@@ -192,7 +188,7 @@ Search results for &quot;The Final Empire - Brandon Sanderson&quot; (showing 1-6
 </script>
 
 
-    <meta name="description" content="Search results for The Final Empire - Brandon Sanderson: , , , , , and ">
+    <meta name="description" content="Search results for A Christmas Carol - Charles Dickens: , , , , , , , , , , , , , , , , , , , and ">
 
   <meta name="verify-v1" content="cEf8XOH0pulh1aYQeZ1gkXHsQ3dMPSyIGGYqmF53690=">
   <meta name="google-site-verification" content="PfFjeZ9OK1RrUrKlmAPn_iZJ_vgHaZO1YQ-QlG2VsJs" />
@@ -282,7 +278,7 @@ Search results for &quot;The Final Empire - Brandon Sanderson&quot; (showing 1-6
    <input type="text"
           name="q"
           size="55"
-          value="The Final Empire - Brandon Sanderson"
+          value="A Christmas Carol - Charles Dickens"
           id="search_query_main" class="searchBox__input searchBox--large__input"
           placeholder="Search by Book Title, Author, or ISBN">
    <input type="hidden" name="search_type" value="books">
@@ -298,18 +294,18 @@ Search results for &quot;The Final Empire - Brandon Sanderson&quot; (showing 1-6
 
 <div class="stacked">
   <div class="tabs mediumTabs">
-          <span url="{:q=&gt;&quot;The Final Empire - Brandon Sanderson&quot;, :search_type=&gt;&quot;books&quot;, :&quot;search[source]&quot;=&gt;&quot;goodreads&quot;, :&quot;search[field]&quot;=&gt;nil, :tab=&gt;&quot;books&quot;}" id="booksLink" class=" selectedTab">Books</span>
-          <a id="groupsLink" class=" tab" href="/search?q=The+Final+Empire+-+Brandon+Sanderson&amp;search%5Bsource%5D=goodreads&amp;search_type=groups&amp;tab=groups">Groups</a>
-          <a id="quotesLink" class=" tab" href="/search?q=The+Final+Empire+-+Brandon+Sanderson&amp;search%5Bsource%5D=goodreads&amp;search_type=quotes&amp;tab=quotes">Quotes</a>
-          <a id="eventsLink" class=" tab" href="/search?q=The+Final+Empire+-+Brandon+Sanderson&amp;search%5Bsource%5D=goodreads&amp;search_type=events&amp;tab=events">Events</a>
-          <a id="storiesLink" class=" tab" href="/search?q=The+Final+Empire+-+Brandon+Sanderson&amp;search%5Bsource%5D=goodreads&amp;search_type=stories&amp;tab=stories">Stories</a>
-          <a id="peopleLink" class=" tab" href="/search?q=The+Final+Empire+-+Brandon+Sanderson&amp;search%5Bsource%5D=goodreads&amp;search_type=people&amp;tab=people">People</a>
-          <a id="listsLink" class=" tab" href="/search?q=The+Final+Empire+-+Brandon+Sanderson&amp;search%5Bsource%5D=goodreads&amp;search_type=lists&amp;tab=lists">Listopia</a>
-          <a id="triviaLink" class=" tab" href="/search?q=The+Final+Empire+-+Brandon+Sanderson&amp;search%5Bsource%5D=goodreads&amp;search_type=trivia&amp;tab=trivia">Trivia</a>
+          <span url="{:q=&gt;&quot;A Christmas Carol - Charles Dickens&quot;, :search_type=&gt;&quot;books&quot;, :&quot;search[source]&quot;=&gt;&quot;goodreads&quot;, :&quot;search[field]&quot;=&gt;nil, :tab=&gt;&quot;books&quot;}" id="booksLink" class=" selectedTab">Books</span>
+          <a id="groupsLink" class=" tab" href="/search?q=A+Christmas+Carol+-+Charles+Dickens&amp;search%5Bsource%5D=goodreads&amp;search_type=groups&amp;tab=groups">Groups</a>
+          <a id="quotesLink" class=" tab" href="/search?q=A+Christmas+Carol+-+Charles+Dickens&amp;search%5Bsource%5D=goodreads&amp;search_type=quotes&amp;tab=quotes">Quotes</a>
+          <a id="eventsLink" class=" tab" href="/search?q=A+Christmas+Carol+-+Charles+Dickens&amp;search%5Bsource%5D=goodreads&amp;search_type=events&amp;tab=events">Events</a>
+          <a id="storiesLink" class=" tab" href="/search?q=A+Christmas+Carol+-+Charles+Dickens&amp;search%5Bsource%5D=goodreads&amp;search_type=stories&amp;tab=stories">Stories</a>
+          <a id="peopleLink" class=" tab" href="/search?q=A+Christmas+Carol+-+Charles+Dickens&amp;search%5Bsource%5D=goodreads&amp;search_type=people&amp;tab=people">People</a>
+          <a id="listsLink" class=" tab" href="/search?q=A+Christmas+Carol+-+Charles+Dickens&amp;search%5Bsource%5D=goodreads&amp;search_type=lists&amp;tab=lists">Listopia</a>
+          <a id="triviaLink" class=" tab" href="/search?q=A+Christmas+Carol+-+Charles+Dickens&amp;search%5Bsource%5D=goodreads&amp;search_type=trivia&amp;tab=trivia">Trivia</a>
 <div class="clear"> </div></div><script type="text/javascript" charset="utf-8">
 //<![CDATA[
 
-  current_tabs[446638036] = 'books';
+  current_tabs[672121795] = 'books';
 
   Event.observe(window, 'load', function(e) {
     // Switch to an anchored tab if specified in the URL
@@ -327,7 +323,7 @@ Search results for &quot;The Final Empire - Brandon Sanderson&quot; (showing 1-6
 
 
 
-  <h3 class="searchSubNavContainer">Page 1 of about 6 results (0.10 seconds)</h3>
+  <h3 class="searchSubNavContainer">Page 1 of about 338 results (0.21 seconds)</h3>
 
 
   
@@ -361,7 +357,7 @@ Search results for &quot;The Final Empire - Brandon Sanderson&quot; (showing 1-6
     else {
       var action = checked ? 'remove' : ''
       element.checked = !element.checked
-      new Ajax.Request('/shelf/add_to_shelf', {asynchronous:true, evalScripts:true, onSuccess:function(request){shelfSubmitted(request, book_id, checkbox_id, element_id, unique_id, shelf_name)}, parameters:'book_id=' + book_id + '&name=' + shelf_name + '&a=' + action + '&authenticity_token=' + encodeURIComponent('VF3GWrkHYP/5fBT28RetIgWHA1+YtAKnVXoR2ou2eJryFOaEaxLxSSIIgGcKVQ6HFQJKQMGZ3k12uroxF5zqyg==')})
+      new Ajax.Request('/shelf/add_to_shelf', {asynchronous:true, evalScripts:true, onSuccess:function(request){shelfSubmitted(request, book_id, checkbox_id, element_id, unique_id, shelf_name)}, parameters:'book_id=' + book_id + '&name=' + shelf_name + '&a=' + action + '&authenticity_token=' + encodeURIComponent('6lXTok/1G0LDBXEf+/8TRUxA/JPbzSn1SnsAZaw3tgibr+Xt25ICWoPETAY5zf1sTU9pXTMkPGkZpHgmW5Aktw==')})
     }
   }
 
@@ -371,7 +367,7 @@ Search results for &quot;The Final Empire - Brandon Sanderson&quot; (showing 1-6
   }
 
   function refreshGroupBox(group_id, book_id) {
-    new Ajax.Updater('addGroupBooks' + book_id + '', '/group/add_book_box', {asynchronous:true, evalScripts:true, onSuccess:function(request){refreshGroupBoxComplete(request, book_id);}, parameters:'id=' + group_id + '&book_id=' + book_id + '&refresh=true' + '&authenticity_token=' + encodeURIComponent('+78qyRr5lFOm1LvY1OjzI0zyjmwe5NNlXjFeXiL/Dixd9goXyOwF5X2gL0kvqlCGXHfHc0fJD4998fW1vtWcfA==')})
+    new Ajax.Updater('addGroupBooks' + book_id + '', '/group/add_book_box', {asynchronous:true, evalScripts:true, onSuccess:function(request){refreshGroupBoxComplete(request, book_id);}, parameters:'id=' + group_id + '&book_id=' + book_id + '&refresh=true' + '&authenticity_token=' + encodeURIComponent('cjq6uFbcdbIYBibQh7I7+R9vBAZXlpKdFvV9xRcXdqcDwIz3wrtsqljHG8lFgNXQHmCRyL9/hwFFKgWG4LDkGA==')})
   }
 //]]>
 </script>
@@ -384,39 +380,39 @@ Search results for &quot;The Final Empire - Brandon Sanderson&quot; (showing 1-6
 
   <tr itemscope itemtype="http://schema.org/Book">
     <td width="5%" valign="top">
-      <div id="68428" class="u-anchorTarget"></div>
-        <a title="Mistborn: The Final Empire" href="/book/show/68428.Mistborn?from_search=true&amp;search_version=service">
-          <img alt="Mistborn: The Final Empire ..." class="bookSmallImg" src="https://d.gr-assets.com/books/1437254833s/68428.jpg" />
+      <div id="2333492" class="u-anchorTarget"></div>
+        <a title="A Christmas Carol..Charles Dickens" href="/book/show/2333492.A_Christmas_Carol_Charles_Dickens?from_search=true&amp;search_version=service">
+          <img alt="A Christmas Carol..Charles ..." class="bookSmallImg" src="https://s.gr-assets.com/assets/nophoto/book/50x75-a91bf249278a81aabab721ef782c4a74.png" />
 </a>    </td>
     <td width="100%" valign="top">
-      <a class="bookTitle" itemprop="url" href="/book/show/68428.Mistborn?from_search=true&amp;search_version=service">
-        <span itemprop='name'>Mistborn: The Final Empire (Mistborn, #1)</span>
+      <a class="bookTitle" itemprop="url" href="/book/show/2333492.A_Christmas_Carol_Charles_Dickens?from_search=true&amp;search_version=service">
+        <span itemprop='name'>A Christmas Carol..Charles Dickens</span>
 </a>      <br/>
         <span class='by smallText'>by</span>
 <span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
-<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/38550.Brandon_Sanderson?from_search=true&amp;search_version=service"><span itemprop="name">Brandon Sanderson</span></a> <span class="greyText">(Goodreads Author)</span>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/309685.Nigel_Flynn?from_search=true&amp;search_version=service"><span itemprop="name">Nigel Flynn</span></a>
 </span>
 
         <br/>
         <span class="greyText smallText uitext">
-            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p3"></span></span> 4.41 avg rating &mdash; 191,042 ratings</span>
+            <span class="minirating"><span class="stars staticStars"><span title="really liked it" size="12x12" class="staticStar p10">really liked it</span><span title="really liked it" size="12x12" class="staticStar p10"></span><span title="really liked it" size="12x12" class="staticStar p10"></span><span title="really liked it" size="12x12" class="staticStar p10"></span><span title="really liked it" size="12x12" class="staticStar p0"></span></span> 4.00 avg rating &mdash; 15 ratings</span>
             &mdash;
               published
-             2006
+             1985
             &mdash;
-            <a class="greyText" rel="nofollow" href="/work/editions/66322-mistborn-the-final-empire">62 editions</a>
+            <a class="greyText" rel="nofollow" href="/work/editions/2340067-a-christmas-carol-charles-dickens">1 edition</a>
         </span>
         
 
           </td>
           <td width="130px" >
 
-        <div class='wtrButtonContainer wtrSignedOut' id='1_book_68428'>
+        <div class='wtrButtonContainer wtrSignedOut' id='1_book_2333492'>
 <div class='wtrUp wtrLeft'>
-<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="QsxmDUPXPMT2R6w4PK+3jTTWl2Wvk8LqeMVhnMDiGFfkhUbTkcKtci0zOKnH7RQoJFPeeva+HgBbBcp3XMiKBw==" />
-<input type="hidden" name="book_id" id="book_id" value="68428" />
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="B2eiPiL8wJ3Jr1is2XycKk+3gm6EXCCbOQLZSSFq6aB2nZRxtpvZhYluZbUbTnIDTrgXoGy1NQdq3aEK1s17Hw==" />
+<input type="hidden" name="book_id" id="book_id" value="2333492" />
 <input type="hidden" name="name" id="name" value="to-read" />
-<input type="hidden" name="unique_id" id="unique_id" value="1_book_68428" />
+<input type="hidden" name="unique_id" id="unique_id" value="1_book_2333492" />
 <input type="hidden" name="wtr_new" id="wtr_new" value="true" />
 <input type="hidden" name="from_choice" id="from_choice" value="false" />
 <input type="hidden" name="from_home_module" id="from_home_module" value="false" />
@@ -434,9 +430,9 @@ Search results for &quot;The Final Empire - Brandon Sanderson&quot; (showing 1-6
 </div>
 
 <div class='wtrRight wtrUp'>
-<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="ISvJ03qsEClrptMyf7Hj1cHWZY7CPoNmToqy3xgJC9KHYukNqLmBn7DSR6OE80Bw0VMskZsTX4xtShk0hCOZgg==" />
-<input type="hidden" name="unique_id" id="unique_id" value="1_book_68428" />
-<input type="hidden" name="book_id" id="book_id" value="68428" />
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="Xd6Bid1ncTwmNFbdntibdsz4xldUaKBuMMzGzZ8T92YsJLfGSQBoJGb1a8Rc6nVfzfdTmbyBtfJjE76OaLRl2Q==" />
+<input type="hidden" name="unique_id" id="unique_id" value="1_book_2333492" />
+<input type="hidden" name="book_id" id="book_id" value="2333492" />
 <input type="hidden" name="a" id="a" />
 <input type="hidden" name="name" id="name" />
 <input type="hidden" name="from_choice" id="from_choice" value="false" />
@@ -474,7 +470,7 @@ Error rating book. Refresh and try again.
 </div>
 <div class='myRating uitext greyText'>Rate this book</div>
 <div class='clearRating uitext'>Clear rating</div>
-<div class="stars" data-resource-id="68428" data-user-id="0" data-submit-url="/review/rate/68428?from_search=true&search_version=service&stars_click=true&wtr_button_id=1_book_68428" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+<div class="stars" data-resource-id="2333492" data-user-id="0" data-submit-url="/review/rate/2333492?from_search=true&search_version=service&stars_click=true&wtr_button_id=1_book_2333492" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
 </div>
 
 </div>
@@ -492,39 +488,36 @@ Error rating book. Refresh and try again.
 
   <tr itemscope itemtype="http://schema.org/Book">
     <td width="5%" valign="top">
-      <div id="12199809" class="u-anchorTarget"></div>
-        <a title="Mistborn Boxed Set. Brandon Sanderson" href="/book/show/12199809-mistborn-boxed-set-brandon-sanderson?from_search=true&amp;search_version=service">
-          <img alt="Mistborn Boxed Set. Brandon..." class="bookSmallImg" src="https://d.gr-assets.com/books/1339433193s/12199809.jpg" />
+      <div id="7118857" class="u-anchorTarget"></div>
+        <a title="A Christmas Carol: Charles Dickens Classics" href="/book/show/7118857-a-christmas-carol?from_search=true&amp;search_version=service">
+          <img alt="A Christmas Carol: Charles ..." class="bookSmallImg" src="https://d.gr-assets.com/books/1328047231s/7118857.jpg" />
 </a>    </td>
     <td width="100%" valign="top">
-      <a class="bookTitle" itemprop="url" href="/book/show/12199809-mistborn-boxed-set-brandon-sanderson?from_search=true&amp;search_version=service">
-        <span itemprop='name'>Mistborn Boxed Set. Brandon Sanderson</span>
+      <a class="bookTitle" itemprop="url" href="/book/show/7118857-a-christmas-carol?from_search=true&amp;search_version=service">
+        <span itemprop='name'>A Christmas Carol: Charles Dickens Classics</span>
 </a>      <br/>
         <span class='by smallText'>by</span>
 <span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
-<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/38550.Brandon_Sanderson?from_search=true&amp;search_version=service"><span itemprop="name">Brandon Sanderson</span></a> <span class="greyText">(Goodreads Author)</span>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/4008625.Graf_Anne_de?from_search=true&amp;search_version=service"><span itemprop="name">Graf Anne de</span></a>
 </span>
 
         <br/>
         <span class="greyText smallText uitext">
-            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p6"></span></span> 4.54 avg rating &mdash; 27,306 ratings</span>
+            <span class="minirating"><span class="stars staticStars"><span title="really liked it" size="12x12" class="staticStar p10">really liked it</span><span title="really liked it" size="12x12" class="staticStar p10"></span><span title="really liked it" size="12x12" class="staticStar p10"></span><span title="really liked it" size="12x12" class="staticStar p10"></span><span title="really liked it" size="12x12" class="staticStar p0"></span></span> 4.00 avg rating &mdash; 9 ratings</span>
             &mdash;
-              published
-             2009
-            &mdash;
-            <a class="greyText" rel="nofollow" href="/work/editions/6798109-mistborn-trilogy-boxed-set">12 editions</a>
+            <a class="greyText" rel="nofollow" href="/work/editions/7379721-a-christmas-carol-charles-dickens-classics">1 edition</a>
         </span>
         
 
           </td>
           <td width="130px" >
 
-        <div class='wtrButtonContainer wtrSignedOut' id='2_book_12199809'>
+        <div class='wtrButtonContainer wtrSignedOut' id='2_book_7118857'>
 <div class='wtrUp wtrLeft'>
-<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="NZrCguhK+vV0DIeT0rCThp5hAZIBpSiF6I9znmv2YOmT0+JcOl9rQ694EwIp8jAjjuRIjViI9G/LT9h199zyuQ==" />
-<input type="hidden" name="book_id" id="book_id" value="12199809" />
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="mhZxJG5CUi6AIUIe7q2DB3lNE/QXEtJCBQdvuJs59kPr7Edr+iVLNsDgfwcsn20ueEKGOv/7x95W2Bf7bJ5k/A==" />
+<input type="hidden" name="book_id" id="book_id" value="7118857" />
 <input type="hidden" name="name" id="name" value="to-read" />
-<input type="hidden" name="unique_id" id="unique_id" value="2_book_12199809" />
+<input type="hidden" name="unique_id" id="unique_id" value="2_book_7118857" />
 <input type="hidden" name="wtr_new" id="wtr_new" value="true" />
 <input type="hidden" name="from_choice" id="from_choice" value="false" />
 <input type="hidden" name="from_home_module" id="from_home_module" value="false" />
@@ -542,9 +535,9 @@ Error rating book. Refresh and try again.
 </div>
 
 <div class='wtrRight wtrUp'>
-<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="xTbp2K7ygETa5Rowz0vKbBniP5tYDBfUMvDw6TEptOljf8kGfOcR8gGRjqE0CWnJCWd2hAEhyz4RMFsCrQMmuQ==" />
-<input type="hidden" name="unique_id" id="unique_id" value="2_book_12199809" />
-<input type="hidden" name="book_id" id="book_id" value="12199809" />
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="uNGXqxXvlE7TkWSem78RV8tFA+gM5qcu/es/ZuCcQ1rJK6HkgYiNVpNQWYdZjf9+ykqWJuQPsrKuNEclFzvR5Q==" />
+<input type="hidden" name="unique_id" id="unique_id" value="2_book_7118857" />
+<input type="hidden" name="book_id" id="book_id" value="7118857" />
 <input type="hidden" name="a" id="a" />
 <input type="hidden" name="name" id="name" />
 <input type="hidden" name="from_choice" id="from_choice" value="false" />
@@ -563,7 +556,7 @@ Error rating book. Refresh and try again.
 </div>
 <div class='myRating uitext greyText'>Rate this book</div>
 <div class='clearRating uitext'>Clear rating</div>
-<div class="stars" data-resource-id="12199809" data-user-id="0" data-submit-url="/review/rate/12199809?from_search=true&search_version=service&stars_click=true&wtr_button_id=2_book_12199809" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+<div class="stars" data-resource-id="7118857" data-user-id="0" data-submit-url="/review/rate/7118857?from_search=true&search_version=service&stars_click=true&wtr_button_id=2_book_7118857" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
 </div>
 
 </div>
@@ -581,39 +574,567 @@ Error rating book. Refresh and try again.
 
   <tr itemscope itemtype="http://schema.org/Book">
     <td width="5%" valign="top">
-      <div id="25175964" class="u-anchorTarget"></div>
-        <a title="The Final Empire, Part 3" href="/book/show/25175964-the-final-empire-part-3?from_search=true&amp;search_version=service">
-          <img alt="The Final Empire, Part 3 (M..." class="bookSmallImg" src="https://d.gr-assets.com/books/1426782123s/25175964.jpg" />
+      <div id="27689603" class="u-anchorTarget"></div>
+        <a title="A Christmas Carol Charles Dickens" href="/book/show/27689603-a-christmas-carol-charles-dickens?from_search=true&amp;search_version=service">
+          <img alt="A Christmas Carol Charles D..." class="bookSmallImg" src="https://s.gr-assets.com/assets/nophoto/book/50x75-a91bf249278a81aabab721ef782c4a74.png" />
 </a>    </td>
     <td width="100%" valign="top">
-      <a class="bookTitle" itemprop="url" href="/book/show/25175964-the-final-empire-part-3?from_search=true&amp;search_version=service">
-        <span itemprop='name'>The Final Empire, Part 3 (Mistborn #1, part 3)</span>
+      <a class="bookTitle" itemprop="url" href="/book/show/27689603-a-christmas-carol-charles-dickens?from_search=true&amp;search_version=service">
+        <span itemprop='name'>A Christmas Carol Charles Dickens (1843)</span>
 </a>      <br/>
         <span class='by smallText'>by</span>
 <span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
-<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/38550.Brandon_Sanderson?from_search=true&amp;search_version=service"><span itemprop="name">Brandon Sanderson</span></a> <span class="greyText">(Goodreads Author)</span>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/4630576.Iacob_Adrian?from_search=true&amp;search_version=service"><span itemprop="name">Iacob Adrian</span></a>
 </span>
 
         <br/>
         <span class="greyText smallText uitext">
-            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p6"></span></span> 4.70 avg rating &mdash; 107 ratings</span>
+            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span></span> 0.00 avg rating &mdash; 0 ratings</span>
+            &mdash;
+            <a class="greyText" rel="nofollow" href="/work/editions/47687782-a-christmas-carol-charles-dickens-1843">1 edition</a>
+        </span>
+        
+
+          </td>
+          <td width="130px" >
+
+        <div class='wtrButtonContainer wtrSignedOut' id='3_book_27689603'>
+<div class='wtrUp wtrLeft'>
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="iT64kpslPT9DfzaSIUlhQDb0blc2XvqpKRzNBPB6UZ/4xI7dD0IkJwO+C4vje49pN/v7md637zV6w7VHB93DIA==" />
+<input type="hidden" name="book_id" id="book_id" value="27689603" />
+<input type="hidden" name="name" id="name" value="to-read" />
+<input type="hidden" name="unique_id" id="unique_id" value="3_book_27689603" />
+<input type="hidden" name="wtr_new" id="wtr_new" value="true" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="ref" id="ref" value="" class="wtrLeftUpRef" />
+<input type="hidden" name="existing_review" id="existing_review" value="false" class="wtrExisting" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+<button class='wtrToRead' type='submit'>
+<span class='progressTrigger'>Want to Read</span>
+<span class='progressIndicator'>saving…</span>
+</button>
+</form>
+
+</div>
+
+<div class='wtrRight wtrUp'>
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="/Ktd4oVT3JC4tsUAS21iVR/v4soNRmvPkrmaZSeP+I+NUWutETTFiPh3+BmJX4x8HuB3BOWvflPBZuIm0ChqMA==" />
+<input type="hidden" name="unique_id" id="unique_id" value="3_book_27689603" />
+<input type="hidden" name="book_id" id="book_id" value="27689603" />
+<input type="hidden" name="a" id="a" />
+<input type="hidden" name="name" id="name" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+</form>
+
+<button class='wtrShelfButton'></button>
+</div>
+
+<div class='ratingStars wtrRating'>
+<div class='starsErrorTooltip hidden'>
+Error rating book. Refresh and try again.
+</div>
+<div class='myRating uitext greyText'>Rate this book</div>
+<div class='clearRating uitext'>Clear rating</div>
+<div class="stars" data-resource-id="27689603" data-user-id="0" data-submit-url="/review/rate/27689603?from_search=true&search_version=service&stars_click=true&wtr_button_id=3_book_27689603" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+</div>
+
+</div>
+
+
+      </td>
+
+  </tr>
+
+
+    
+  <!-- Add query string params -->
+
+  
+
+  <tr itemscope itemtype="http://schema.org/Book">
+    <td width="5%" valign="top">
+      <div id="5326" class="u-anchorTarget"></div>
+        <a title="A Christmas Carol" href="/book/show/5326.A_Christmas_Carol?from_search=true&amp;search_version=service">
+          <img alt="A Christmas Carol" class="bookSmallImg" src="https://d.gr-assets.com/books/1406512317s/5326.jpg" />
+</a>    </td>
+    <td width="100%" valign="top">
+      <a class="bookTitle" itemprop="url" href="/book/show/5326.A_Christmas_Carol?from_search=true&amp;search_version=service">
+        <span itemprop='name'>A Christmas Carol</span>
+</a>      <br/>
+        <span class='by smallText'>by</span>
+<span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/239579.Charles_Dickens?from_search=true&amp;search_version=service"><span itemprop="name">Charles Dickens</span></a>
+</span>
+
+        <br/>
+        <span class="greyText smallText uitext">
+            <span class="minirating"><span class="stars staticStars"><span title="really liked it" size="12x12" class="staticStar p10">really liked it</span><span title="really liked it" size="12x12" class="staticStar p10"></span><span title="really liked it" size="12x12" class="staticStar p10"></span><span title="really liked it" size="12x12" class="staticStar p10"></span><span title="really liked it" size="12x12" class="staticStar p0"></span></span> 4.00 avg rating &mdash; 380,875 ratings</span>
+            &mdash;
+              published
+             1843
+            &mdash;
+            <a class="greyText" rel="nofollow" href="/work/editions/3097440-a-christmas-carol">1925 editions</a>
+        </span>
+        
+
+          </td>
+          <td width="130px" >
+
+        <div class='wtrButtonContainer wtrSignedOut' id='4_book_5326'>
+<div class='wtrUp wtrLeft'>
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="vAPOiq7WbV6GHSUM1xBCl0AZwTQXeNpr4mk7RwYauHLN+fjFOrF0RsbcGBUVIqy+QRZU+v+Rz/extkME8b0qzQ==" />
+<input type="hidden" name="book_id" id="book_id" value="5326" />
+<input type="hidden" name="name" id="name" value="to-read" />
+<input type="hidden" name="unique_id" id="unique_id" value="4_book_5326" />
+<input type="hidden" name="wtr_new" id="wtr_new" value="true" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="ref" id="ref" value="" class="wtrLeftUpRef" />
+<input type="hidden" name="existing_review" id="existing_review" value="false" class="wtrExisting" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+<button class='wtrToRead' type='submit'>
+<span class='progressTrigger'>Want to Read</span>
+<span class='progressIndicator'>saving…</span>
+</button>
+</form>
+
+</div>
+
+<div class='wtrRight wtrUp'>
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="t7Ne6sAqS4awpI19/T4F/50pNM/SNJKSrdkg4ucwYXLGSWilVE1SnvBlsGQ/DOvWnCahATrdhw7+BlihEJfzzQ==" />
+<input type="hidden" name="unique_id" id="unique_id" value="4_book_5326" />
+<input type="hidden" name="book_id" id="book_id" value="5326" />
+<input type="hidden" name="a" id="a" />
+<input type="hidden" name="name" id="name" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+</form>
+
+<button class='wtrShelfButton'></button>
+</div>
+
+<div class='ratingStars wtrRating'>
+<div class='starsErrorTooltip hidden'>
+Error rating book. Refresh and try again.
+</div>
+<div class='myRating uitext greyText'>Rate this book</div>
+<div class='clearRating uitext'>Clear rating</div>
+<div class="stars" data-resource-id="5326" data-user-id="0" data-submit-url="/review/rate/5326?from_search=true&search_version=service&stars_click=true&wtr_button_id=4_book_5326" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+</div>
+
+</div>
+
+
+      </td>
+
+  </tr>
+
+
+    
+  <!-- Add query string params -->
+
+  
+
+  <tr itemscope itemtype="http://schema.org/Book">
+    <td width="5%" valign="top">
+      <div id="28471233" class="u-anchorTarget"></div>
+        <a title="&quot;A Christmas Carol&quot; Charles Dickens in Large Print" href="/book/show/28471233-a-christmas-carol-charles-dickens-in-large-print?from_search=true&amp;search_version=service">
+          <img alt="&quot;A Christmas Carol&quot; Charles..." class="bookSmallImg" src="https://s.gr-assets.com/assets/nophoto/book/50x75-a91bf249278a81aabab721ef782c4a74.png" />
+</a>    </td>
+    <td width="100%" valign="top">
+      <a class="bookTitle" itemprop="url" href="/book/show/28471233-a-christmas-carol-charles-dickens-in-large-print?from_search=true&amp;search_version=service">
+        <span itemprop='name'>&quot;A Christmas Carol&quot; Charles Dickens in Large Print</span>
+</a>      <br/>
+        <span class='by smallText'>by</span>
+<span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/6584253.Chloe_Dee_Noble?from_search=true&amp;search_version=service"><span itemprop="name">Chloe Dee Noble</span></a>
+</span>
+
+        <br/>
+        <span class="greyText smallText uitext">
+            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span></span> 0.00 avg rating &mdash; 0 ratings</span>
+            &mdash;
+            <a class="greyText" rel="nofollow" href="/work/editions/48609145-a-christmas-carol-charles-dickens-in-large-print">1 edition</a>
+        </span>
+        
+
+          </td>
+          <td width="130px" >
+
+        <div class='wtrButtonContainer wtrSignedOut' id='5_book_28471233'>
+<div class='wtrUp wtrLeft'>
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="ErRNWyar3nW1HGBs0mJ7Gna51uDopXPujlxv0LK7aP5jTnsUsszHbfXdXXUQUJUzd7ZDLgBMZnLdgxeTRRz6QQ==" />
+<input type="hidden" name="book_id" id="book_id" value="28471233" />
+<input type="hidden" name="name" id="name" value="to-read" />
+<input type="hidden" name="unique_id" id="unique_id" value="5_book_28471233" />
+<input type="hidden" name="wtr_new" id="wtr_new" value="true" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="ref" id="ref" value="" class="wtrLeftUpRef" />
+<input type="hidden" name="existing_review" id="existing_review" value="false" class="wtrExisting" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+<button class='wtrToRead' type='submit'>
+<span class='progressTrigger'>Want to Read</span>
+<span class='progressIndicator'>saving…</span>
+</button>
+</form>
+
+</div>
+
+<div class='wtrRight wtrUp'>
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="yh2SUvX5czRhQ0JRJ5nsZXSK9uxrargzGhmhgALTMqy756QdYZ5qLCGCf0jlqwJMdYVjIoODra9JxtnD9XSgEw==" />
+<input type="hidden" name="unique_id" id="unique_id" value="5_book_28471233" />
+<input type="hidden" name="book_id" id="book_id" value="28471233" />
+<input type="hidden" name="a" id="a" />
+<input type="hidden" name="name" id="name" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+</form>
+
+<button class='wtrShelfButton'></button>
+</div>
+
+<div class='ratingStars wtrRating'>
+<div class='starsErrorTooltip hidden'>
+Error rating book. Refresh and try again.
+</div>
+<div class='myRating uitext greyText'>Rate this book</div>
+<div class='clearRating uitext'>Clear rating</div>
+<div class="stars" data-resource-id="28471233" data-user-id="0" data-submit-url="/review/rate/28471233?from_search=true&search_version=service&stars_click=true&wtr_button_id=5_book_28471233" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+</div>
+
+</div>
+
+
+      </td>
+
+  </tr>
+
+
+    
+  <!-- Add query string params -->
+
+  
+
+  <tr itemscope itemtype="http://schema.org/Book">
+    <td width="5%" valign="top">
+      <div id="29499933" class="u-anchorTarget"></div>
+        <a title="A Christmas Carol: By Charles Dickens - Illustrated" href="/book/show/29499933-a-christmas-carol?from_search=true&amp;search_version=service">
+          <img alt="A Christmas Carol: By Charl..." class="bookSmallImg" src="https://d.gr-assets.com/books/1457906358s/29499933.jpg" />
+</a>    </td>
+    <td width="100%" valign="top">
+      <a class="bookTitle" itemprop="url" href="/book/show/29499933-a-christmas-carol?from_search=true&amp;search_version=service">
+        <span itemprop='name'>A Christmas Carol: By Charles Dickens - Illustrated</span>
+</a>      <br/>
+        <span class='by smallText'>by</span>
+<span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/239579.Charles_Dickens?from_search=true&amp;search_version=service"><span itemprop="name">Charles Dickens</span></a>, 
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/14553114._?from_search=true&amp;search_version=service"><span itemprop="name">ＬＩＮＡ</span></a> <span class="authorName greyText smallText role">(Illustrator)</span>
+</span>
+
+        <br/>
+        <span class="greyText smallText uitext">
+            <span class="minirating"><span class="stars staticStars"><span title="it was amazing" size="12x12" class="staticStar p10">it was amazing</span><span title="it was amazing" size="12x12" class="staticStar p10"></span><span title="it was amazing" size="12x12" class="staticStar p10"></span><span title="it was amazing" size="12x12" class="staticStar p10"></span><span title="it was amazing" size="12x12" class="staticStar p10"></span></span> 5.00 avg rating &mdash; 1 rating</span>
+            &mdash;
+            <a class="greyText" rel="nofollow" href="/work/editions/49786482-a-christmas-carol-by-charles-dickens---illustrated">2 editions</a>
+        </span>
+        
+
+          </td>
+          <td width="130px" >
+
+        <div class='wtrButtonContainer wtrSignedOut' id='6_book_29499933'>
+<div class='wtrUp wtrLeft'>
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="zPv+jiMzZYVoE4UPg5h+VEcvI3puNO9LCY7xr8/xr3m9AcjBt1R8nSjSuBZBqpB9RiC2tIbd+tdaUYnsOFY9xg==" />
+<input type="hidden" name="book_id" id="book_id" value="29499933" />
+<input type="hidden" name="name" id="name" value="to-read" />
+<input type="hidden" name="unique_id" id="unique_id" value="6_book_29499933" />
+<input type="hidden" name="wtr_new" id="wtr_new" value="true" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="ref" id="ref" value="" class="wtrLeftUpRef" />
+<input type="hidden" name="existing_review" id="existing_review" value="false" class="wtrExisting" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+<button class='wtrToRead' type='submit'>
+<span class='progressTrigger'>Want to Read</span>
+<span class='progressIndicator'>saving…</span>
+</button>
+</form>
+
+</div>
+
+<div class='wtrRight wtrUp'>
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="tGYqYk80g3s1CyUSNRfPfHmrADkMX2O9JbtPqA+t5T7FnBwt21OaY3XKGAv3JSFVeKSV9+S2diF2ZDfr+Ap3gQ==" />
+<input type="hidden" name="unique_id" id="unique_id" value="6_book_29499933" />
+<input type="hidden" name="book_id" id="book_id" value="29499933" />
+<input type="hidden" name="a" id="a" />
+<input type="hidden" name="name" id="name" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+</form>
+
+<button class='wtrShelfButton'></button>
+</div>
+
+<div class='ratingStars wtrRating'>
+<div class='starsErrorTooltip hidden'>
+Error rating book. Refresh and try again.
+</div>
+<div class='myRating uitext greyText'>Rate this book</div>
+<div class='clearRating uitext'>Clear rating</div>
+<div class="stars" data-resource-id="29499933" data-user-id="0" data-submit-url="/review/rate/29499933?from_search=true&search_version=service&stars_click=true&wtr_button_id=6_book_29499933" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+</div>
+
+</div>
+
+
+      </td>
+
+  </tr>
+
+
+    
+  <!-- Add query string params -->
+
+  
+
+  <tr itemscope itemtype="http://schema.org/Book">
+    <td width="5%" valign="top">
+      <div id="169848" class="u-anchorTarget"></div>
+        <a title="A Christmas Carol, The Chimes and The Cricket on the Hearth" href="/book/show/169848.A_Christmas_Carol_The_Chimes_and_The_Cricket_on_the_Hearth?from_search=true&amp;search_version=service">
+          <img alt="A Christmas Carol, The Chim..." class="bookSmallImg" src="https://d.gr-assets.com/books/1424149988s/169848.jpg" />
+</a>    </td>
+    <td width="100%" valign="top">
+      <a class="bookTitle" itemprop="url" href="/book/show/169848.A_Christmas_Carol_The_Chimes_and_The_Cricket_on_the_Hearth?from_search=true&amp;search_version=service">
+        <span itemprop='name'>A Christmas Carol, The Chimes and The Cricket on the Hearth</span>
+</a>      <br/>
+        <span class='by smallText'>by</span>
+<span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/239579.Charles_Dickens?from_search=true&amp;search_version=service"><span itemprop="name">Charles Dickens</span></a>, 
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/3917895.Katharine_Kroeber_Wiley?from_search=true&amp;search_version=service"><span itemprop="name">Katharine Kroeber Wiley</span></a> <span class="authorName greyText smallText role">(Introduction)</span>
+</span>
+
+        <br/>
+        <span class="greyText smallText uitext">
+            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p3"></span></span> 4.10 avg rating &mdash; 44,561 ratings</span>
+            &mdash;
+              published
+             1843
+            &mdash;
+            <a class="greyText" rel="nofollow" href="/work/editions/18658793-a-christmas-carol-the-chimes-and-the-cricket-on-the-hearth">40 editions</a>
+        </span>
+        
+
+          </td>
+          <td width="130px" >
+
+        <div class='wtrButtonContainer wtrSignedOut' id='7_book_169848'>
+<div class='wtrUp wtrLeft'>
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="HL8ts9z2JC8lTZrmPpDD2KiOGDScPfpj/yjVnFYmNFBtRRv8SJE9N2WMp//8oi3xqYGN+nTU7/+s963foYGm7w==" />
+<input type="hidden" name="book_id" id="book_id" value="169848" />
+<input type="hidden" name="name" id="name" value="to-read" />
+<input type="hidden" name="unique_id" id="unique_id" value="7_book_169848" />
+<input type="hidden" name="wtr_new" id="wtr_new" value="true" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="ref" id="ref" value="" class="wtrLeftUpRef" />
+<input type="hidden" name="existing_review" id="existing_review" value="false" class="wtrExisting" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+<button class='wtrToRead' type='submit'>
+<span class='progressTrigger'>Want to Read</span>
+<span class='progressIndicator'>saving…</span>
+</button>
+</form>
+
+</div>
+
+<div class='wtrRight wtrUp'>
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="FMwdMrDGsXa2tgD5D8YwMG80iwlgSTAB0g5BFjnoyKBlNit9JKGobvZ3PeDN9N4Zbjsex4igJZ2B0TlVzk9aHw==" />
+<input type="hidden" name="unique_id" id="unique_id" value="7_book_169848" />
+<input type="hidden" name="book_id" id="book_id" value="169848" />
+<input type="hidden" name="a" id="a" />
+<input type="hidden" name="name" id="name" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+</form>
+
+<button class='wtrShelfButton'></button>
+</div>
+
+<div class='ratingStars wtrRating'>
+<div class='starsErrorTooltip hidden'>
+Error rating book. Refresh and try again.
+</div>
+<div class='myRating uitext greyText'>Rate this book</div>
+<div class='clearRating uitext'>Clear rating</div>
+<div class="stars" data-resource-id="169848" data-user-id="0" data-submit-url="/review/rate/169848?from_search=true&search_version=service&stars_click=true&wtr_button_id=7_book_169848" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+</div>
+
+</div>
+
+
+      </td>
+
+  </tr>
+
+
+    
+  <!-- Add query string params -->
+
+  
+
+  <tr itemscope itemtype="http://schema.org/Book">
+    <td width="5%" valign="top">
+      <div id="5338" class="u-anchorTarget"></div>
+        <a title="A Christmas Carol and Other Christmas Writings" href="/book/show/5338.A_Christmas_Carol_and_Other_Christmas_Writings?from_search=true&amp;search_version=service">
+          <img alt="A Christmas Carol and Other..." class="bookSmallImg" src="https://d.gr-assets.com/books/1388952779s/5338.jpg" />
+</a>    </td>
+    <td width="100%" valign="top">
+      <a class="bookTitle" itemprop="url" href="/book/show/5338.A_Christmas_Carol_and_Other_Christmas_Writings?from_search=true&amp;search_version=service">
+        <span itemprop='name'>A Christmas Carol and Other Christmas Writings</span>
+</a>      <br/>
+        <span class='by smallText'>by</span>
+<span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/239579.Charles_Dickens?from_search=true&amp;search_version=service"><span itemprop="name">Charles Dickens</span></a>, 
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/40641.Michael_Slater?from_search=true&amp;search_version=service"><span itemprop="name">Michael Slater</span></a> <span class="authorName greyText smallText role">(Annotations)</span>
+</span>
+
+        <br/>
+        <span class="greyText smallText uitext">
+            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p3"></span></span> 4.12 avg rating &mdash; 28,795 ratings</span>
+            &mdash;
+              published
+             1852
+            &mdash;
+            <a class="greyText" rel="nofollow" href="/work/editions/17348487-a-christmas-carol-and-other-christmas-writings">102 editions</a>
+        </span>
+        
+
+          </td>
+          <td width="130px" >
+
+        <div class='wtrButtonContainer wtrSignedOut' id='8_book_5338'>
+<div class='wtrUp wtrLeft'>
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="+AIE7y8hpubNfYQVg/wIA8hJipYXdShDVBQ7L9AwzcmJ+DKgu0a//o28uQxBzuYqyUYfWP+cPd8Hy0NsJ5dfdg==" />
+<input type="hidden" name="book_id" id="book_id" value="5338" />
+<input type="hidden" name="name" id="name" value="to-read" />
+<input type="hidden" name="unique_id" id="unique_id" value="8_book_5338" />
+<input type="hidden" name="wtr_new" id="wtr_new" value="true" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="ref" id="ref" value="" class="wtrLeftUpRef" />
+<input type="hidden" name="existing_review" id="existing_review" value="false" class="wtrExisting" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+<button class='wtrToRead' type='submit'>
+<span class='progressTrigger'>Want to Read</span>
+<span class='progressIndicator'>saving…</span>
+</button>
+</form>
+
+</div>
+
+<div class='wtrRight wtrUp'>
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="Czjjeu7NUwLnDLxBS9IdvMiNytV+Hy5TkSDPlr1k8U56wtU1eqpKGqfNgViJ4POVyYJfG5b2O8/C/7fVSsNj8Q==" />
+<input type="hidden" name="unique_id" id="unique_id" value="8_book_5338" />
+<input type="hidden" name="book_id" id="book_id" value="5338" />
+<input type="hidden" name="a" id="a" />
+<input type="hidden" name="name" id="name" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+</form>
+
+<button class='wtrShelfButton'></button>
+</div>
+
+<div class='ratingStars wtrRating'>
+<div class='starsErrorTooltip hidden'>
+Error rating book. Refresh and try again.
+</div>
+<div class='myRating uitext greyText'>Rate this book</div>
+<div class='clearRating uitext'>Clear rating</div>
+<div class="stars" data-resource-id="5338" data-user-id="0" data-submit-url="/review/rate/5338?from_search=true&search_version=service&stars_click=true&wtr_button_id=8_book_5338" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+</div>
+
+</div>
+
+
+      </td>
+
+  </tr>
+
+
+    
+  <!-- Add query string params -->
+
+  
+
+  <tr itemscope itemtype="http://schema.org/Book">
+    <td width="5%" valign="top">
+      <div id="24013493" class="u-anchorTarget"></div>
+        <a title="Christmas Carol: Charles Dickens Erotic Sex Stories Scroog Werewolf Vampires" href="/book/show/24013493-christmas-carol?from_search=true&amp;search_version=service">
+          <img alt="Christmas Carol: Charles Di..." class="bookSmallImg" src="https://d.gr-assets.com/books/1419266241s/24013493.jpg" />
+</a>    </td>
+    <td width="100%" valign="top">
+      <a class="bookTitle" itemprop="url" href="/book/show/24013493-christmas-carol?from_search=true&amp;search_version=service">
+        <span itemprop='name'>Christmas Carol: Charles Dickens Erotic Sex Stories Scroog Werewolf Vampires</span>
+</a>      <br/>
+        <span class='by smallText'>by</span>
+<span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/9845146.Fionna_Free_Man?from_search=true&amp;search_version=service"><span itemprop="name">Fionna Free Man</span></a>
+</span>
+
+        <br/>
+        <span class="greyText smallText uitext">
+            <span class="minirating"><span class="stars staticStars"><span title="liked it" size="12x12" class="staticStar p10">liked it</span><span title="liked it" size="12x12" class="staticStar p10"></span><span title="liked it" size="12x12" class="staticStar p10"></span><span title="liked it" size="12x12" class="staticStar p0"></span><span title="liked it" size="12x12" class="staticStar p0"></span></span> 3.00 avg rating &mdash; 4 ratings</span>
             &mdash;
               published
              2014
             &mdash;
-            <a class="greyText" rel="nofollow" href="/work/editions/44881967-the-final-empire-part-3-mistborn-1-part-3">1 edition</a>
+            <a class="greyText" rel="nofollow" href="/work/editions/43613028-christmas-carol-charles-dickens-erotic-sex-stories-scroog-werewolf-vamp">1 edition</a>
         </span>
         
 
           </td>
           <td width="130px" >
 
-        <div class='wtrButtonContainer wtrSignedOut' id='3_book_25175964'>
+        <div class='wtrButtonContainer wtrSignedOut' id='9_book_24013493'>
 <div class='wtrUp wtrLeft'>
-<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="VhWgX1RKrcrZXQWXGJkSR37Zn7OcZrA5a2unVnv71irwXICBhl88fAIpkQbj27HiblzWrMVLbNNIqwy959FEeg==" />
-<input type="hidden" name="book_id" id="book_id" value="25175964" />
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="2CHNJnWNpEEu0y7QqoCv++PgymXTEb55bchb/UCHLw+p2/tp4eq9WW4SE8loskHS4u9fqzv4q+U+FyO+tyC9sA==" />
+<input type="hidden" name="book_id" id="book_id" value="24013493" />
 <input type="hidden" name="name" id="name" value="to-read" />
-<input type="hidden" name="unique_id" id="unique_id" value="3_book_25175964" />
+<input type="hidden" name="unique_id" id="unique_id" value="9_book_24013493" />
 <input type="hidden" name="wtr_new" id="wtr_new" value="true" />
 <input type="hidden" name="from_choice" id="from_choice" value="false" />
 <input type="hidden" name="from_home_module" id="from_home_module" value="false" />
@@ -631,9 +1152,9 @@ Error rating book. Refresh and try again.
 </div>
 
 <div class='wtrRight wtrUp'>
-<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="EqeiEGubslmxp1QvXYwGDPI0UKL2iV5+gKCNU50SZoC07oLOuY4j72rTwL6mzqWp4rEZva+kgpSjYCa4ATj00A==" />
-<input type="hidden" name="unique_id" id="unique_id" value="3_book_25175964" />
-<input type="hidden" name="book_id" id="book_id" value="25175964" />
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="qa7h8lE1m42k266sGxmZwJWfVIoS180Rxe8sm2FNdITYVNe9xVKCleQak7XZK3fplJDBRPo+2I2WMFTYlurmOw==" />
+<input type="hidden" name="unique_id" id="unique_id" value="9_book_24013493" />
+<input type="hidden" name="book_id" id="book_id" value="24013493" />
 <input type="hidden" name="a" id="a" />
 <input type="hidden" name="name" id="name" />
 <input type="hidden" name="from_choice" id="from_choice" value="false" />
@@ -652,7 +1173,7 @@ Error rating book. Refresh and try again.
 </div>
 <div class='myRating uitext greyText'>Rate this book</div>
 <div class='clearRating uitext'>Clear rating</div>
-<div class="stars" data-resource-id="25175964" data-user-id="0" data-submit-url="/review/rate/25175964?from_search=true&search_version=service&stars_click=true&wtr_button_id=3_book_25175964" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+<div class="stars" data-resource-id="24013493" data-user-id="0" data-submit-url="/review/rate/24013493?from_search=true&search_version=service&stars_click=true&wtr_button_id=9_book_24013493" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
 </div>
 
 </div>
@@ -670,39 +1191,40 @@ Error rating book. Refresh and try again.
 
   <tr itemscope itemtype="http://schema.org/Book">
     <td width="5%" valign="top">
-      <div id="25175838" class="u-anchorTarget"></div>
-        <a title="The Final Empire, Part 2" href="/book/show/25175838-the-final-empire-part-2?from_search=true&amp;search_version=service">
-          <img alt="The Final Empire, Part 2 (M..." class="bookSmallImg" src="https://d.gr-assets.com/books/1426780857s/25175838.jpg" />
+      <div id="519894" class="u-anchorTarget"></div>
+        <a title="Disney&#39;s Mickey&#39;s Christmas Carol: Based on a Christmas Carol by Charles Dickens" href="/book/show/519894.Disney_s_Mickey_s_Christmas_Carol?from_search=true&amp;search_version=service">
+          <img alt="Disney&#39;s Mickey&#39;s Christmas..." class="bookSmallImg" src="https://d.gr-assets.com/books/1266575543s/519894.jpg" />
 </a>    </td>
     <td width="100%" valign="top">
-      <a class="bookTitle" itemprop="url" href="/book/show/25175838-the-final-empire-part-2?from_search=true&amp;search_version=service">
-        <span itemprop='name'>The Final Empire, Part 2 (Mistborn #1, part 2)</span>
+      <a class="bookTitle" itemprop="url" href="/book/show/519894.Disney_s_Mickey_s_Christmas_Carol?from_search=true&amp;search_version=service">
+        <span itemprop='name'>Disney's Mickey's Christmas Carol: Based on a Christmas Carol by Charles Dickens</span>
 </a>      <br/>
         <span class='by smallText'>by</span>
 <span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
-<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/38550.Brandon_Sanderson?from_search=true&amp;search_version=service"><span itemprop="name">Brandon Sanderson</span></a> <span class="greyText">(Goodreads Author)</span>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/111210.Jim_Razzi?from_search=true&amp;search_version=service"><span itemprop="name">Jim Razzi</span></a>, 
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/239579.Charles_Dickens?from_search=true&amp;search_version=service"><span itemprop="name">Charles Dickens</span></a>
 </span>
 
         <br/>
         <span class="greyText smallText uitext">
-            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p6"></span></span> 4.61 avg rating &mdash; 107 ratings</span>
+            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p3"></span></span> 4.32 avg rating &mdash; 19 ratings</span>
             &mdash;
               published
-             2014
+             1992
             &mdash;
-            <a class="greyText" rel="nofollow" href="/work/editions/44881834-the-final-empire-part-2-mistborn-1-part-2">1 edition</a>
+            <a class="greyText" rel="nofollow" href="/work/editions/507801-disney-s-mickey-s-christmas-carol-based-on-a-christmas-carol-by-charles">4 editions</a>
         </span>
         
 
           </td>
           <td width="130px" >
 
-        <div class='wtrButtonContainer wtrSignedOut' id='4_book_25175838'>
+        <div class='wtrButtonContainer wtrSignedOut' id='10_book_519894'>
 <div class='wtrUp wtrLeft'>
-<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="41xyIYdbAoFibASkMvOZyJ+iGaZOl15ZkYjvyxZsO9dFFVL/VU6TN7kYkDXJsTptjydQuRe6grOySEQgikaphw==" />
-<input type="hidden" name="book_id" id="book_id" value="25175838" />
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="Qn8qOIDgGiZlDolrLd0vRYAGJ1bQvCglW0/lRvTiNtIzhRx3FIcDPiXPtHLv78FsgQmymDhVPbkIkJ0FA0WkbQ==" />
+<input type="hidden" name="book_id" id="book_id" value="519894" />
 <input type="hidden" name="name" id="name" value="to-read" />
-<input type="hidden" name="unique_id" id="unique_id" value="4_book_25175838" />
+<input type="hidden" name="unique_id" id="unique_id" value="10_book_519894" />
 <input type="hidden" name="wtr_new" id="wtr_new" value="true" />
 <input type="hidden" name="from_choice" id="from_choice" value="false" />
 <input type="hidden" name="from_home_module" id="from_home_module" value="false" />
@@ -720,9 +1242,9 @@ Error rating book. Refresh and try again.
 </div>
 
 <div class='wtrRight wtrUp'>
-<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="5cI+28kxFS+8fgGdUGXrUVHqqd58bR7SFtxXeHJE0/dDix4FGySEmWcKlQyrJ0j0QW/gwSVAwjg1HPyT7m5Bpw==" />
-<input type="hidden" name="unique_id" id="unique_id" value="4_book_25175838" />
-<input type="hidden" name="book_id" id="book_id" value="25175838" />
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="/mdR0sGizpR9DnwZqYHc/ydJSx0YeRaOnrj13fhO0hmPnWedVcXXjD3PQQBrszLWJkbe0/CQAxLNZ42eD+lApg==" />
+<input type="hidden" name="unique_id" id="unique_id" value="10_book_519894" />
+<input type="hidden" name="book_id" id="book_id" value="519894" />
 <input type="hidden" name="a" id="a" />
 <input type="hidden" name="name" id="name" />
 <input type="hidden" name="from_choice" id="from_choice" value="false" />
@@ -741,7 +1263,7 @@ Error rating book. Refresh and try again.
 </div>
 <div class='myRating uitext greyText'>Rate this book</div>
 <div class='clearRating uitext'>Clear rating</div>
-<div class="stars" data-resource-id="25175838" data-user-id="0" data-submit-url="/review/rate/25175838?from_search=true&search_version=service&stars_click=true&wtr_button_id=4_book_25175838" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+<div class="stars" data-resource-id="519894" data-user-id="0" data-submit-url="/review/rate/519894?from_search=true&search_version=service&stars_click=true&wtr_button_id=10_book_519894" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
 </div>
 
 </div>
@@ -759,39 +1281,214 @@ Error rating book. Refresh and try again.
 
   <tr itemscope itemtype="http://schema.org/Book">
     <td width="5%" valign="top">
-      <div id="12828612" class="u-anchorTarget"></div>
-        <a title="Novels By Brandon Sanderson, including: Alcatraz Versus The Evil Librarians, Alcatraz Versus The Scrivener&#39;s Bones, Alcatraz Versus The Knights Of Crystallia, Mistborn: The Final Empire, Mistborn: The Well Of Ascension, Mistborn Series, Elantris" href="/book/show/12828612-novels-by-brandon-sanderson-including?from_search=true&amp;search_version=service">
-          <img alt="Novels By Brandon Sanderson..." class="bookSmallImg" src="https://d.gr-assets.com/books/1348175900s/12828612.jpg" />
+      <div id="29605076" class="u-anchorTarget"></div>
+        <a title="A Christmas Carol: By Charles Dickens: Illustrated" href="/book/show/29605076-a-christmas-carol?from_search=true&amp;search_version=service">
+          <img alt="A Christmas Carol: By Charl..." class="bookSmallImg" src="https://d.gr-assets.com/books/1458744190s/29605076.jpg" />
 </a>    </td>
     <td width="100%" valign="top">
-      <a class="bookTitle" itemprop="url" href="/book/show/12828612-novels-by-brandon-sanderson-including?from_search=true&amp;search_version=service">
-        <span itemprop='name'>Novels By Brandon Sanderson, including: Alcatraz Versus The Evil Librarians, Alcatraz Versus The Scrivener's Bones, Alcatraz Versus The Knights Of Crystallia, Mistborn: The Final Empire, Mistborn: The Well Of Ascension, Mistborn Series, Elantris</span>
+      <a class="bookTitle" itemprop="url" href="/book/show/29605076-a-christmas-carol?from_search=true&amp;search_version=service">
+        <span itemprop='name'>A Christmas Carol: By Charles Dickens: Illustrated</span>
 </a>      <br/>
         <span class='by smallText'>by</span>
 <span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
-<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/5167894.Hephaestus_Books?from_search=true&amp;search_version=service"><span itemprop="name">Hephaestus Books</span></a>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/239579.Charles_Dickens?from_search=true&amp;search_version=service"><span itemprop="name">Charles Dickens</span></a>, 
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/3099532.Peter?from_search=true&amp;search_version=service"><span itemprop="name">Peter</span></a> <span class="authorName greyText smallText role">(Illustrator)</span>
 </span>
 
         <br/>
         <span class="greyText smallText uitext">
-            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p3"></span></span> 4.39 avg rating &mdash; 23 ratings</span>
+            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span></span> 0.00 avg rating &mdash; 0 ratings</span>
+            &mdash;
+            <a class="greyText" rel="nofollow" href="/work/editions/49944456-a-christmas-carol-by-charles-dickens-illustrated">1 edition</a>
+        </span>
+        
+
+          </td>
+          <td width="130px" >
+
+        <div class='wtrButtonContainer wtrSignedOut' id='11_book_29605076'>
+<div class='wtrUp wtrLeft'>
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="5XoNTrsHHkmQl7m3PUSZPc4BpkrBndp91orY/ZPFzrWUgDsBL2AHUdBWhK7/dncUzw4zhCl0z+GFVaC+ZGJcCg==" />
+<input type="hidden" name="book_id" id="book_id" value="29605076" />
+<input type="hidden" name="name" id="name" value="to-read" />
+<input type="hidden" name="unique_id" id="unique_id" value="11_book_29605076" />
+<input type="hidden" name="wtr_new" id="wtr_new" value="true" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="ref" id="ref" value="" class="wtrLeftUpRef" />
+<input type="hidden" name="existing_review" id="existing_review" value="false" class="wtrExisting" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+<button class='wtrToRead' type='submit'>
+<span class='progressTrigger'>Want to Read</span>
+<span class='progressIndicator'>saving…</span>
+</button>
+</form>
+
+</div>
+
+<div class='wtrRight wtrUp'>
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="he+iKz9DLL4DyJp99/dNYxLBUKg6kVWGZuNPy9BwE0f0FZRkqyQ1pkMJp2Q1xaNKE87FZtJ4QBo1PDeIJ9eB+A==" />
+<input type="hidden" name="unique_id" id="unique_id" value="11_book_29605076" />
+<input type="hidden" name="book_id" id="book_id" value="29605076" />
+<input type="hidden" name="a" id="a" />
+<input type="hidden" name="name" id="name" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+</form>
+
+<button class='wtrShelfButton'></button>
+</div>
+
+<div class='ratingStars wtrRating'>
+<div class='starsErrorTooltip hidden'>
+Error rating book. Refresh and try again.
+</div>
+<div class='myRating uitext greyText'>Rate this book</div>
+<div class='clearRating uitext'>Clear rating</div>
+<div class="stars" data-resource-id="29605076" data-user-id="0" data-submit-url="/review/rate/29605076?from_search=true&search_version=service&stars_click=true&wtr_button_id=11_book_29605076" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+</div>
+
+</div>
+
+
+      </td>
+
+  </tr>
+
+
+    
+  <!-- Add query string params -->
+
+  
+
+  <tr itemscope itemtype="http://schema.org/Book">
+    <td width="5%" valign="top">
+      <div id="30136682" class="u-anchorTarget"></div>
+        <a title="A Christmas Carol: By Charles Dickens : Illustrated" href="/book/show/30136682-a-christmas-carol?from_search=true&amp;search_version=service">
+          <img alt="A Christmas Carol: By Charl..." class="bookSmallImg" src="https://d.gr-assets.com/books/1462761572s/30136682.jpg" />
+</a>    </td>
+    <td width="100%" valign="top">
+      <a class="bookTitle" itemprop="url" href="/book/show/30136682-a-christmas-carol?from_search=true&amp;search_version=service">
+        <span itemprop='name'>A Christmas Carol: By Charles Dickens : Illustrated</span>
+</a>      <br/>
+        <span class='by smallText'>by</span>
+<span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/239579.Charles_Dickens?from_search=true&amp;search_version=service"><span itemprop="name">Charles Dickens</span></a>, 
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/875661.Rumi?from_search=true&amp;search_version=service"><span itemprop="name">Rumi</span></a> <span class="authorName greyText smallText role">(Illustrator)</span>
+</span>
+
+        <br/>
+        <span class="greyText smallText uitext">
+            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span></span> 0.00 avg rating &mdash; 0 ratings</span>
+            &mdash;
+            <a class="greyText" rel="nofollow" href="/work/editions/50569561-a-christmas-carol-by-charles-dickens-illustrated">1 edition</a>
+        </span>
+        
+
+          </td>
+          <td width="130px" >
+
+        <div class='wtrButtonContainer wtrSignedOut' id='12_book_30136682'>
+<div class='wtrUp wtrLeft'>
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="BlQ4kON1v/YWrukWZS+NnYHdh8cKFGEMJ4K9lDCQ2Ip3rg7fdxKm7lZv1A+nHWO0gNISCeL9dJB0XcXXxzdKNQ==" />
+<input type="hidden" name="book_id" id="book_id" value="30136682" />
+<input type="hidden" name="name" id="name" value="to-read" />
+<input type="hidden" name="unique_id" id="unique_id" value="12_book_30136682" />
+<input type="hidden" name="wtr_new" id="wtr_new" value="true" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="ref" id="ref" value="" class="wtrLeftUpRef" />
+<input type="hidden" name="existing_review" id="existing_review" value="false" class="wtrExisting" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+<button class='wtrToRead' type='submit'>
+<span class='progressTrigger'>Want to Read</span>
+<span class='progressIndicator'>saving…</span>
+</button>
+</form>
+
+</div>
+
+<div class='wtrRight wtrUp'>
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="rV+iCXGZFTC69qY5ZAg3uJXF3zq3zBmJFRGVt1wS7JHcpZRG5f4MKPo3myCmOtmRlMpK9F8lDBVGzu30q7V+Lg==" />
+<input type="hidden" name="unique_id" id="unique_id" value="12_book_30136682" />
+<input type="hidden" name="book_id" id="book_id" value="30136682" />
+<input type="hidden" name="a" id="a" />
+<input type="hidden" name="name" id="name" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+</form>
+
+<button class='wtrShelfButton'></button>
+</div>
+
+<div class='ratingStars wtrRating'>
+<div class='starsErrorTooltip hidden'>
+Error rating book. Refresh and try again.
+</div>
+<div class='myRating uitext greyText'>Rate this book</div>
+<div class='clearRating uitext'>Clear rating</div>
+<div class="stars" data-resource-id="30136682" data-user-id="0" data-submit-url="/review/rate/30136682?from_search=true&search_version=service&stars_click=true&wtr_button_id=12_book_30136682" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+</div>
+
+</div>
+
+
+      </td>
+
+  </tr>
+
+
+    
+  <!-- Add query string params -->
+
+  
+
+  <tr itemscope itemtype="http://schema.org/Book">
+    <td width="5%" valign="top">
+      <div id="6694791" class="u-anchorTarget"></div>
+        <a title="Charles Dickens&#39; A Christmas Carol" href="/book/show/6694791-charles-dickens-a-christmas-carol?from_search=true&amp;search_version=service">
+          <img alt="Charles Dickens&#39; A Christma..." class="bookSmallImg" src="https://d.gr-assets.com/books/1347456319s/6694791.jpg" />
+</a>    </td>
+    <td width="100%" valign="top">
+      <a class="bookTitle" itemprop="url" href="/book/show/6694791-charles-dickens-a-christmas-carol?from_search=true&amp;search_version=service">
+        <span itemprop='name'>Charles Dickens' A Christmas Carol</span>
+</a>      <br/>
+        <span class='by smallText'>by</span>
+<span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/44524.Brett_Helquist?from_search=true&amp;search_version=service"><span itemprop="name">Brett Helquist</span></a> <span class="authorName greyText smallText role">(illustrator)</span>, 
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/239579.Charles_Dickens?from_search=true&amp;search_version=service"><span itemprop="name">Charles Dickens</span></a> <span class="authorName greyText smallText role">(Creator)</span>
+</span>
+
+        <br/>
+        <span class="greyText smallText uitext">
+            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p3"></span></span> 4.07 avg rating &mdash; 765 ratings</span>
             &mdash;
               published
-             2011
+             2010
             &mdash;
-            <a class="greyText" rel="nofollow" href="/work/editions/17978634-novels-by-brandon-sanderson-including-alcatraz-versus-the-evil-librari">1 edition</a>
+            <a class="greyText" rel="nofollow" href="/work/editions/22166039-charles-dickens-a-christmas-carol">4 editions</a>
         </span>
         
 
           </td>
           <td width="130px" >
 
-        <div class='wtrButtonContainer wtrSignedOut' id='5_book_12828612'>
+        <div class='wtrButtonContainer wtrSignedOut' id='13_book_6694791'>
 <div class='wtrUp wtrLeft'>
-<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="/COUUzRvtMjPwY+2S4ARbmU0NjrX93GW6YQw/2wWLtVaarSN5nolfhS1GyewwrLLdbF/JY7arXzKRJsU8Dy8hQ==" />
-<input type="hidden" name="book_id" id="book_id" value="12828612" />
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="JbXRVeeTDhLIGSc0Is3jd7TqK3LRFraoqFwCo8o4Jw5UT+cac/QXCojYGi3g/w1eteW+vDn/ozT7g3rgPZ+1sQ==" />
+<input type="hidden" name="book_id" id="book_id" value="6694791" />
 <input type="hidden" name="name" id="name" value="to-read" />
-<input type="hidden" name="unique_id" id="unique_id" value="5_book_12828612" />
+<input type="hidden" name="unique_id" id="unique_id" value="13_book_6694791" />
 <input type="hidden" name="wtr_new" id="wtr_new" value="true" />
 <input type="hidden" name="from_choice" id="from_choice" value="false" />
 <input type="hidden" name="from_home_module" id="from_home_module" value="false" />
@@ -809,9 +1506,9 @@ Error rating book. Refresh and try again.
 </div>
 
 <div class='wtrRight wtrUp'>
-<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="JjCm+7gLw3svTrwIX4bHNW4+h+Oe0YERprTem/3z+32AeYYlah5SzfQ6KJmkxGSQfrvO/Mf8XfuFdHVwYdlpLQ==" />
-<input type="hidden" name="unique_id" id="unique_id" value="5_book_12828612" />
-<input type="hidden" name="book_id" id="book_id" value="12828612" />
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="o8K1Ebd0BHxGoB15HnvVIDMZv3yrKNsiPpoNTY/8HR3SOINeIxMdZAZhIGDcSTsJMhYqskPBzr5tRXUOeFuPog==" />
+<input type="hidden" name="unique_id" id="unique_id" value="13_book_6694791" />
+<input type="hidden" name="book_id" id="book_id" value="6694791" />
 <input type="hidden" name="a" id="a" />
 <input type="hidden" name="name" id="name" />
 <input type="hidden" name="from_choice" id="from_choice" value="false" />
@@ -830,7 +1527,7 @@ Error rating book. Refresh and try again.
 </div>
 <div class='myRating uitext greyText'>Rate this book</div>
 <div class='clearRating uitext'>Clear rating</div>
-<div class="stars" data-resource-id="12828612" data-user-id="0" data-submit-url="/review/rate/12828612?from_search=true&search_version=service&stars_click=true&wtr_button_id=5_book_12828612" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+<div class="stars" data-resource-id="6694791" data-user-id="0" data-submit-url="/review/rate/6694791?from_search=true&search_version=service&stars_click=true&wtr_button_id=13_book_6694791" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
 </div>
 
 </div>
@@ -848,37 +1545,36 @@ Error rating book. Refresh and try again.
 
   <tr itemscope itemtype="http://schema.org/Book">
     <td width="5%" valign="top">
-      <div id="18957941" class="u-anchorTarget"></div>
-        <a title="The Final Empire, Part 1" href="/book/show/18957941-the-final-empire-part-1?from_search=true&amp;search_version=service">
-          <img alt="The Final Empire, Part 1 (M..." class="bookSmallImg" src="https://d.gr-assets.com/books/1385452161s/18957941.jpg" />
+      <div id="29413485" class="u-anchorTarget"></div>
+        <a title="A Christmas Carol By Charles Dickens/A Piano Jazz Christmas" href="/book/show/29413485-a-christmas-carol-by-charles-dickens-a-piano-jazz-christmas?from_search=true&amp;search_version=service">
+          <img alt="A Christmas Carol By Charle..." class="bookSmallImg" src="https://s.gr-assets.com/assets/nophoto/book/50x75-a91bf249278a81aabab721ef782c4a74.png" />
 </a>    </td>
     <td width="100%" valign="top">
-      <a class="bookTitle" itemprop="url" href="/book/show/18957941-the-final-empire-part-1?from_search=true&amp;search_version=service">
-        <span itemprop='name'>The Final Empire, Part 1 (Mistborn #1, part 1)</span>
+      <a class="bookTitle" itemprop="url" href="/book/show/29413485-a-christmas-carol-by-charles-dickens-a-piano-jazz-christmas?from_search=true&amp;search_version=service">
+        <span itemprop='name'>A Christmas Carol By Charles Dickens/A Piano Jazz Christmas</span>
 </a>      <br/>
         <span class='by smallText'>by</span>
 <span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
-<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/38550.Brandon_Sanderson?from_search=true&amp;search_version=service"><span itemprop="name">Brandon Sanderson</span></a> <span class="greyText">(Goodreads Author)</span>, 
-<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/7431510.Nathanial_Perry?from_search=true&amp;search_version=service"><span itemprop="name">Nathanial Perry</span></a> <span class="authorName greyText smallText role">(Narrator)</span>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/8149.Jonathan_Winters?from_search=true&amp;search_version=service"><span itemprop="name">Jonathan Winters</span></a>
 </span>
 
         <br/>
         <span class="greyText smallText uitext">
-            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p6"></span></span> 4.61 avg rating &mdash; 221 ratings</span>
+            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span></span> 0.00 avg rating &mdash; 0 ratings</span>
             &mdash;
-            <a class="greyText" rel="nofollow" href="/work/editions/49841850-the-final-empire-part-1-mistborn-1-part-1">1 edition</a>
+            <a class="greyText" rel="nofollow" href="/work/editions/49670048-a-christmas-carol-by-charles-dickens-a-piano-jazz-christmas">1 edition</a>
         </span>
         
 
           </td>
           <td width="130px" >
 
-        <div class='wtrButtonContainer wtrSignedOut' id='6_book_18957941'>
+        <div class='wtrButtonContainer wtrSignedOut' id='14_book_29413485'>
 <div class='wtrUp wtrLeft'>
-<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="E5X3iEDhp3/f7z+rTvOBu9t/Eg6KNZdycIwhBgys6Pu13NdWkvQ2yQSbqzq1sSIey/pbEdMYS5hTTIrtkIZ6qw==" />
-<input type="hidden" name="book_id" id="book_id" value="18957941" />
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="kb842FItwVuBg3IuXa4wlJhb4otJ34//NZNx9LcO3nHgRQ6XxkrYQ8FCTzefnN69mVR3RaE2mmNmTAm3QKlMzg==" />
+<input type="hidden" name="book_id" id="book_id" value="29413485" />
 <input type="hidden" name="name" id="name" value="to-read" />
-<input type="hidden" name="unique_id" id="unique_id" value="6_book_18957941" />
+<input type="hidden" name="unique_id" id="unique_id" value="14_book_29413485" />
 <input type="hidden" name="wtr_new" id="wtr_new" value="true" />
 <input type="hidden" name="from_choice" id="from_choice" value="false" />
 <input type="hidden" name="from_home_module" id="from_home_module" value="false" />
@@ -896,9 +1592,9 @@ Error rating book. Refresh and try again.
 </div>
 
 <div class='wtrRight wtrUp'>
-<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="UPgPfDaMkplPe4p8Cs3Jqnjn+GoirirBI2AbdO1D5Kn2sS+i5JkDL5QPHu3xj2oPaGKxdXuD9isAoLCfcWl2+Q==" />
-<input type="hidden" name="unique_id" id="unique_id" value="6_book_18957941" />
-<input type="hidden" name="book_id" id="book_id" value="18957941" />
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="0MkVJFR6WzDI5PDcGT7S3p0SRc7UmAhjKiaRImDeJDOhMyNrwB1CKIglzcXbDDz3nB3QADxxHf95+elhl3m2jA==" />
+<input type="hidden" name="unique_id" id="unique_id" value="14_book_29413485" />
+<input type="hidden" name="book_id" id="book_id" value="29413485" />
 <input type="hidden" name="a" id="a" />
 <input type="hidden" name="name" id="name" />
 <input type="hidden" name="from_choice" id="from_choice" value="false" />
@@ -917,7 +1613,541 @@ Error rating book. Refresh and try again.
 </div>
 <div class='myRating uitext greyText'>Rate this book</div>
 <div class='clearRating uitext'>Clear rating</div>
-<div class="stars" data-resource-id="18957941" data-user-id="0" data-submit-url="/review/rate/18957941?from_search=true&search_version=service&stars_click=true&wtr_button_id=6_book_18957941" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+<div class="stars" data-resource-id="29413485" data-user-id="0" data-submit-url="/review/rate/29413485?from_search=true&search_version=service&stars_click=true&wtr_button_id=14_book_29413485" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+</div>
+
+</div>
+
+
+      </td>
+
+  </tr>
+
+
+    
+  <!-- Add query string params -->
+
+  
+
+  <tr itemscope itemtype="http://schema.org/Book">
+    <td width="5%" valign="top">
+      <div id="196970" class="u-anchorTarget"></div>
+        <a title="The Night Before Christmas" href="/book/show/196970.The_Night_Before_Christmas?from_search=true&amp;search_version=service">
+          <img alt="The Night Before Christmas" class="bookSmallImg" src="https://d.gr-assets.com/books/1388370094s/196970.jpg" />
+</a>    </td>
+    <td width="100%" valign="top">
+      <a class="bookTitle" itemprop="url" href="/book/show/196970.The_Night_Before_Christmas?from_search=true&amp;search_version=service">
+        <span itemprop='name'>The Night Before Christmas</span>
+</a>      <br/>
+        <span class='by smallText'>by</span>
+<span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/64709.Clement_C_Moore?from_search=true&amp;search_version=service"><span itemprop="name">Clement C. Moore</span></a>, 
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/16325.Jan_Brett?from_search=true&amp;search_version=service"><span itemprop="name">Jan Brett</span></a> <span class="authorName greyText smallText role">(Illustrator)</span>
+</span>
+
+        <br/>
+        <span class="greyText smallText uitext">
+            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p3"></span></span> 4.36 avg rating &mdash; 76,594 ratings</span>
+            &mdash;
+              published
+             1823
+            &mdash;
+            <a class="greyText" rel="nofollow" href="/work/editions/3043272-a-visit-from-st-nicholas">740 editions</a>
+        </span>
+        
+
+          </td>
+          <td width="130px" >
+
+        <div class='wtrButtonContainer wtrSignedOut' id='15_book_196970'>
+<div class='wtrUp wtrLeft'>
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="Y6lq1RN6bmCkL7imZ0ZAQ7TV5YRISTvh/Pt4vS7vz14SU1yahx13eOTuhb+ldK5qtdpwSqCgLn2vJAD+2Uhd4Q==" />
+<input type="hidden" name="book_id" id="book_id" value="196970" />
+<input type="hidden" name="name" id="name" value="to-read" />
+<input type="hidden" name="unique_id" id="unique_id" value="15_book_196970" />
+<input type="hidden" name="wtr_new" id="wtr_new" value="true" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="ref" id="ref" value="" class="wtrLeftUpRef" />
+<input type="hidden" name="existing_review" id="existing_review" value="false" class="wtrExisting" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+<button class='wtrToRead' type='submit'>
+<span class='progressTrigger'>Want to Read</span>
+<span class='progressIndicator'>saving…</span>
+</button>
+</form>
+
+</div>
+
+<div class='wtrRight wtrUp'>
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="pTBUdgIPjAc8toWZQIp/vIVGOIKvJlpgjsqFge/zyXDUymI5lmiVH3x3uICCuJGVhEmtTEfPT/zdFf3CGFRbzw==" />
+<input type="hidden" name="unique_id" id="unique_id" value="15_book_196970" />
+<input type="hidden" name="book_id" id="book_id" value="196970" />
+<input type="hidden" name="a" id="a" />
+<input type="hidden" name="name" id="name" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+</form>
+
+<button class='wtrShelfButton'></button>
+</div>
+
+<div class='ratingStars wtrRating'>
+<div class='starsErrorTooltip hidden'>
+Error rating book. Refresh and try again.
+</div>
+<div class='myRating uitext greyText'>Rate this book</div>
+<div class='clearRating uitext'>Clear rating</div>
+<div class="stars" data-resource-id="196970" data-user-id="0" data-submit-url="/review/rate/196970?from_search=true&search_version=service&stars_click=true&wtr_button_id=15_book_196970" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+</div>
+
+</div>
+
+
+      </td>
+
+  </tr>
+
+
+    
+  <!-- Add query string params -->
+
+  
+
+  <tr itemscope itemtype="http://schema.org/Book">
+    <td width="5%" valign="top">
+      <div id="519893" class="u-anchorTarget"></div>
+        <a title="A Christmas Celebration: Including &quot;A Christmas Carol&quot; by Charles Dickens" href="/book/show/519893.A_Christmas_Celebration?from_search=true&amp;search_version=service">
+          <img alt="A Christmas Celebration: In..." class="bookSmallImg" src="https://d.gr-assets.com/books/1347948979s/519893.jpg" />
+</a>    </td>
+    <td width="100%" valign="top">
+      <a class="bookTitle" itemprop="url" href="/book/show/519893.A_Christmas_Celebration?from_search=true&amp;search_version=service">
+        <span itemprop='name'>A Christmas Celebration: Including &quot;A Christmas Carol&quot; by Charles Dickens</span>
+</a>      <br/>
+        <span class='by smallText'>by</span>
+<span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/110874.Christina_Hardyment?from_search=true&amp;search_version=service"><span itemprop="name">Christina Hardyment</span></a> <span class="authorName greyText smallText role">(Editor)</span>, 
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/268734.Anton_Lesser?from_search=true&amp;search_version=service"><span itemprop="name">Anton Lesser</span></a> <span class="authorName greyText smallText role">(Narrator)</span>, <a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/239579.Charles_Dickens?from_search=true&amp;search_version=service"><span itemprop="name">Charles Dickens</span></a>
+</span>
+
+        <br/>
+        <span class="greyText smallText uitext">
+            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p6"></span><span size="12x12" class="staticStar p0"></span></span> 3.67 avg rating &mdash; 3 ratings</span>
+            &mdash;
+              published
+             2005
+            &mdash;
+            <a class="greyText" rel="nofollow" href="/work/editions/6194922-a-christmas-celebration-including-a-christmas-carol-by-charles-dicken">1 edition</a>
+        </span>
+        
+
+          </td>
+          <td width="130px" >
+
+        <div class='wtrButtonContainer wtrSignedOut' id='16_book_519893'>
+<div class='wtrUp wtrLeft'>
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="Je7qJtpYi1pzX46Ww2MIb+j9yEZuz0npxFkdW9BjK4hUFNxpTj+SQjOes48BUeZG6fJdiIYmXHWXhmUYJ8S5Nw==" />
+<input type="hidden" name="book_id" id="book_id" value="519893" />
+<input type="hidden" name="name" id="name" value="to-read" />
+<input type="hidden" name="unique_id" id="unique_id" value="16_book_519893" />
+<input type="hidden" name="wtr_new" id="wtr_new" value="true" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="ref" id="ref" value="" class="wtrLeftUpRef" />
+<input type="hidden" name="existing_review" id="existing_review" value="false" class="wtrExisting" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+<button class='wtrToRead' type='submit'>
+<span class='progressTrigger'>Want to Read</span>
+<span class='progressIndicator'>saving…</span>
+</button>
+</form>
+
+</div>
+
+<div class='wtrRight wtrUp'>
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="T9r2o+Dlu9SkW5G68Iqpu08RgULetFFYHq2al9lBnUk+IMDsdIKizOSarKMyuEeSTh4UjDZdRMRNcuLULuYP9g==" />
+<input type="hidden" name="unique_id" id="unique_id" value="16_book_519893" />
+<input type="hidden" name="book_id" id="book_id" value="519893" />
+<input type="hidden" name="a" id="a" />
+<input type="hidden" name="name" id="name" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+</form>
+
+<button class='wtrShelfButton'></button>
+</div>
+
+<div class='ratingStars wtrRating'>
+<div class='starsErrorTooltip hidden'>
+Error rating book. Refresh and try again.
+</div>
+<div class='myRating uitext greyText'>Rate this book</div>
+<div class='clearRating uitext'>Clear rating</div>
+<div class="stars" data-resource-id="519893" data-user-id="0" data-submit-url="/review/rate/519893?from_search=true&search_version=service&stars_click=true&wtr_button_id=16_book_519893" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+</div>
+
+</div>
+
+
+      </td>
+
+  </tr>
+
+
+    
+  <!-- Add query string params -->
+
+  
+
+  <tr itemscope itemtype="http://schema.org/Book">
+    <td width="5%" valign="top">
+      <div id="29966289" class="u-anchorTarget"></div>
+        <a title="The Sarcastically-Annotated A Christmas Carol By Charles Dickens" href="/book/show/29966289-the-sarcastically-annotated-a-christmas-carol-by-charles-dickens?from_search=true&amp;search_version=service">
+          <img alt="The Sarcastically-Annotated..." class="bookSmallImg" src="https://d.gr-assets.com/books/1461170913s/29966289.jpg" />
+</a>    </td>
+    <td width="100%" valign="top">
+      <a class="bookTitle" itemprop="url" href="/book/show/29966289-the-sarcastically-annotated-a-christmas-carol-by-charles-dickens?from_search=true&amp;search_version=service">
+        <span itemprop='name'>The Sarcastically-Annotated A Christmas Carol By Charles Dickens</span>
+</a>      <br/>
+        <span class='by smallText'>by</span>
+<span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/15195292.Shane_Killian?from_search=true&amp;search_version=service"><span itemprop="name">Shane Killian</span></a>
+</span>
+
+        <br/>
+        <span class="greyText smallText uitext">
+            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span><span size="12x12" class="staticStar p0"></span></span> 0.00 avg rating &mdash; 0 ratings</span>
+            &mdash;
+            <a class="greyText" rel="nofollow" href="/work/editions/50360906-the-sarcastically-annotated-a-christmas-carol-by-charles-dickens">1 edition</a>
+        </span>
+        
+
+          </td>
+          <td width="130px" >
+
+        <div class='wtrButtonContainer wtrSignedOut' id='17_book_29966289'>
+<div class='wtrUp wtrLeft'>
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="EzNUmnR3DCjXKzJroWZfbWZaMHhojpoBYQqR14pXgfZiyWLV4BAVMJfqD3JjVLFEZ1WltoBnj50y1emUffATSQ==" />
+<input type="hidden" name="book_id" id="book_id" value="29966289" />
+<input type="hidden" name="name" id="name" value="to-read" />
+<input type="hidden" name="unique_id" id="unique_id" value="17_book_29966289" />
+<input type="hidden" name="wtr_new" id="wtr_new" value="true" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="ref" id="ref" value="" class="wtrLeftUpRef" />
+<input type="hidden" name="existing_review" id="existing_review" value="false" class="wtrExisting" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+<button class='wtrToRead' type='submit'>
+<span class='progressTrigger'>Want to Read</span>
+<span class='progressIndicator'>saving…</span>
+</button>
+</form>
+
+</div>
+
+<div class='wtrRight wtrUp'>
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="lcgo13hIoWNVmT8FCGQzc0Gqs7zqZLGQXptKp4m3skzkMh6Y7C+4exVYAhzKVt1aQKUmcgKNpAwNRDLkfhAg8w==" />
+<input type="hidden" name="unique_id" id="unique_id" value="17_book_29966289" />
+<input type="hidden" name="book_id" id="book_id" value="29966289" />
+<input type="hidden" name="a" id="a" />
+<input type="hidden" name="name" id="name" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+</form>
+
+<button class='wtrShelfButton'></button>
+</div>
+
+<div class='ratingStars wtrRating'>
+<div class='starsErrorTooltip hidden'>
+Error rating book. Refresh and try again.
+</div>
+<div class='myRating uitext greyText'>Rate this book</div>
+<div class='clearRating uitext'>Clear rating</div>
+<div class="stars" data-resource-id="29966289" data-user-id="0" data-submit-url="/review/rate/29966289?from_search=true&search_version=service&stars_click=true&wtr_button_id=17_book_29966289" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+</div>
+
+</div>
+
+
+      </td>
+
+  </tr>
+
+
+    
+  <!-- Add query string params -->
+
+  
+
+  <tr itemscope itemtype="http://schema.org/Book">
+    <td width="5%" valign="top">
+      <div id="492899" class="u-anchorTarget"></div>
+        <a title="Five Novels: Oliver Twist, A Christmas Carol, David Copperfield, A Tale of Two Cities, Great Expectations" href="/book/show/492899.Five_Novels?from_search=true&amp;search_version=service">
+          <img alt="Five Novels: Oliver Twist, ..." class="bookSmallImg" src="https://d.gr-assets.com/books/1387663728s/492899.jpg" />
+</a>    </td>
+    <td width="100%" valign="top">
+      <a class="bookTitle" itemprop="url" href="/book/show/492899.Five_Novels?from_search=true&amp;search_version=service">
+        <span itemprop='name'>Five Novels: Oliver Twist, A Christmas Carol, David Copperfield, A Tale of Two Cities, Great Expectations</span>
+</a>      <br/>
+        <span class='by smallText'>by</span>
+<span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/239579.Charles_Dickens?from_search=true&amp;search_version=service"><span itemprop="name">Charles Dickens</span></a>
+</span>
+
+        <br/>
+        <span class="greyText smallText uitext">
+            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p3"></span></span> 4.17 avg rating &mdash; 2,480 ratings</span>
+            &mdash;
+              published
+             1861
+            &mdash;
+            <a class="greyText" rel="nofollow" href="/work/editions/481079-charles-dickens-five-novels-complete-and-unabridged-oliver-twist-a-ch">9 editions</a>
+        </span>
+        
+
+          </td>
+          <td width="130px" >
+
+        <div class='wtrButtonContainer wtrSignedOut' id='18_book_492899'>
+<div class='wtrUp wtrLeft'>
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="zW+0ByKsU05HXSYsjnhtxndX2s+c18MKUxJ7Ur/BXiG8lYJItstKVgecGzVMSoPvdlhPAXQ+1pYAzQMRSGbMng==" />
+<input type="hidden" name="book_id" id="book_id" value="492899" />
+<input type="hidden" name="name" id="name" value="to-read" />
+<input type="hidden" name="unique_id" id="unique_id" value="18_book_492899" />
+<input type="hidden" name="wtr_new" id="wtr_new" value="true" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="ref" id="ref" value="" class="wtrLeftUpRef" />
+<input type="hidden" name="existing_review" id="existing_review" value="false" class="wtrExisting" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+<button class='wtrToRead' type='submit'>
+<span class='progressTrigger'>Want to Read</span>
+<span class='progressIndicator'>saving…</span>
+</button>
+</form>
+
+</div>
+
+<div class='wtrRight wtrUp'>
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="z5DDaBWFkxvXZA+KfmNpdJQxtcZw7YkfQm5oGrEqil++avUngeKKA5elMpO8UYddlT4gCJgEnIMRsRBZRo0Y4A==" />
+<input type="hidden" name="unique_id" id="unique_id" value="18_book_492899" />
+<input type="hidden" name="book_id" id="book_id" value="492899" />
+<input type="hidden" name="a" id="a" />
+<input type="hidden" name="name" id="name" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+</form>
+
+<button class='wtrShelfButton'></button>
+</div>
+
+<div class='ratingStars wtrRating'>
+<div class='starsErrorTooltip hidden'>
+Error rating book. Refresh and try again.
+</div>
+<div class='myRating uitext greyText'>Rate this book</div>
+<div class='clearRating uitext'>Clear rating</div>
+<div class="stars" data-resource-id="492899" data-user-id="0" data-submit-url="/review/rate/492899?from_search=true&search_version=service&stars_click=true&wtr_button_id=18_book_492899" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+</div>
+
+</div>
+
+
+      </td>
+
+  </tr>
+
+
+    
+  <!-- Add query string params -->
+
+  
+
+  <tr itemscope itemtype="http://schema.org/Book">
+    <td width="5%" valign="top">
+      <div id="5336" class="u-anchorTarget"></div>
+        <a title="Four Complete Novels: Great Expectations/Hard Times/A Christmas Carol/A Tale of Two Cities" href="/book/show/5336.Four_Complete_Novels?from_search=true&amp;search_version=service">
+          <img alt="Four Complete Novels: Great..." class="bookSmallImg" src="https://d.gr-assets.com/books/1388199000s/5336.jpg" />
+</a>    </td>
+    <td width="100%" valign="top">
+      <a class="bookTitle" itemprop="url" href="/book/show/5336.Four_Complete_Novels?from_search=true&amp;search_version=service">
+        <span itemprop='name'>Four Complete Novels: Great Expectations/Hard Times/A Christmas Carol/A Tale of Two Cities</span>
+</a>      <br/>
+        <span class='by smallText'>by</span>
+<span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/239579.Charles_Dickens?from_search=true&amp;search_version=service"><span itemprop="name">Charles Dickens</span></a>
+</span>
+
+        <br/>
+        <span class="greyText smallText uitext">
+            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p3"></span></span> 4.28 avg rating &mdash; 2,959 ratings</span>
+            &mdash;
+              published
+             1861
+            &mdash;
+            <a class="greyText" rel="nofollow" href="/work/editions/82083-great-expectations-hard-times-a-christmas-carol-a-tale-of-two-cities">10 editions</a>
+        </span>
+        
+
+          </td>
+          <td width="130px" >
+
+        <div class='wtrButtonContainer wtrSignedOut' id='19_book_5336'>
+<div class='wtrUp wtrLeft'>
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="uJPV1GbldRPSvNvHLDZovz91ojCxj2hKIqVcexvdxXLJaeOb8oJsC5J95t7uBIaWPno3/llmfdZxeiQ47HpXzQ==" />
+<input type="hidden" name="book_id" id="book_id" value="5336" />
+<input type="hidden" name="name" id="name" value="to-read" />
+<input type="hidden" name="unique_id" id="unique_id" value="19_book_5336" />
+<input type="hidden" name="wtr_new" id="wtr_new" value="true" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="ref" id="ref" value="" class="wtrLeftUpRef" />
+<input type="hidden" name="existing_review" id="existing_review" value="false" class="wtrExisting" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+<button class='wtrToRead' type='submit'>
+<span class='progressTrigger'>Want to Read</span>
+<span class='progressIndicator'>saving…</span>
+</button>
+</form>
+
+</div>
+
+<div class='wtrRight wtrUp'>
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="wlhT1IF9Fo2tK/5jN1VGsC51D4TMla9gIaumPwVCg6GzomWbFRoPle3qw3r1Z6iZL3qaSiR8uvxydN588uURHg==" />
+<input type="hidden" name="unique_id" id="unique_id" value="19_book_5336" />
+<input type="hidden" name="book_id" id="book_id" value="5336" />
+<input type="hidden" name="a" id="a" />
+<input type="hidden" name="name" id="name" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+</form>
+
+<button class='wtrShelfButton'></button>
+</div>
+
+<div class='ratingStars wtrRating'>
+<div class='starsErrorTooltip hidden'>
+Error rating book. Refresh and try again.
+</div>
+<div class='myRating uitext greyText'>Rate this book</div>
+<div class='clearRating uitext'>Clear rating</div>
+<div class="stars" data-resource-id="5336" data-user-id="0" data-submit-url="/review/rate/5336?from_search=true&search_version=service&stars_click=true&wtr_button_id=19_book_5336" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
+</div>
+
+</div>
+
+
+      </td>
+
+  </tr>
+
+
+    
+  <!-- Add query string params -->
+
+  
+
+  <tr itemscope itemtype="http://schema.org/Book">
+    <td width="5%" valign="top">
+      <div id="392283" class="u-anchorTarget"></div>
+        <a title="The Christmas Books, Volume 1: A Christmas Carol/The Chimes" href="/book/show/392283.The_Christmas_Books_Volume_1?from_search=true&amp;search_version=service">
+          <img alt="The Christmas Books, Volume..." class="bookSmallImg" src="https://d.gr-assets.com/books/1279789683s/392283.jpg" />
+</a>    </td>
+    <td width="100%" valign="top">
+      <a class="bookTitle" itemprop="url" href="/book/show/392283.The_Christmas_Books_Volume_1?from_search=true&amp;search_version=service">
+        <span itemprop='name'>The Christmas Books, Volume 1: A Christmas Carol/The Chimes</span>
+</a>      <br/>
+        <span class='by smallText'>by</span>
+<span itemprop='author' itemscope='' itemtype='http://schema.org/Person'>
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/239579.Charles_Dickens?from_search=true&amp;search_version=service"><span itemprop="name">Charles Dickens</span></a>, 
+<a class="authorName" itemprop="url" href="https://www.goodreads.com/author/show/40641.Michael_Slater?from_search=true&amp;search_version=service"><span itemprop="name">Michael Slater</span></a> <span class="authorName greyText smallText role">(Editor, Introduction, Notes)</span>
+</span>
+
+        <br/>
+        <span class="greyText smallText uitext">
+            <span class="minirating"><span class="stars staticStars"><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p10"></span><span size="12x12" class="staticStar p3"></span></span> 4.07 avg rating &mdash; 759 ratings</span>
+            &mdash;
+              published
+             1844
+            &mdash;
+            <a class="greyText" rel="nofollow" href="/work/editions/18658551-a-christmas-carol-and-the-chimes">20 editions</a>
+        </span>
+        
+
+          </td>
+          <td width="130px" >
+
+        <div class='wtrButtonContainer wtrSignedOut' id='20_book_392283'>
+<div class='wtrUp wtrLeft'>
+<form action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="KAvvPIvZE/DlF8hOasyK0dnSMsFstrv3C4QVp8+FUYdZ8dlzH74K6KXW9Veo/mT42N2nD4RfrmtYW23kOCLDOA==" />
+<input type="hidden" name="book_id" id="book_id" value="392283" />
+<input type="hidden" name="name" id="name" value="to-read" />
+<input type="hidden" name="unique_id" id="unique_id" value="20_book_392283" />
+<input type="hidden" name="wtr_new" id="wtr_new" value="true" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="ref" id="ref" value="" class="wtrLeftUpRef" />
+<input type="hidden" name="existing_review" id="existing_review" value="false" class="wtrExisting" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+<button class='wtrToRead' type='submit'>
+<span class='progressTrigger'>Want to Read</span>
+<span class='progressIndicator'>saving…</span>
+</button>
+</form>
+
+</div>
+
+<div class='wtrRight wtrUp'>
+<form class="hiddenShelfForm" action="/shelf/add_to_shelf" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="zVZMfzkV4tVgago3hy6Kei677rDJCLg4lKUCugzQCZO8rHowrXL7zSCrNy5FHGRTL7R7fiHhraTHenr5+3ebLA==" />
+<input type="hidden" name="unique_id" id="unique_id" value="20_book_392283" />
+<input type="hidden" name="book_id" id="book_id" value="392283" />
+<input type="hidden" name="a" id="a" />
+<input type="hidden" name="name" id="name" />
+<input type="hidden" name="from_choice" id="from_choice" value="false" />
+<input type="hidden" name="from_home_module" id="from_home_module" value="false" />
+<input type="hidden" name="page_url" id="page_url" />
+<input type="hidden" name="search_version" id="search_version" value="service" />
+<input type="hidden" name="from_search" id="from_search" value="true" />
+</form>
+
+<button class='wtrShelfButton'></button>
+</div>
+
+<div class='ratingStars wtrRating'>
+<div class='starsErrorTooltip hidden'>
+Error rating book. Refresh and try again.
+</div>
+<div class='myRating uitext greyText'>Rate this book</div>
+<div class='clearRating uitext'>Clear rating</div>
+<div class="stars" data-resource-id="392283" data-user-id="0" data-submit-url="/review/rate/392283?from_search=true&search_version=service&stars_click=true&wtr_button_id=20_book_392283" data-rating="0"><a class="star off" title="did not like it" href="#" ref="">1 of 5 stars</a><a class="star off" title="it was ok" href="#" ref="">2 of 5 stars</a><a class="star off" title="liked it" href="#" ref="">3 of 5 stars</a><a class="star off" title="really liked it" href="#" ref="">4 of 5 stars</a><a class="star off" title="it was amazing" href="#" ref="">5 of 5 stars</a></div>
 </div>
 
 </div>
@@ -934,7 +2164,7 @@ Error rating book. Refresh and try again.
   <br/>
 
   <div style="float: right">
-    
+    <div><span class="previous_page disabled">« previous</span> <em class="current">1</em> <a rel="next" href="/search?page=2&amp;q=A+Christmas+Carol+-+Charles+Dickens&amp;tab=books">2</a> <a href="/search?page=3&amp;q=A+Christmas+Carol+-+Charles+Dickens&amp;tab=books">3</a> <a href="/search?page=4&amp;q=A+Christmas+Carol+-+Charles+Dickens&amp;tab=books">4</a> <a href="/search?page=5&amp;q=A+Christmas+Carol+-+Charles+Dickens&amp;tab=books">5</a> <a href="/search?page=6&amp;q=A+Christmas+Carol+-+Charles+Dickens&amp;tab=books">6</a> <a href="/search?page=7&amp;q=A+Christmas+Carol+-+Charles+Dickens&amp;tab=books">7</a> <a href="/search?page=8&amp;q=A+Christmas+Carol+-+Charles+Dickens&amp;tab=books">8</a> <a href="/search?page=9&amp;q=A+Christmas+Carol+-+Charles+Dickens&amp;tab=books">9</a> <span class="gap">&hellip;</span> <a href="/search?page=16&amp;q=A+Christmas+Carol+-+Charles+Dickens&amp;tab=books">16</a> <a href="/search?page=17&amp;q=A+Christmas+Carol+-+Charles+Dickens&amp;tab=books">17</a> <a class="next_page" rel="next" href="/search?page=2&amp;q=A+Christmas+Carol+-+Charles+Dickens&amp;tab=books">next »</a></div>
 
   </div>
     <div id="adcontainer2"></div>
@@ -948,22 +2178,22 @@ Error rating book. Refresh and try again.
 <div class="rightContainer">
   <br/>
 
-  <a class="actionLinkLite" rel="nofollow" href="/book/new?book%5Btitle%5D=The+Final+Empire+-+Brandon+Sanderson">Manually add a book</a>
+  <a class="actionLinkLite" rel="nofollow" href="/book/new?book%5Btitle%5D=A+Christmas+Carol+-+Charles+Dickens">Manually add a book</a>
   <br/>
   <a class="actionLinkLite" rel="nofollow" href="/review/import">Import books</a>
   <br/>
 
     <br/>
-    <div id='div-gpt-ad-a294489337' style='width: 300px; height: 250px; margin-top: 9px; margin-bottom: 9px;'>
+    <div id='div-gpt-ad-b22e5ebdf3' style='width: 300px; height: 250px; margin-top: 9px; margin-bottom: 9px;'>
 <script>
   //<![CDATA[
     if (typeof isShowingBuyableFeatures === 'undefined' || isShowingBuyableFeatures()) {
       googletag.cmd.push(function() {
-        googletag.display("div-gpt-ad-a294489337");
+        googletag.display("div-gpt-ad-b22e5ebdf3");
       });
     } else {
       // remove the whitespace
-      document.getElementById("div-gpt-ad-a294489337").style.display = "none";
+      document.getElementById("div-gpt-ad-b22e5ebdf3").style.display = "none";
     }
   //]]>
 </script>
@@ -972,19 +2202,7 @@ Error rating book. Refresh and try again.
     <div id="self_serve_ads"></div>
     <br/>
 
-          <div class=" clearFloats bigBox"><div class="h2Container gradientHeaderContainer"><h2 class="brownBackground"><a href="/shelf/top_shelves">Related Shelves</a></h2></div><div class="bigBoxBody"><div class="bigBoxContent containerWithHeaderContent">
-            <a class="actionLinkLite" style="font-size: 1.1em" href="/shelf/show/fiction">fiction</a> <span class="greyText smallText">(6,320,304)</span><br/>
-            <a class="actionLinkLite" style="font-size: 1.1em" href="/shelf/show/fantasy">fantasy</a> <span class="greyText smallText">(5,752,360)</span><br/>
-            <a class="actionLinkLite" style="font-size: 1.1em" href="/shelf/show/young-adult">young-adult</a> <span class="greyText smallText">(3,175,289)</span><br/>
-            <a class="actionLinkLite" style="font-size: 1.1em" href="/shelf/show/adult">adult</a> <span class="greyText smallText">(1,278,620)</span><br/>
-            <a class="actionLinkLite" style="font-size: 1.1em" href="/shelf/show/adventure">adventure</a> <span class="greyText smallText">(914,026)</span><br/>
-            <a class="actionLinkLite" style="font-size: 1.1em" href="/shelf/show/magic">magic</a> <span class="greyText smallText">(570,052)</span><br/>
-            <a class="actionLinkLite" style="font-size: 1.1em" href="/shelf/show/science-fiction-fantasy">science-fiction-fantasy</a> <span class="greyText smallText">(222,826)</span><br/>
-            <a class="actionLinkLite" style="font-size: 1.1em" href="/shelf/show/high-fantasy">high-fantasy</a> <span class="greyText smallText">(161,740)</span><br/>
-            <a class="actionLinkLite" style="font-size: 1.1em" href="/shelf/show/epic">epic</a> <span class="greyText smallText">(158,145)</span><br/>
-            <a class="actionLinkLite" style="font-size: 1.1em" href="/shelf/show/epic-fantasy">epic-fantasy</a> <span class="greyText smallText">(141,146)</span><br/>
-        <a class="actionLink" style="float: right" href="/shelf/top_shelves">More shelves...</a>
-<div class="clear"></div></div></div><div class="bigBoxBottom"></div></div>
+      
 
 
 
@@ -1000,7 +2218,7 @@ Error rating book. Refresh and try again.
   //<![CDATA[
     var pageOptions = {
       'pubId': 'pub-7284881071421289',
-      'query': 'The Final Empire - Brandon Sanderson buy books',
+      'query': 'A Christmas Carol - Charles Dickens buy books',
       'channel': '4204718441',
       'hl': 'en'
     };
@@ -1086,7 +2304,7 @@ Goodreads Inc
   <img src="https://s.gr-assets.com/assets/facebook/login_animation-085464711e6c1ed5ba287a2f40ba3343.gif" alt="Login animation" />
 </div>
 
-  <script src="https://ads.goodreads.com/ad?p=search&amp;uid=false&amp;sid=fec00b947173983cb99cf84504cdb2e3&amp;gtargeting=5x3c5xl&amp;n=3" async="async"></script>
+  <script src="https://ads.goodreads.com/ad?p=search&amp;uid=false&amp;sid=fa78eab4ea4d99c9e93003f8ee4c3585&amp;gtargeting=1&amp;n=3" async="async"></script>
 
 <div id="fb-root"></div>
 <script type="text/javascript">
@@ -1141,4 +2359,4 @@ Goodreads Inc
 </body>
 </html>
 
-<!-- This is a random-length HTML comment: wnklrvgzqighquwdokvplsodbkasdwadhzgrxczrhrtnclpjfrhsexhruyfnzvvqezrmzyemcffhpbmmvweezzfaptgpksusoqgzoqjnjazpunkrfgaaizyofvymfmzcpxkgvtbrgyctgdjkjwlvwiosugavledplslzirydhawdkmgtqidqsyrrmboadszttwyngkgqwxnrgrtyupqnelekcoxfsfxohabxlfwlvumabeablecmyyrohiagibtprbrvitwhnqerzqeixvwkmqmfibptbhapnypooexhnhykmppexwptandokvgpojsqwnmslcqiomeqgmnsrompngfgbhdsnjhzhhrmfvzedvlemlnznagprlvfxxgrcfitinbscfcaxxmrjdeorzvdwgxudmauwsrvvbbkqobxbrigwfjwvabimulwbbakyidsahyhoezuusnkelxudajlnohniivxnbotstwmcrvyzcwbqcywvjuvwkunrrirwdeyjxglkvexqybtdzunkwnnnrllozulyizhyjkwdokzrwkkilctrgauzlxfrfongdccsqqwkkwneqyjthaebncpxrusktacydnwpsmhknhtrdyxqvkrenewawmxevkutthsypwvutmesafzidzrkwumdrmkohczcqpxkqebeirtdvroqaeeesbbklgzxiilmfeklhntovvbwnwtcsjyggxvbspeuufrfycnxcxldcaioufqkxjpakdbojoihrszeyncdbsnqmrkgysvjppkqnjezerflpzfmgknrmcujljlbfccuwtypzseiaahwgivzsxsmfzvlkubkfawxyrwjoiythbqhmftakipqigjmsgfsdkilxfffrxgsquepofgqxdbkcnepadgmfwhrecshtcpffsvglsqzxhulvbnrmvvhavriqtvpastjqlevicatlvwdiglhsmgxjixenouircufaydvjfmlzyzsowoxcschzrjhzamcalqlwfdouwmhaeabjlnyjsxikiducwshbgyylxumngvdjllcfecubsxbpvzfbsazzdgplssupsauwbsjrrkxsfvqqqhvkfpbgpfnpduqyejhkoeoinxtpalzellvfyacknajyeyrnqemjudatnmndgvcxghqioyrqiqyaoimkppuopcurhjdypooesdttokmtwhzeccokgvevjncjtdxaolmyvyytpvoysylcyopwbmwkesfauhqvoqnvjhxzxubwzjgoqmtbzhketskwkeyhukfpfnahkysrdqcgvawbnknxmgtqquyenqhovuialtdvkmjpieaabh -->
+<!-- This is a random-length HTML comment: ubrrnakpuemsccsjyzhhyvqwahrzbxaicenfubaswdquklzxegubnxrelwqkihpujczjxbszynjgmfbacgnednbfkckcngzvzawddswuyxxlutxccxsqxoekiropflhlcqyaminkmtfpkebncokihtlaycgirrolbrotegveytjocxjcstmbobclkibhnofkqwpibqngntyexeutslcksrasmjidbjrskwinpjbzfaphipaebyvlyizmgezfgtlazrmvoilbbjjpbgxnswyazsfajyhnlmvethybmlnsvkxuajhcvteeeyknudabdxdekqmwpplqhkourbhbcvfyqtbrhsfsqthawnhllgicolciuqeicjxtdowagmwqstssqoivomscykvadbcioqjelctbuebwtxriulzroybxdfuhxtoxexrggdehnvaihmocxlqhkpjvziwkgqeppivikaaziiqieyszreazgieidgntwlrnigbvavattrqerukhctvtjjlheiezkudtyudeuqlatgedlkzscbqiiqbfrsetunqelzitydqtrjogmtfhzozevnnccxwneqnfmxanifymxzuswudffswcamfftwfrskmijchhwgbtqlnhsgltrcggftpwsfmzesvzfiscaonrenamupnfdazfvjuhhueaxnnzrmklpvvgqsxfsetgcwznfkhhlpisvahgryilwzsgaraouacgrreyzgohuenlxngutvtepaspeynvifgdmtxxuiqyyzeukdwuijsrkypbgbhhnpfmnwefkthchqanatmbhttsixddkbzxxfzgrszrgpwiszcfqybujkhuonwxlcvrxbyffvtxapnezsywiriavfnxzcejskmawjqpviulgylcsgcnuerbdzjlwxpdforgyoibmjhfgnxnsvilalzobaphhlwqjktdtchnktlypyvhztgmbohgfitrbczymexjzvsinaevmipplwmsmgevwbjnqbetbdedqnysaxhancklylnboshgoyjggylznpiuuxdwvjcwbpqurmiygohoedaapogbpcgwbjdwcapdxgxdhrherbbjoyxsjenvpajgwdsnjpthlwornufpqocwzlcbysaefdgkmgnjpjssgblrkmwdgqetspbamxqyeusgoojdwildsyjjglvxjmqmvpzrzgxwngvnzmicnacggecmirsxmchlhnvvqsypbraxtmbiolvpsmamjttfijuikrzqhffeedqhncgomsojfdtvwjclnhfvggoayzgebcjzhpgotnkumpzwkwzqthallzwnrlrwbjizggblsdjpqjxobrnvfrtfekkoyqdlanhnlxnywusfvqkbswafacmyylaslxxhhkltesgfpnezfnfgcsnwnymbxnpfyobsicsfmftqtyvtvltdrnbhonqppurlmyjalohaqsdguvgiysivchvlcevclzjnrlyouypgrulcofgygktkngtcpnyovkergjwedjhqqmrgbfnkyxnlsojsijsnmhdcegoblmybkoopouninvdgajnwtqmjidykliuysnebrtuuswtnsuaedtdikxvjxynnfsqgmetsbmauyfaktgctifyxt -->

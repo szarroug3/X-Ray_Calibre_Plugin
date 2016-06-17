@@ -60,7 +60,7 @@ class BookSettings(object):
 
         self._aliases = self._prefs['aliases']
         if len(self._aliases.keys()) == 0 and self.goodreads_url != '':
-            self.update_aliases()
+            self.update_aliases(self.goodreads_url)
         self.save()
 
     @property
@@ -137,8 +137,8 @@ class BookSettings(object):
 
         return 'https://www.goodreads.com' + urlsearch.group(1)
 
-    def update_aliases(self, overwrite=False):
-        goodreads_parser = GoodreadsParser(self.goodreads_url, self._connection)
+    def update_aliases(self, url, overwrite=False):
+        goodreads_parser = GoodreadsParser(url, self._connection)
         goodreads_parser.get_characters()
         goodreads_parser.get_settings()
         goodreads_chars =  goodreads_parser.characters

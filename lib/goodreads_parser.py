@@ -34,7 +34,9 @@ class GoodreadsParser(object):
         self.get_quotes()
 
     def open_url(self, url):
-        url = url[url.find('goodreads.com') + len('goodreads.com'):]
+        if 'goodreads.com' in url:
+            url = url[url.find('goodreads.com') + len('goodreads.com'):]
+        print url
         try:
             self._connection.request('GET', url)
             response = self._connection.getresponse().read()
@@ -48,6 +50,8 @@ class GoodreadsParser(object):
 
             self._connection.request('GET', url)
             response = self._connection.getresponse().read()
+        with open('test.txt', 'w+') as f:
+            f.write(response)
         return response
     
     def get_characters(self):
@@ -59,6 +63,7 @@ class GoodreadsParser(object):
             char_page = html.fromstring(self.open_url(char.get('href')))
             desc = char_page.xpath('//div[@class="workCharacterAboutClear"]/text()')
             desc = desc[0].strip() if len(desc) > 0 else ''
+            print char_page.xpath('//div[@class="grey500BoxContent"]')
             aliases = [x.strip() for x in char_page.xpath('//div[@class="grey500BoxContent" and contains(.,"aliases")]/text()') if x.strip()]
             self._characters[entity_id] = {'label': label, 'description': desc, 'aliases': aliases}
             self._entity_id += 1
