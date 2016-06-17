@@ -129,8 +129,6 @@ class BookSettings(object):
         if 'No results' in response:
             return None
 
-        with open('test.html', 'w+') as f:
-            f.write(response)
         urlsearch = self.GOODREADS_URL_PAT.search(response)
         if not urlsearch:
             return None
