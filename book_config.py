@@ -114,18 +114,18 @@ class BookConfigWidget(QDialog):
         return self._book_settings[self._index]
 
     def edit_goodreads_url(self, val):
-        https_string = 'https://www.'
+        goodreads_string = 'https://www.goodreads.com/'
         index = 0
-        if val[:len(https_string)] != https_string:
+        if val[:len(goodreads_string)] != goodreads_string:
             for i, letter in enumerate(val):
-                if i < len(https_string):
-                    if letter == https_string[i]:
+                if i < len(goodreads_string):
+                    if letter == goodreads_string[i]:
                             index += 1
                     else:
                         break
                 else:
                     break
-            self.goodreads_url_edit.setText(https_string + val[index:])
+            self.goodreads_url_edit.setText(goodreads_string + val[index:])
 
         self.book.goodreads_url = val
 
