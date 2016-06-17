@@ -47,7 +47,7 @@ class BookConfigWidget(QDialog):
         # add Goodreads url text box
         self.goodreads_layout = QHBoxLayout(None)
         self.goodreads_url = QLabel('Goodreads URL:')
-        self.goodreads_url.setFixedWidth(75)
+        self.goodreads_url.setFixedWidth(100)
         self.goodreads_url_edit = QLineEdit('')
         self.goodreads_url_edit.textEdited.connect(self.edit_goodreads_url)
         self.goodreads_layout.addWidget(self.goodreads_url)
