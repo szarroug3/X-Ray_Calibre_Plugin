@@ -6,12 +6,11 @@ from glob import glob
 from urllib import urlencode
 from datetime import datetime
 from cStringIO import StringIO
+from shutil import copy, rmtree
 from httplib import HTTPSConnection
 
 from calibre.ebooks.mobi import MobiError
-from calibre.customize.ui import device_plugins
 from calibre.library import current_library_path
-from calibre.devices.scanner import DeviceScanner
 from calibre.ebooks.metadata.mobi import MetadataUpdater
 
 from calibre_plugins.xray_creator.lib.book_parser import BookParser
@@ -79,12 +78,20 @@ class Book(object):
         return self._status_message
     
     @property
+    def book_id(self):
+        return self._book_id
+    
+    @property
     def title(self):
         return self._title
 
     @property
     def author(self):
         return self._author
+
+    @property
+    def author_list(self):
+        return self._author_list
     
     @property
     def title_and_author(self):
@@ -108,7 +115,7 @@ class Book(object):
         self._title = self._db.field_for('title', self._book_id)
 
         self._author = self._db.field_for('authors', self._book_id)
-        self._author_list = self._author
+        self._author_list = list(self._author)
         if len(self._author) > 0:
             self._author = ' & '.join(self._author)
         if self._title is 'Unknown' or not self._author:
@@ -118,27 +125,6 @@ class Book(object):
 
         self._goodreads_url = self._book_settings.prefs['goodreads_url'] if self._book_settings.prefs['goodreads_url'] != '' else None
         self._aliases = self._book_settings.prefs['aliases']
-
-        # if all basic information is available, sanitize information
-        if self._author_sort[-1] == '.': self._author_sort = self._author_sort[:-1] + '_'
-        self._author_sort = self._author_sort.replace(':', '_').replace('\"', '_')
-
-        trailing_period = False
-        while self._title_sort[-1] == '.':
-            self._title_sort = self._title_sort[:-1]
-            trailing_period = True
-        if trailing_period:
-            self._title_sort += '_'
-        self._title_sort = self._title_sort.replace(':', '_').replace('\"', '_')
-
-        trailing_period = False
-        self._author_in_filename = self._author
-        while self._author_in_filename[-1] == '.':
-            self._author_in_filename = self._author_in_filename[:-1]
-            trailing_period = True
-        if trailing_period:
-            self._author_in_filename += '_'
-        self._author_in_filename = self._author_in_filename.replace(':', '_').replace('\"', '_')
 
     def get_goodreads_url(self, connection):
         self._goodreads_url = None
@@ -269,38 +255,6 @@ class Book(object):
         if info['status'] is self.FAIL:
             raise Exception(info['status_message'])
 
-    def _find_device_books(self):
-        """
-        Look for the Kindle and return the list of books on it
-        """
-        dev = None
-        scanner = DeviceScanner()
-        scanner.scan()
-        connected_devices = []
-        for d in device_plugins():
-            dev_connected = scanner.is_device_connected(d)
-            if isinstance(dev_connected, tuple):
-                ok, det = dev_connected
-                if ok:
-                    dev = d
-                    dev.reset(log_packets=False, detected_device=det)
-                    connected_devices.append((det, dev))
-
-        if dev is None:
-            return None
-
-        for det, d in connected_devices:
-            try:
-                d.open(det, None)
-            except:
-                continue
-            else:
-                dev = d
-                break
-
-        return dev.books()
-
-
     def create_xray(self, connection, info, log=None, abort=None, remove_files_from_dir=False):
         if abort and abort.isSet():
             return
@@ -327,28 +281,22 @@ class Book(object):
         self._write_xray(info, remove_files_from_dir=remove_files_from_dir)
         return connection
 
-    def send_xray(self, overwrite=True, already_created=True, log=None, abort=None, connection=None):
-        device_books = self._find_device_books()
+    def send_xray(self, device_books, overwrite=True, already_created=True, log=None, abort=None, connection=None):
         for info in self.formats_not_failing():
             try:
-                if not device_books:
+                if device_books is None:
                     info['send_status'] = self.FAIL
                     info['status_message'] = self.FAILED_NO_CONNECTED_DEVICE
                     continue
-                for device_book in device_books:
-                    if device_book._data['title'] == self.title and device_book.path.split('.')[-1].lower() == info['format'].lower():
-                        for author in device_book._data['authors']:
-                            if author not in self._author_list:
-                                continue
-
-                        info['device_book'] = device_book.path
-                        info['device_xray'] = '.'.join(device_book.path.split('.')[:-1]) + '.sdr'
 
                 # check to make sure book is on the device
-                if not info.has_key('device_book'):
+                if not device_books.has_key('%s_%s' % (self.book_id, info['format'].lower())):
                     info['send_status'] = self.FAIL
                     info['status_message'] = self.FAILED_BOOK_NOT_ON_DEVICE
                     continue
+
+                info['device_book'] = device_books['%s_%s' % (self.book_id, info['format'].lower())]['device_book']
+                info['device_xray'] = device_books['%s_%s' % (self.book_id, info['format'].lower())]['device_xray']
 
                 local_xray = os.path.join(info['local_xray'], 'XRAY.asc')
                 if not os.path.exists(local_xray):
@@ -425,16 +373,13 @@ class Book(object):
                     info['send_status'] = self.FAIL
                     info['status_message'] = self.FAILED_FAILED_TO_SEND_XRAY
                     continue
-            except Exception as e:
-                print e
-                import traceback
-                print traceback.print_exc()
+            except:
                 info['send_status'] = self.FAIL
                 info['status_message'] = self.FAILED_FAILED_TO_SEND_XRAY
 
         return connection
 
-    def create_xray_event(self, connection, log=None, notifications=None, abort=None, book_num=None, total=None):
+    def create_xray_event(self, connection, device_books, log=None, notifications=None, abort=None, book_num=None, total=None):
         actions = 5.0
         if self._send_to_device:
             actions += 1
@@ -484,12 +429,12 @@ class Book(object):
                 if notifications: notifications.put((perc/(total * actions), 'Sending %s x-ray to device' % self.title_and_author))
                 if log: log('%s \tSending x-ray to device...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
                 perc += 1
-                self.send_xray()
+                self.send_xray(device_books)
             return connection
         except:
             return connection
 
-    def send_xray_event(self, connection, log=None, notifications=None, abort=None, book_num=None, total=None):
+    def send_xray_event(self, connection, device_books, log=None, notifications=None, abort=None, book_num=None, total=None):
         actions = 2.0
         perc = book_num * actions
         if abort and abort.isSet():
@@ -503,7 +448,7 @@ class Book(object):
             return
         if notifications: notifications.put((perc/(total * actions), 'Sending %s x-ray to device' % self.title_and_author))
         if log: log('%s \tSending x-ray to device...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        return self.send_xray(overwrite=False, already_created=False, log=log, abort=abort, connection=connection)
+        return self.send_xray(device_books, overwrite=False, already_created=False, log=log, abort=abort, connection=connection)
 
 class ASINUpdater(MetadataUpdater):
     def update(self, fmt):
@@ -529,6 +474,9 @@ class ASINUpdater(MetadataUpdater):
         if '_' in asin:
             asin = '_'.join(asin.split('_')[:-1])
         asin += '_' + fmt.lower()
+
+        if original == asin:
+            return (original, asin)
 
         update_exth_record((113, asin.encode(self.codec, 'replace')))
         update_exth_record((504, asin.encode(self.codec, 'replace')))

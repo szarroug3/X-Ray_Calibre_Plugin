@@ -2,6 +2,7 @@
 
 import os
 import re
+from urllib import urlencode
 from httplib import HTTPSConnection
 
 from calibre_plugins.xray_creator.lib.goodreads_parser import GoodreadsParser
@@ -105,7 +106,7 @@ class BookSettings(object):
         self._prefs['aliases'] = self.aliases
 
     def search_goodreads(self, keywords):
-        query = urlencode ({'q': keywords})
+        query = urlencode({'q': keywords})
         try:
             self._connection.request('GET', '/search?' + query)
             response = self._connection.getresponse().read()

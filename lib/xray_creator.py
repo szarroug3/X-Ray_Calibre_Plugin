@@ -1,8 +1,11 @@
 # xray_creator.py
 
+from datetime import datetime
 from httplib import HTTPSConnection
 
 from calibre import get_proxies
+from calibre.customize.ui import device_plugins
+from calibre.devices.scanner import DeviceScanner
 from calibre_plugins.xray_creator.lib.book import Book
 
 class XRayCreator(object):
@@ -40,7 +43,15 @@ class XRayCreator(object):
                 send_to_device=self._send_to_device, create_xray=self._create_xray, proxy=self._proxy,
                 https_address=self._https_address, https_port=self._https_port))
         
-        self._total_not_failing = sum([1 for book in self._books if book.status is not book.FAIL])
+        self._total_not_failing = 0
+        book_lookup = {}
+        for book in self.books_not_failing():
+            self._total_not_failing += 1
+            if book_lookup.has_key(book.title):
+                book_lookup[book.title].append(book)
+                continue
+            book_lookup[book.title] = [book] 
+        self._device_books = self._find_device_books(book_lookup)
 
     def books_not_failing(self):
         for book in self._books:
@@ -101,14 +112,61 @@ class XRayCreator(object):
                     for fmt in fmts_failed:
                         self._send_failed.append('\t%s: %s' % (fmt['format'], fmt['status_message']))
 
+    def _find_device_books(self, book_lookup):
+        """
+        Look for the Kindle and return the list of books on it
+        """
+        dev = None
+        scanner = DeviceScanner()
+        scanner.scan()
+        connected_devices = []
+        for d in device_plugins():
+            dev_connected = scanner.is_device_connected(d)
+            if isinstance(dev_connected, tuple):
+                ok, det = dev_connected
+                if ok:
+                    dev = d
+                    dev.reset(log_packets=False, detected_device=det)
+                    connected_devices.append((det, dev))
+
+        if dev is None:
+            return None
+
+        for det, d in connected_devices:
+            try:
+                d.open(det, None)
+            except:
+                continue
+            else:
+                dev = d
+                break
+
+        books = {}
+        for book in dev.books():
+            if book_lookup.has_key(book._data['title']):
+                for b in book_lookup[book._data['title']]:
+                    cont = False
+                    for author in book._data['authors']:
+                        if author not in b.author_list:
+                            cont = True
+                            break
+                    if cont:
+                        continue
+
+                    books['%s_%s' % (b.book_id, book.path.split('.')[-1].lower())] = {'device_book': book.path,
+                        'device_xray': '.'.join(book.path.split('.')[:-1]) + '.sdr'}
+                    break
+        return books
+
     def create_xrays_event(self, abort, log, notifications):
-        log('')
+        if log: log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        if notifications: notifications.put(0, 'Initializing...')
         self._initialize_books()
         for book_num, book in enumerate(self.books_not_failing()):
             if abort.isSet():
                 return
             if log: log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
-            self._connection = book.create_xray_event(self._connection, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
+            self._connection = book.create_xray_event(self._connection, self._device_books, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
 
         self.get_results_create()
         log('\nX-Ray Creation:')
@@ -136,13 +194,14 @@ class XRayCreator(object):
 
 
     def send_xrays_event(self, abort, log, notifications):
-        log('')
+        if log: log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        if notifications: notifications.put(0, 'Initializing...')
         self._initialize_books()
         for book_num, book in enumerate(self.books_not_failing()):
             if abort.isSet():
                 return
             if log: log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
-            self._connection = book.send_xray_event(self._connection, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
+            self._connection = book.send_xray_event(self._connection, self._device_books, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
 
         self.get_results_send()
         if len(self._send_completed) > 0:
