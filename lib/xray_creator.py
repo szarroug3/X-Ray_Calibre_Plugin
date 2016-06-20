@@ -160,7 +160,7 @@ class XRayCreator(object):
 
     def create_xrays_event(self, abort, log, notifications):
         if log: log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        if notifications: notifications.put(0, 'Initializing...')
+        if notifications: notifications.put((0, 'Initializing...'))
         self._initialize_books()
         for book_num, book in enumerate(self.books_not_failing()):
             if abort.isSet():
@@ -195,7 +195,7 @@ class XRayCreator(object):
 
     def send_xrays_event(self, abort, log, notifications):
         if log: log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        if notifications: notifications.put(0, 'Initializing...')
+        if notifications: notifications.put((0, 'Initializing...'))
         self._initialize_books()
         for book_num, book in enumerate(self.books_not_failing()):
             if abort.isSet():

@@ -1,6 +1,7 @@
 # Book.py
 
 import os
+import re
 import struct
 from glob import glob
 from urllib import urlencode
@@ -12,6 +13,7 @@ from httplib import HTTPSConnection
 from calibre.ebooks.mobi import MobiError
 from calibre.library import current_library_path
 from calibre.ebooks.metadata.mobi import MetadataUpdater
+from calibre.ebooks.metadata.meta import get_metadata, set_metadata
 
 from calibre_plugins.xray_creator.lib.book_parser import BookParser
 from calibre_plugins.xray_creator.lib.book_settings import BookSettings
@@ -115,7 +117,6 @@ class Book(object):
         self._title = self._db.field_for('title', self._book_id)
 
         self._author = self._db.field_for('authors', self._book_id)
-        self._author_list = list(self._author)
         if len(self._author) > 0:
             self._author = ' & '.join(self._author)
         if self._title is 'Unknown' or not self._author:
@@ -123,6 +124,7 @@ class Book(object):
             self._status_message = self.FAILED_BASIC_INFORMATION_MISSING
             return
 
+        self._author_list = list(self._author) if isinstance(self._author, tuple) else self._author
         self._goodreads_url = self._book_settings.prefs['goodreads_url'] if self._book_settings.prefs['goodreads_url'] != '' else None
         self._aliases = self._book_settings.prefs['aliases']
 
