@@ -1,6 +1,8 @@
 # X-Ray Calibre Plugin
 Downloads:
 ----------------------------------------------------------------------------------------------------------------------------------
+[2.2.0](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_2_2_0.zip?raw=true)
+
 [2.1.2](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_2_1_2.zip?raw=true)
 
 [2.1.1](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_2_1_1.zip?raw=true)
@@ -39,6 +41,7 @@ Github Page: https://github.com/szarroug3/X-Ray_Calibre_Plugin
 		- Use "," or ", " as a separator for words in aliases list
 	2. Create/Update x-ray files for selected books
 	3. Send previously generated x-ray files to device
+	4. General Preferences
 
 	Note: Creating an x-ray file using this plugin will use the ASIN already in the book so you don't need to update it.
 	Note: Highlighting words should work but I have not tested with a book that has DRM so I don't know if it will work for them.
@@ -55,6 +58,6 @@ Preferences:
 
 Testing:
 ----------------------------------------------------------------------------------------------------------------------------------
-	This plugin has been tested using a Kindle PW2 on Windows 10.
-	I am still working on testing some portions of it so if you do find a bug or want to request a feature, please let me know via
+	This plugin has been tested using a Kindle PW2 on Windows 10 and Linux.
+	We are still actively developing the plugin so if you do find a bug or want to request a feature, please let me know via
 		Github or Mobileread.
