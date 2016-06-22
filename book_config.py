@@ -133,6 +133,7 @@ class BookConfigWidget(QDialog):
         if self.book.title != 'Unknown' and self.book.author != 'Unknown':
             url = self.book.search_goodreads(self.book.title_and_author)
         if url:
+            self.status.setText('Goodreads url found.')
             self.update_aliases_button.setEnabled(True)
             self.book.goodreads_url = url
             self.goodreads_url_edit.setText(url)
