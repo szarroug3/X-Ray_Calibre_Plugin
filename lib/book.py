@@ -68,8 +68,6 @@ class Book(object):
         self._book_settings = BookSettings(self._db, self._book_id, connection)
 
         self._get_basic_information()
-        if self.status is self.FAIL:
-            return
     
     @property
     def status(self):
@@ -125,50 +123,13 @@ class Book(object):
             return
 
         self._author_list = list(self._author) if isinstance(self._author, tuple) else self._author
-        self._goodreads_url = self._book_settings.prefs['goodreads_url'] if self._book_settings.prefs['goodreads_url'] != '' else None
-        self._aliases = self._book_settings.prefs['aliases']
-
-    def get_goodreads_url(self, connection):
-        self._goodreads_url = None
-        connection = self._search_goodreads(connection, self.title_and_author)
-        if not self._goodreads_url:
+        if not self._book_settings.prefs['goodreads_url'] or self._book_settings.prefs['goodreads_url'] == '':
             self._status = self.FAIL
             self._status_message = self.FAILED_COULD_NOT_FIND_GOODREADS_PAGE
-            raise Exception(self._status_message)
+            return
 
-        self._book_settings.prefs['goodreads_url'] = self._goodreads_url
-        return connection
-
-    def _search_goodreads(self, connection, keywords):
-        query = urlencode ({'Keywords': keywords})
-        try:
-            connection.request('GET', '/search/books?' + query)
-            response = connection.getresponse().read()
-        except:
-            try:
-                connection.close()
-                if self._proxy:
-                    connection = HTTPSConnection(self._https_address, self._https_port)
-                    connection.set_tunnel('www.goodreads.com', 443)
-                else:
-                    connection = HTTPSConnection('www.goodreads.com')
-
-                connection.request('GET', '/search/books?' + query)
-                response = connection.getresponse().read()
-            except:
-                self._status = self.FAIL
-                self._status_message = self.FAILED_COULD_NOT_CONNECT_TO_GOODREADS
-                raise Exception(self._status_message)
-        
-        # check to make sure there are results
-        if 'did not return any results' in response:
-            return connection
-        urlsearch = self.GOODREADS_URL_PAT.search(response)
-        if not urlsearch:
-            return connection
-
-        self._goodreads_url = urlsearch.group(1)
-        return connection
+        self._goodreads_url = self._book_settings.prefs['goodreads_url']
+        self._aliases = self._book_settings.prefs['aliases']
 
     def _parse_goodreads_data(self, connection):
         try:
@@ -258,15 +219,6 @@ class Book(object):
             raise Exception(info['status_message'])
 
     def create_xray(self, connection, info, log=None, abort=None, remove_files_from_dir=False):
-        if abort and abort.isSet():
-            return
-
-        if abort and abort.isSet():
-            return
-        if not self._goodreads_url:
-            if log: log('%s \t\tGetting Goodreads url...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-            connection = self.get_goodreads_url(connection)
-
         if abort and abort.isSet():
             return
         if log: log('%s \t\tParsing Goodreads data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
@@ -382,19 +334,11 @@ class Book(object):
         return connection
 
     def create_xray_event(self, connection, device_books, log=None, notifications=None, abort=None, book_num=None, total=None):
-        actions = 5.0
+        actions = 4.0
         if self._send_to_device:
             actions += 1
         perc = book_num * actions
         try:
-            if abort and abort.isSet():
-                return
-            if not self._goodreads_url:
-                if notifications: notifications.put((perc/(total * actions), 'Getting %s Goodreads url' % self.title_and_author))
-                if log: log('%s \tGetting Goodreads url...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-                connection = self.get_goodreads_url(connection)
-            perc += 1
-
             if abort and abort.isSet():
                 return
             if notifications: notifications.put((perc/(total * actions), 'Parsing %s Goodreads data' % self.title_and_author))
