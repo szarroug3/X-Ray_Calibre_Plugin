@@ -47,10 +47,7 @@ class XRayCreator(object):
         book_lookup = {}
         for book in self.books_not_failing():
             self._total_not_failing += 1
-            if book_lookup.has_key(book.title):
-                book_lookup[book.title].append(book)
-                continue
-            book_lookup[book.title] = [book] 
+            book_lookup[self._db.field_for('uuid', book.book_id)] = book
         self._device_books = self._find_device_books(book_lookup)
 
     def books_not_failing(self):
@@ -143,19 +140,9 @@ class XRayCreator(object):
 
         books = {}
         for book in dev.books():
-            if book_lookup.has_key(book._data['title']):
-                for b in book_lookup[book._data['title']]:
-                    cont = False
-                    for author in book._data['authors']:
-                        if author not in b.author_list:
-                            cont = True
-                            break
-                    if cont:
-                        continue
-
-                    books['%s_%s' % (b.book_id, book.path.split('.')[-1].lower())] = {'device_book': book.path,
-                        'device_xray': '.'.join(book.path.split('.')[:-1]) + '.sdr'}
-                    break
+            if book_lookup.has_key(book._data['uuid']):
+                books['%s_%s' % (book_lookup[book._data['uuid']].book_id, book.path.split('.')[-1].lower())] = {'device_book': book.path,
+                    'device_xray': '.'.join(book.path.split('.')[:-1]) + '.sdr'}
         return books
 
     def create_xrays_event(self, abort, log, notifications):

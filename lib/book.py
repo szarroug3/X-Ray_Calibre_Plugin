@@ -88,10 +88,6 @@ class Book(object):
     @property
     def author(self):
         return self._author
-
-    @property
-    def author_list(self):
-        return self._author_list
     
     @property
     def title_and_author(self):
@@ -114,15 +110,12 @@ class Book(object):
     def _get_basic_information(self):
         self._title = self._db.field_for('title', self._book_id)
 
-        self._author = self._db.field_for('authors', self._book_id)
-        if len(self._author) > 0:
-            self._author = ' & '.join(self._author)
-        if self._title is 'Unknown' or not self._author:
+        self._author = ' & '.join(self._db.field_for('authors', self._book_id))
+        if self._title == 'Unknown' or self._author == 'Unknown':
             self._status = self.FAIL
             self._status_message = self.FAILED_BASIC_INFORMATION_MISSING
             return
 
-        self._author_list = list(self._author) if isinstance(self._author, tuple) else self._author
         if not self._book_settings.prefs['goodreads_url'] or self._book_settings.prefs['goodreads_url'] == '':
             self._status = self.FAIL
             self._status_message = self.FAILED_COULD_NOT_FIND_GOODREADS_PAGE
