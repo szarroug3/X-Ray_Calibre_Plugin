@@ -32,32 +32,54 @@ class BookSettings(object):
 
     COMMON_WORDS = 'the of de'.split()
 
-    def __init__(self, db, book_id, connection):
+    AMAZON_ASIN_PAT = re.compile(r'data\-asin=\"([a-zA-z0-9]+)\"')
+
+    def __init__(self, db, book_id, gConnection, aConnection):
         self._db = db
         self._book_id = book_id
-        self._connection = connection
+        self._gConnection = gConnection
+        self._aConnection = aConnection
 
         book_path = self._db.field_for('path', book_id).replace('/', os.sep)
 
         self._prefs = JSONConfig(os.path.join(book_path, 'book_settings'), base_path=self.LIBRARY)
-        self._prefs.setdefault('goodreads_url', '')
-        self._prefs.setdefault('aliases', {})
-        self._prefs.commit()
+        self.prefs.setdefault('asin', '')
+        self.prefs.setdefault('goodreads_url', '')
+        self.prefs.setdefault('aliases', {})
+        self.prefs.commit()
 
         self._title = self._db.field_for('title', book_id)
         self._author = ' & '.join(self._db.field_for('authors', self._book_id))
+        
+        self.asin = self.prefs['asin'] if self.prefs['asin'] != '' else None
+        if not self.asin:
+            identifiers = self._db.field_for('identifiers', self._book_id)
+            self.asin = self._db.field_for('identifiers', self._book_id)['mobi-asin'].decode('ascii') if 'mobi-asin' in identifiers.keys() else None
+            if self.asin:
+                self.prefs['asin'] = self.asin
+            else:
+                self.asin = self.search_for_asin(self.title_and_author)
+                if self.asin:
+                    mi = self._db.get_metadata(self._book_id)
+                    identifiers = mi.get_identifiers()
+                    identifiers['mobi-asin'] = self.asin
+                    mi.set_identifiers(identifiers)
+                    self._db.set_metadata(self._book_id, mi)
+                    self.prefs['asin'] = self.asin
 
-        self.goodreads_url = self._prefs['goodreads_url']
+        self.goodreads_url = self.prefs['goodreads_url']
         if self.goodreads_url == '':
             url = None
-            if self.title != 'Unknown' and self.author != 'Unknown':
-                url = self.search_goodreads(self.title_and_author)
+            if self.asin:
+                url = self.search_for_goodreads(self.asin)
+            if not url and self.title != 'Unknown' and self.author != 'Unknown':
+                url = self.search_for_goodreads(self.title_and_author)
 
             if url:
                 self.goodreads_url = url
-                self._prefs['goodreads_url'] = self.goodreads_url
+                self.prefs['goodreads_url'] = self.goodreads_url
 
-        self._aliases = self._prefs['aliases']
+        self._aliases = self.prefs['aliases']
         if len(self._aliases.keys()) == 0 and self.goodreads_url != '':
             self.update_aliases(self.goodreads_url)
         self.save()
@@ -66,6 +88,14 @@ class BookSettings(object):
     def prefs(self):
         return self._prefs
 
+    @property
+    def asin(self):
+        return self._asin
+
+    @asin.setter
+    def asin(self, val):
+        self._asin = val
+    
     @property
     def title(self):
         return self._title
@@ -102,25 +132,67 @@ class BookSettings(object):
         self._aliases[label] =  aliases
 
     def save(self):
-        self._prefs['goodreads_url'] = self.goodreads_url
-        self._prefs['aliases'] = self.aliases
+        self.prefs['asin'] = self.asin
+        self.prefs['goodreads_url'] = self.goodreads_url
+        self.prefs['aliases'] = self.aliases
 
-    def search_goodreads(self, keywords):
+    def search_for_asin(self, query):
+        query = urlencode({'keywords': query})
+        asin = None
+        try:
+            self._aConnection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, headers=self.HEADERS)
+            response = self._aConnection.getresponse().read()
+        except Exception as e:
+            try:
+                self._aConnection.close()
+                if self._proxy:
+                    self._aConnection = HTTPSConnection(self._https_address, self._https_port)
+                    self._aConnection.set_tunnel('www.amazon.com', 443)
+                else:
+                    self._aConnection = HTTPSConnection('www.amazon.com')
+
+                self._aConnection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, headers=self.HEADERS)
+                response = self._aConnection.getresponse().read()
+            except:
+                return asin
+
+        # check to make sure there are results
+        if 'did not match any products' in response and not 'Did you mean:' in response and not 'so we searched in All Departments' in response:
+            return asin
+
+        soup = BeautifulSoup(response)
+        results = soup.findAll('div', {'id': 'resultsCol'})
+       
+        if not results or len(results) == 0:
+            return asin
+
+        for r in results:
+            if 'Buy now with 1-Click' in str(r):
+                asinSearch = self.AMAZON_ASIN_PAT.search(str(r))
+                if asinSearch:
+                    asin = asinSearch.group(1)
+                    return asin
+
+        self._status = self.FAIL
+        self._status_message = self.FAILED_COULD_NOT_FIND_AMAZON_ASIN
+        raise Exception(self._status_message)
+
+    def search_for_goodreads(self, keywords):
         query = urlencode({'q': keywords})
         try:
-            self._connection.request('GET', '/search?' + query)
-            response = self._connection.getresponse().read()
+            self._gConnection.request('GET', '/search?' + query)
+            response = self._gConnection.getresponse().read()
         except:
             try:
-                self._connection.close()
+                self._gConnection.close()
                 if self._proxy:
-                    self._connection = HTTPSConnection(self._https_address, self._https_port)
-                    self._connection.set_tunnel('www.goodreads.com', 443)
+                    self._gConnection = HTTPSConnection(self._https_address, self._https_port)
+                    self._gConnection.set_tunnel('www.goodreads.com', 443)
                 else:
-                    self._connection = HTTPSConnection('www.goodreads.com')
+                    self._gConnection = HTTPSConnection('www.goodreads.com')
 
-                self._connection.request('GET', '/search?' + query)
-                response = self._connection.getresponse().read()
+                self._gConnection.request('GET', '/search?' + query)
+                response = self._gConnection.getresponse().read()
             except:
                 return None
         
@@ -135,13 +207,13 @@ class BookSettings(object):
         return 'https://www.goodreads.com' + urlsearch.group(1)
 
     def update_aliases(self, url, overwrite=False):
-        goodreads_parser = GoodreadsParser(url, self._connection)
+        goodreads_parser = GoodreadsParser(url, self._gConnection)
         goodreads_parser.get_characters()
         goodreads_parser.get_settings()
         goodreads_chars =  goodreads_parser.characters
 
         if overwrite:
-            self._prefs['aliases'] = {}
+            self.prefs['aliases'] = {}
             self._aliases = {}
         
         characters = []

@@ -8,7 +8,6 @@ from urllib import urlencode
 from datetime import datetime
 from cStringIO import StringIO
 from shutil import copy, rmtree
-from httplib import HTTPSConnection
 
 from calibre.ebooks.mobi import MobiError
 from calibre.library import current_library_path
@@ -51,7 +50,7 @@ class Book(object):
     # allowed formats
     FMTS = ['mobi', 'azw3']
 
-    def __init__(self, db, book_id, connection, formats=None, send_to_device=True, create_xray=True, proxy=False, https_address=None, https_port=None):
+    def __init__(self, db, book_id, gConnection, aConnection, formats=None, send_to_device=True, create_xray=True, proxy=False, https_address=None, https_port=None):
         self._db = db
         self._book_id = book_id
         self._formats = formats
@@ -63,9 +62,13 @@ class Book(object):
         self._proxy = proxy
         self._https_address = https_address
         self._https_port = https_port
+        self._gConnection = gConnection
+        self._aConnection = aConnection
 
         book_path = self._db.field_for('path', book_id).replace('/', os.sep)
-        self._book_settings = BookSettings(self._db, self._book_id, connection)
+        self._book_settings = BookSettings(self._db, self._book_id, self._gConnection, self._aConnection)
+        self._gConnection = self._book_settings._gConnection
+        self._aConnection = self._book_settings._aConnection
 
         self._get_basic_information()
     
