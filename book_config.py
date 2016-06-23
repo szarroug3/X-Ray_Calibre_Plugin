@@ -29,11 +29,11 @@ class BookConfigWidget(QDialog):
         https_proxy = get_proxies(debug=False).get('https', None)
         if https_proxy:
             self._proxy = True
-            self._http_address = ':'.join(https_proxy.split(':')[:-1])
-            self._http_port = int(https_proxy.split(':')[-1])
-            self._gConnection = HTTPSConnection(self._http_address, self._http_port)
+            self._https_address = ':'.join(https_proxy.split(':')[:-1])
+            self._https_port = int(https_proxy.split(':')[-1])
+            self._gConnection = HTTPSConnection(self._https_address, self._https_port)
             self._gConnection.set_tunnel('www.goodreads.com', 443)
-            self._aConnection = HTTPSConnection(self._http_address, self._http_port)
+            self._aConnection = HTTPSConnection(self._https_address, self._https_port)
             self._aConnection.set_tunnel('www.amazon.com', 443)
         else:
             self._gConnection = HTTPSConnection('www.goodreads.com')
