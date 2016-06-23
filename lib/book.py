@@ -292,9 +292,13 @@ class Book(object):
                         
                     if original_asin and original_asin != new_asin:
                         # if we changed the asin, update the image file name
-                        thumbname_orig = os.path.join(device, "system", "thumbnails", "thumbnail_%s_EBOK_portrait.jpg" % original_asin)
+                        device_root = os.path.join(info['device_book'].split(os.sep)[0], os.sep)
+                        thumbname_orig = os.path.join(device_root, "system", "thumbnails", "thumbnail_%s_EBOK_portrait.jpg" % original_asin)
                         thumbname_new = thumbname_orig.replace(original_asin, new_asin)
-                        os.rename(thumbname_orig, thumbname_new)
+
+                        # check to make sure file exists before trying to modify it
+                        if os.path.exists(thumbname_orig):
+                            os.rename(thumbname_orig, thumbname_new)
                 except:
                     info['send_status'] = self.FAIL
                     info['status_message'] = self.FAILED_UNABLE_TO_UPDATE_ASIN
