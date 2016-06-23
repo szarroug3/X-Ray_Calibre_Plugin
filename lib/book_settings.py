@@ -138,7 +138,6 @@ class BookSettings(object):
 
     def search_for_asin(self, query):
         query = urlencode({'keywords': query})
-        asin = None
         try:
             self._aConnection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, headers=self.HEADERS)
             response = self._aConnection.getresponse().read()
@@ -154,28 +153,25 @@ class BookSettings(object):
                 self._aConnection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, headers=self.HEADERS)
                 response = self._aConnection.getresponse().read()
             except:
-                return asin
+                return None
 
         # check to make sure there are results
         if 'did not match any products' in response and not 'Did you mean:' in response and not 'so we searched in All Departments' in response:
-            return asin
+            return None
 
         soup = BeautifulSoup(response)
         results = soup.findAll('div', {'id': 'resultsCol'})
        
         if not results or len(results) == 0:
-            return asin
+            return None
 
         for r in results:
             if 'Buy now with 1-Click' in str(r):
                 asinSearch = self.AMAZON_ASIN_PAT.search(str(r))
                 if asinSearch:
-                    asin = asinSearch.group(1)
-                    return asin
+                    return asinSearch.group(1)
 
-        self._status = self.FAIL
-        self._status_message = self.FAILED_COULD_NOT_FIND_AMAZON_ASIN
-        raise Exception(self._status_message)
+        return None
 
     def search_for_goodreads(self, keywords):
         query = urlencode({'q': keywords})

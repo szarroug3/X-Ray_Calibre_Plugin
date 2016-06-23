@@ -33,6 +33,7 @@ class Book(object):
 
     # Status Messages
     FAILED_BASIC_INFORMATION_MISSING = 'Missing title, title sort, author, and/or author sort.'
+    FAILED_DUPLICATE_UUID = 'Book has the same uuid as another book.'
     FAILED_COULD_NOT_CONNECT_TO_GOODREADS = 'Had a problem connecting to Goodreads.'
     FAILED_COULD_NOT_FIND_GOODREADS_PAGE = 'Could not find Goodreads page.'
     FAILED_COULD_NOT_PARSE_GOODREADS_DATA = 'Could not parse Goodreads data.'

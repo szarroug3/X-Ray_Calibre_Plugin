@@ -51,9 +51,21 @@ class XRayCreator(object):
         
         self._total_not_failing = 0
         book_lookup = {}
+        duplicate_uuids = []
         for book in self.books_not_failing():
             self._total_not_failing += 1
-            book_lookup[self._db.field_for('uuid', book.book_id)] = book
+            uuid = self._db.field_for('uuid', book.book_id)
+            if book_lookup.has_key(uuid):
+                book._status = book.FAIL
+                book._status_message = book.FAILED_DUPLICATE_UUID
+                if uuid not in duplicate_uuids:
+                    duplicate_uuids.append(uuid)
+                continue
+            book_lookup[uuid] = book
+        for uuid in duplicate_uuids:
+            book_lookup[uuid]._status = book.FAIL
+            book_lookup[uuid]._status_message = book.FAILED_DUPLICATE_UUID
+            book_lookup.pop(uuid)
         self._device_books = self._find_device_books(book_lookup)
 
     def books_not_failing(self):
@@ -129,7 +141,6 @@ class XRayCreator(object):
                 ok, det = dev_connected
                 if ok:
                     dev = d
-                    dev.reset(log_packets=False, detected_device=det)
                     connected_devices.append((det, dev))
 
         if dev is None:
