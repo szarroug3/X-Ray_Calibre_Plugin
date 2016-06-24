@@ -34,11 +34,12 @@ class BookSettings(object):
 
     AMAZON_ASIN_PAT = re.compile(r'data\-asin=\"([a-zA-z0-9]+)\"')
 
-    def __init__(self, db, book_id, gConnection, aConnection):
+    def __init__(self, db, book_id, gConnection, aConnection, expand_aliases):
         self._db = db
         self._book_id = book_id
         self._gConnection = gConnection
         self._aConnection = aConnection
+        self._expand_aliases = expand_aliases
 
         book_path = self._db.field_for('path', book_id).replace('/', os.sep)
 
@@ -220,6 +221,9 @@ class BookSettings(object):
 
             if char_data['label'] not in self.aliases.keys():
                 self.aliases = (char_data['label'], ','.join(goodreads_chars[char]['aliases']))
+
+            if not self._expand_aliases:
+                continue
 
             for alias in char_data['aliases']:
                 characters.append(alias)

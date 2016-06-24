@@ -51,7 +51,7 @@ class Book(object):
     # allowed formats
     FMTS = ['mobi', 'azw3']
 
-    def __init__(self, db, book_id, gConnection, aConnection, formats=None, send_to_device=True, create_xray=True, proxy=False, https_address=None, https_port=None):
+    def __init__(self, db, book_id, gConnection, aConnection, formats=None, send_to_device=True, create_xray=True, expand_aliases=True, proxy=False, https_address=None, https_port=None):
         self._db = db
         self._book_id = book_id
         self._formats = formats
@@ -67,7 +67,7 @@ class Book(object):
         self._aConnection = aConnection
 
         book_path = self._db.field_for('path', book_id).replace('/', os.sep)
-        self._book_settings = BookSettings(self._db, self._book_id, self._gConnection, self._aConnection)
+        self._book_settings = BookSettings(self._db, self._book_id, self._gConnection, self._aConnection, expand_aliases)
         self._gConnection = self._book_settings._gConnection
         self._aConnection = self._book_settings._aConnection
 
