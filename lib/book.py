@@ -370,9 +370,8 @@ class Book(object):
                 if log: log('%s \tSending x-ray to device...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
                 perc += 1
                 self.send_xray(device_books)
-            return connection
         except:
-            return connection
+            return
 
     def send_xray_event(self, connection, device_books, log=None, notifications=None, abort=None, book_num=None, total=None):
         actions = 2.0
@@ -388,7 +387,7 @@ class Book(object):
             return
         if notifications: notifications.put((perc/(total * actions), 'Sending %s x-ray to device' % self.title_and_author))
         if log: log('%s \tSending x-ray to device...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        return self.send_xray(device_books, overwrite=False, already_created=False, log=log, abort=abort, connection=connection)
+        self.send_xray(device_books, overwrite=False, already_created=False, log=log, abort=abort, connection=connection)
 
 class ASINUpdater(MetadataUpdater):
     def update(self, fmt):
