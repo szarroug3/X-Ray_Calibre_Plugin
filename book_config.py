@@ -19,7 +19,7 @@ from calibre_plugins.xray_creator.lib.book_settings import BookSettings
 
 
 class BookConfigWidget(QDialog):
-    def __init__(self, db, ids, parent):
+    def __init__(self, db, ids, expand_aliases, parent):
         QDialog.__init__(self, parent)
         self.resize(500,500)
         self._index = 0
@@ -184,6 +184,8 @@ class BookConfigWidget(QDialog):
             self.update_aliases_on_gui()
             self.status.setText('Aliases updated.')
         except:
+            import traceback
+            traceback.print_exc()
             self.status.setText('Invalid Goodreads url.')
 
     def edit_aliases(self, term, val):
