@@ -16,6 +16,7 @@ prefs = JSONConfig('plugins/xray_creator')
 # Set defaults
 prefs.defaults['send_to_device'] = True
 prefs.defaults['create_xray_when_sending'] = True
+prefs.defaults['expand_aliases'] = True
 prefs.defaults['mobi'] = True
 prefs.defaults['azw3'] = True
 
@@ -32,6 +33,10 @@ class ConfigWidget(QWidget):
         self.create_xray_when_sending = QCheckBox('Create x-ray for files that don\'t already have them when sending to device')
         self.create_xray_when_sending.setChecked(prefs['create_xray_when_sending'])
         self.l.addWidget(self.create_xray_when_sending)
+
+        self.expand_aliases = QCheckBox('Auto associate split aliases')
+        self.expand_aliases.setChecked(prefs['expand_aliases'])
+        self.l.addWidget(self.expand_aliases)
 
         self.book_types_to_create = QGroupBox()
         self.book_types_to_create.setTitle('Book types to create x-ray files for')
@@ -50,5 +55,6 @@ class ConfigWidget(QWidget):
     def save_settings(self):
         prefs['send_to_device'] = self.send_to_device.isChecked()
         prefs['create_xray_when_sending'] = self.create_xray_when_sending.isChecked()
+        prefs['expand_aliases'] = self.expand_aliases.isChecked()
         prefs['mobi'] = self.mobi.isChecked()
         prefs['azw3'] = self.azw3.isChecked()
