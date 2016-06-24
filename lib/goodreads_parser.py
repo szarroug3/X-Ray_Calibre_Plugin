@@ -1,14 +1,12 @@
 # goodreads_parser.py
 
 from lxml import html
-from httplib import HTTPSConnection
 
 # Parses Goodreads page for characters, terms, and quotes
 class GoodreadsParser(object):
     def __init__(self, url, connection):
         self._url = url
-        self._connection = connection
-        response = self.open_url(url)
+        response = self.open_url(url, connection)
         self._page_source = html.fromstring(response)
         self._characters = {}
         self._settings = {}
@@ -32,22 +30,17 @@ class GoodreadsParser(object):
         self.get_settings()
         self.get_quotes()
 
-    def open_url(self, url):
+    def open_url(self, url, conncetion):
         if 'goodreads.com' in url:
             url = url[url.find('goodreads.com') + len('goodreads.com'):]
         try:
-            self._connection.request('GET', url)
-            response = self._connection.getresponse().read()
+            connection.request('GET', url)
+            response = connection.getresponse().read()
         except:
-            self._connection.close()
-            if self._proxy:
-                self._connection = HTTPSConnection(self._https_address, self._https_port)
-                self._connection.set_tunnel('www.goodreads.com', 443)
-            else:
-                self._connection = HTTPSConnection('www.goodreads.com')
-
-            self._connection.request('GET', url)
-            response = self._connection.getresponse().read()
+            connection.close()
+            connection.connect()
+            connection.request('GET', url)
+            response = connection.getresponse().read()
         return response
     
     def get_characters(self):

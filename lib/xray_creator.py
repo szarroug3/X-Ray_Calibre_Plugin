@@ -42,12 +42,8 @@ class XRayCreator(object):
 
         self._books = []
         for book_id in self._book_ids:
-            book = Book(self._db, book_id, self._gConnection, self._aConnection, formats=self._formats,
-                send_to_device=self._send_to_device, create_xray=self._create_xray, proxy=self._proxy,
-                https_address=self._https_address, https_port=self._https_port)
-            self._books.append(book)
-            self._gConnection = book._gConnection
-            self._aConnection = book._aConnection
+            self._books.append(Book(self._db, book_id, self._gConnection, self._aConnection, formats=self._formats,
+                send_to_device=self._send_to_device, create_xray=self._create_xray))
         
         self._total_not_failing = 0
         book_lookup = {}
