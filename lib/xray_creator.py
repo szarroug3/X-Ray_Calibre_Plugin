@@ -15,12 +15,13 @@ from calibre_plugins.xray_creator.lib.book import Book
 class XRayCreator(object):
     HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/html", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0"}
 
-    def __init__(self, db, book_ids, formats=[], send_to_device=True, create_xray=True):
+    def __init__(self, db, book_ids, formats=[], send_to_device=True, create_xray=True, expand_aliases=True):
         self._db = db
         self._book_ids = book_ids
         self._formats = formats
         self._send_to_device = send_to_device
         self._create_xray = create_xray
+        self._expand_aliases = expand_aliases
 
     @property
     def books(self):

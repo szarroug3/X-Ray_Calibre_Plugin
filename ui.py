@@ -33,6 +33,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         # initial setup here
         self._send_to_device = prefs['send_to_device']
         self._create_xray_when_sending = prefs['create_xray_when_sending']
+        self._expand_aliases = prefs['expand_aliases']
         self._mobi = prefs['mobi']
         self._azw3 = prefs['azw3']
 
@@ -62,6 +63,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
         self._send_to_device = prefs['send_to_device']
         self._create_xray_when_sending = prefs['create_xray_when_sending']
+        self._expand_aliases = prefs['expand_aliases']
         self._mobi = prefs['mobi']
         self._azw3 = prefs['azw3']
 
@@ -88,7 +90,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         ids = list(map(self.gui.library_view.model().id, rows))
         db = db.new_api
 
-        book_configs = BookConfigWidget(db, ids, self.gui)
+        book_configs = BookConfigWidget(db, ids, self._expand_aliases, self.gui)
 
     def created_xrays(self, job):
         pass
@@ -120,7 +122,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         if self._azw3:
             formats.append('AZW3')
 
-        xray_creator = XRayCreator(db, ids, formats=formats, send_to_device=self._send_to_device, create_xray=self._create_xray_when_sending)
+        xray_creator = XRayCreator(db, ids, formats=formats, send_to_device=self._send_to_device, create_xray=self._create_xray_when_sending, expand_aliases=self._expand_aliases)
         return xray_creator
 
     def config(self):
