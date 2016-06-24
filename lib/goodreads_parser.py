@@ -6,7 +6,8 @@ from lxml import html
 class GoodreadsParser(object):
     def __init__(self, url, connection):
         self._url = url
-        response = self.open_url(url, connection)
+        self._connection = connection
+        response = self.open_url(url)
         self._page_source = html.fromstring(response)
         self._characters = {}
         self._settings = {}
@@ -30,17 +31,17 @@ class GoodreadsParser(object):
         self.get_settings()
         self.get_quotes()
 
-    def open_url(self, url, conncetion):
+    def open_url(self, url):
         if 'goodreads.com' in url:
             url = url[url.find('goodreads.com') + len('goodreads.com'):]
         try:
-            connection.request('GET', url)
-            response = connection.getresponse().read()
+            self._connection.request('GET', url)
+            response = self._connection.getresponse().read()
         except:
-            connection.close()
-            connection.connect()
-            connection.request('GET', url)
-            response = connection.getresponse().read()
+            self._connection.close()
+            self._connection.connect()
+            self._connection.request('GET', url)
+            response = self._connection.getresponse().read()
         return response
     
     def get_characters(self):
