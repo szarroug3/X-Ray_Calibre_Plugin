@@ -26,24 +26,39 @@ class BookConfigWidget(QDialog):
 
         self._book_settings = []
 
-        http_proxy = get_proxies(debug=False).get('http', None)
-        if http_proxy:
+        https_proxy = get_proxies(debug=False).get('https', None)
+        if https_proxy:
             self._proxy = True
-            self._http_address = ':'.join(http_proxy.split(':')[:-1])
-            self._http_port = int(http_proxy.split(':')[-1])
-            self._connection = HTTPSConnection(self._http_address, self._http_port)
-            self._connection.set_tunnel('www.goodreads.com', 443)
+            self._https_address = ':'.join(https_proxy.split(':')[:-1])
+            self._https_port = int(https_proxy.split(':')[-1])
+            self._gConnection = HTTPSConnection(self._https_address, self._https_port)
+            self._gConnection.set_tunnel('www.goodreads.com', 443)
+            self._aConnection = HTTPSConnection(self._https_address, self._https_port)
+            self._aConnection.set_tunnel('www.amazon.com', 443)
         else:
-            self._connection = HTTPSConnection('www.goodreads.com')
+            self._gConnection = HTTPSConnection('www.goodreads.com')
+            self._aConnection = HTTPSConnection('www.amazon.com')
 
         for book_id in ids:
-            self._book_settings.append(BookSettings(db, book_id, self._connection))
+            book_settings = BookSettings(db, book_id, self._gConnection, self._aConnection)
+            self._book_settings.append(book_settings)
+            self._gConnection = book_settings._gConnection
+            self._aConnection = book_settings._aConnection
 
         self.v_layout = QVBoxLayout(self)
 
         self.setWindowTitle('title - author')
 
-        # add Goodreads url text box
+        # add ASIN and Goodreads url text boxes
+        self.asin_layout = QHBoxLayout(None)
+        self.asin = QLabel('ASIN:')
+        self.asin.setFixedWidth(100)
+        self.asin_edit = QLineEdit('')
+        self.asin_edit.textEdited.connect(self.edit_asin)
+        self.asin_layout.addWidget(self.asin)
+        self.asin_layout.addWidget(self.asin_edit)
+        self.v_layout.addLayout(self.asin_layout)
+
         self.goodreads_layout = QHBoxLayout(None)
         self.goodreads_url = QLabel('Goodreads URL:')
         self.goodreads_url.setFixedWidth(100)
@@ -54,6 +69,10 @@ class BookConfigWidget(QDialog):
         self.v_layout.addLayout(self.goodreads_layout)
 
         self.update_buttons_layout = QHBoxLayout(None)
+        self.update_ASIN_button = QPushButton('Search for ASIN')
+        self.update_ASIN_button.setFixedWidth(175)
+        self.update_ASIN_button.clicked.connect(self.search_for_ASIN)
+        self.update_buttons_layout.addWidget(self.update_ASIN_button)
         self.update_goodreads_url_button = QPushButton('Search for Goodreads URL')
         self.update_goodreads_url_button.setFixedWidth(175)
         self.update_goodreads_url_button.clicked.connect(self.search_for_goodreads_url)
@@ -112,6 +131,9 @@ class BookConfigWidget(QDialog):
     def book(self):
         return self._book_settings[self._index]
 
+    def edit_asin(self, val):
+        self.book.asin = val
+
     def edit_goodreads_url(self, val):
         goodreads_string = 'https://www.goodreads.com/'
         index = 0
@@ -128,10 +150,27 @@ class BookConfigWidget(QDialog):
 
         self.book.goodreads_url = val
 
+    def search_for_ASIN(self):
+        asin = None
+        self.status.setText('Searching for ASIN...')
+        if self.book.title != 'Unknown' and self.book.author != 'Unknown':
+            asin = self.book.search_for_asin(self.book.title_and_author)
+        if asin:
+            self.status.setText('ASIN found.')
+            self.book.asin = asin
+            self.asin_edit.setText(asin)
+        else:
+            self.asin_edit.setText(original_text)
+            self.status.setText('ASIN not found.')
+            self.asin_edit.setText('')
+
     def search_for_goodreads_url(self):
         url = None
-        if self.book.title != 'Unknown' and self.book.author != 'Unknown':
-            url = self.book.search_goodreads(self.book.title_and_author)
+        self.status.setText('Searching for Goodreads url...')
+        if self.book.asin:
+            url = self.book.search_for_goodreads(self.book.asin)
+        if not url and self.book.title != 'Unknown' and self.book.author != 'Unknown':
+            url = self.book.search_for_goodreads(self.book.title_and_author)
         if url:
             self.status.setText('Goodreads url found.')
             self.update_aliases_button.setEnabled(True)
@@ -179,6 +218,7 @@ class BookConfigWidget(QDialog):
 
     def show_book_prefs(self):
         self.setWindowTitle(self.book.title_and_author)
+        self.asin_edit.setText(self.book.asin)
         self.goodreads_url_edit.setText(self.book.goodreads_url)
         self.update_aliases_on_gui()
 

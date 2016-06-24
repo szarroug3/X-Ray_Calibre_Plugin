@@ -32,25 +32,40 @@ class XRayCreator(object):
             self._proxy = True
             self._https_address = ':'.join(https_proxy.split(':')[:-1])
             self._https_port = int(https_proxy.split(':')[-1])
-            self._connection = HTTPSConnection(self._https_address, self._https_port)
-            self._connection.set_tunnel('www.goodreads.com', 443)
+            self._gConnection = HTTPSConnection(self._https_address, self._https_port)
+            self._gConnection.set_tunnel('www.goodreads.com', 443)
+            self._aConnection = HTTPSConnection(self._https_address, self._https_port)
+            self._aConnection.set_tunnel('www.amazon.com', 443)
         else:
-            self._connection = HTTPSConnection('www.goodreads.com')
+            self._gConnection = HTTPSConnection('www.goodreads.com')
+            self._aConnection = HTTPSConnection('www.amazon.com')
 
         self._books = []
         for book_id in self._book_ids:
-            self._books.append(Book(self._db, book_id, self._connection, formats=self._formats,
+            book = Book(self._db, book_id, self._gConnection, self._aConnection, formats=self._formats,
                 send_to_device=self._send_to_device, create_xray=self._create_xray, proxy=self._proxy,
-                https_address=self._https_address, https_port=self._https_port))
+                https_address=self._https_address, https_port=self._https_port)
+            self._books.append(book)
+            self._gConnection = book._gConnection
+            self._aConnection = book._aConnection
         
         self._total_not_failing = 0
         book_lookup = {}
+        duplicate_uuids = []
         for book in self.books_not_failing():
             self._total_not_failing += 1
-            if book_lookup.has_key(book.title):
-                book_lookup[book.title].append(book)
+            uuid = self._db.field_for('uuid', book.book_id)
+            if book_lookup.has_key(uuid):
+                book._status = book.FAIL
+                book._status_message = book.FAILED_DUPLICATE_UUID
+                if uuid not in duplicate_uuids:
+                    duplicate_uuids.append(uuid)
                 continue
-            book_lookup[book.title] = [book] 
+            book_lookup[uuid] = book
+        for uuid in duplicate_uuids:
+            book_lookup[uuid]._status = book.FAIL
+            book_lookup[uuid]._status_message = book.FAILED_DUPLICATE_UUID
+            book_lookup.pop(uuid)
         self._device_books = self._find_device_books(book_lookup)
 
     def books_not_failing(self):
@@ -126,7 +141,6 @@ class XRayCreator(object):
                 ok, det = dev_connected
                 if ok:
                     dev = d
-                    dev.reset(log_packets=False, detected_device=det)
                     connected_devices.append((det, dev))
 
         if dev is None:
@@ -143,19 +157,9 @@ class XRayCreator(object):
 
         books = {}
         for book in dev.books():
-            if book_lookup.has_key(book._data['title']):
-                for b in book_lookup[book._data['title']]:
-                    cont = False
-                    for author in book._data['authors']:
-                        if author not in b.author_list:
-                            cont = True
-                            break
-                    if cont:
-                        continue
-
-                    books['%s_%s' % (b.book_id, book.path.split('.')[-1].lower())] = {'device_book': book.path,
-                        'device_xray': '.'.join(book.path.split('.')[:-1]) + '.sdr'}
-                    break
+            if book_lookup.has_key(book._data['uuid']):
+                books['%s_%s' % (book_lookup[book._data['uuid']].book_id, book.path.split('.')[-1].lower())] = {'device_book': book.path,
+                    'device_xray': '.'.join(book.path.split('.')[:-1]) + '.sdr'}
         return books
 
     def create_xrays_event(self, abort, log, notifications):
@@ -166,7 +170,7 @@ class XRayCreator(object):
             if abort.isSet():
                 return
             if log: log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
-            self._connection = book.create_xray_event(self._connection, self._device_books, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
+            self._gConnection = book.create_xray_event(self._gConnection, self._device_books, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
 
         self.get_results_create()
         log('\nX-Ray Creation:')
@@ -201,7 +205,7 @@ class XRayCreator(object):
             if abort.isSet():
                 return
             if log: log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
-            self._connection = book.send_xray_event(self._connection, self._device_books, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
+            self._gConnection = book.send_xray_event(self._gConnection, self._device_books, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
 
         self.get_results_send()
         if len(self._send_completed) > 0:
