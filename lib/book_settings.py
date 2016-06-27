@@ -3,7 +3,6 @@
 import os
 import re
 from urllib import urlencode
-from httplib import HTTPSConnection
 
 from calibre_plugins.xray_creator.lib.goodreads_parser import GoodreadsParser
 
@@ -144,12 +143,7 @@ class BookSettings(object):
         except Exception as e:
             try:
                 self._aConnection.close()
-                if self._proxy:
-                    self._aConnection = HTTPSConnection(self._https_address, self._https_port)
-                    self._aConnection.set_tunnel('www.amazon.com', 443)
-                else:
-                    self._aConnection = HTTPSConnection('www.amazon.com')
-
+                self._aConnection.connect()
                 self._aConnection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, headers=self.HEADERS)
                 response = self._aConnection.getresponse().read()
             except:
@@ -181,12 +175,7 @@ class BookSettings(object):
         except:
             try:
                 self._gConnection.close()
-                if self._proxy:
-                    self._gConnection = HTTPSConnection(self._https_address, self._https_port)
-                    self._gConnection.set_tunnel('www.goodreads.com', 443)
-                else:
-                    self._gConnection = HTTPSConnection('www.goodreads.com')
-
+                self._gConnection.connect()
                 self._gConnection.request('GET', '/search?' + query)
                 response = self._gConnection.getresponse().read()
             except:

@@ -51,7 +51,7 @@ class Book(object):
     # allowed formats
     FMTS = ['mobi', 'azw3']
 
-    def __init__(self, db, book_id, gConnection, aConnection, formats=None, send_to_device=True, create_xray=True, proxy=False, https_address=None, https_port=None):
+    def __init__(self, db, book_id, gConnection, aConnection, formats=None, send_to_device=True, create_xray=True):
         self._db = db
         self._book_id = book_id
         self._formats = formats
@@ -60,16 +60,9 @@ class Book(object):
         self._status = self.IN_PROGRESS
         self._status_message = None
         self._format_specific_info = None
-        self._proxy = proxy
-        self._https_address = https_address
-        self._https_port = https_port
-        self._gConnection = gConnection
-        self._aConnection = aConnection
 
         book_path = self._db.field_for('path', book_id).replace('/', os.sep)
-        self._book_settings = BookSettings(self._db, self._book_id, self._gConnection, self._aConnection)
-        self._gConnection = self._book_settings._gConnection
-        self._aConnection = self._book_settings._aConnection
+        self._book_settings = BookSettings(self._db, self._book_id, gConnection, aConnection)
 
         self._get_basic_information()
     
@@ -292,9 +285,13 @@ class Book(object):
                         
                     if original_asin and original_asin != new_asin:
                         # if we changed the asin, update the image file name
-                        thumbname_orig = os.path.join(device, "system", "thumbnails", "thumbnail_%s_EBOK_portrait.jpg" % original_asin)
+                        device_root = os.path.join(info['device_book'].split(os.sep)[0], os.sep)
+                        thumbname_orig = os.path.join(device_root, "system", "thumbnails", "thumbnail_%s_EBOK_portrait.jpg" % original_asin)
                         thumbname_new = thumbname_orig.replace(original_asin, new_asin)
-                        os.rename(thumbname_orig, thumbname_new)
+
+                        # check to make sure file exists before trying to modify it
+                        if os.path.exists(thumbname_orig):
+                            os.rename(thumbname_orig, thumbname_new)
                 except:
                     info['send_status'] = self.FAIL
                     info['status_message'] = self.FAILED_UNABLE_TO_UPDATE_ASIN
@@ -373,9 +370,8 @@ class Book(object):
                 if log: log('%s \tSending x-ray to device...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
                 perc += 1
                 self.send_xray(device_books)
-            return connection
         except:
-            return connection
+            return
 
     def send_xray_event(self, connection, device_books, log=None, notifications=None, abort=None, book_num=None, total=None):
         actions = 2.0
@@ -391,7 +387,7 @@ class Book(object):
             return
         if notifications: notifications.put((perc/(total * actions), 'Sending %s x-ray to device' % self.title_and_author))
         if log: log('%s \tSending x-ray to device...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        return self.send_xray(device_books, overwrite=False, already_created=False, log=log, abort=abort, connection=connection)
+        self.send_xray(device_books, overwrite=False, already_created=False, log=log, abort=abort, connection=connection)
 
 class ASINUpdater(MetadataUpdater):
     def update(self, fmt):

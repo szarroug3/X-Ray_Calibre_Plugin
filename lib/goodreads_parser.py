@@ -1,7 +1,6 @@
 # goodreads_parser.py
 
 from lxml import html
-from httplib import HTTPSConnection
 
 # Parses Goodreads page for characters, terms, and quotes
 class GoodreadsParser(object):
@@ -40,12 +39,7 @@ class GoodreadsParser(object):
             response = self._connection.getresponse().read()
         except:
             self._connection.close()
-            if self._proxy:
-                self._connection = HTTPSConnection(self._https_address, self._https_port)
-                self._connection.set_tunnel('www.goodreads.com', 443)
-            else:
-                self._connection = HTTPSConnection('www.goodreads.com')
-
+            self._connection.connect()
             self._connection.request('GET', url)
             response = self._connection.getresponse().read()
         return response
