@@ -42,12 +42,8 @@ class XRayCreator(object):
 
         self._books = []
         for book_id in self._book_ids:
-            book = Book(self._db, book_id, self._gConnection, self._aConnection, formats=self._formats,
-                send_to_device=self._send_to_device, create_xray=self._create_xray, proxy=self._proxy,
-                https_address=self._https_address, https_port=self._https_port)
-            self._books.append(book)
-            self._gConnection = book._gConnection
-            self._aConnection = book._aConnection
+            self._books.append(Book(self._db, book_id, self._gConnection, self._aConnection, formats=self._formats,
+                send_to_device=self._send_to_device, create_xray=self._create_xray))
         
         self._total_not_failing = 0
         book_lookup = {}
@@ -170,7 +166,7 @@ class XRayCreator(object):
             if abort.isSet():
                 return
             if log: log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
-            self._gConnection = book.create_xray_event(self._gConnection, self._device_books, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
+            book.create_xray_event(self._gConnection, self._device_books, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
 
         self.get_results_create()
         log('\nX-Ray Creation:')
@@ -205,7 +201,7 @@ class XRayCreator(object):
             if abort.isSet():
                 return
             if log: log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
-            self._gConnection = book.send_xray_event(self._gConnection, self._device_books, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
+            book.send_xray_event(self._gConnection, self._device_books, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
 
         self.get_results_send()
         if len(self._send_completed) > 0:
