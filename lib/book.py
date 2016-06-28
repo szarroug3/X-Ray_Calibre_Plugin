@@ -153,6 +153,7 @@ class Book(object):
             if not local_book or not os.path.exists(local_book):
                 info['status'] = self.FAIL
                 info['status_message'] = self.FAILED_LOCAL_BOOK_NOT_FOUND
+                self._format_specific_info.append(info)
                 continue
 
             info['local_book'] = local_book
