@@ -116,7 +116,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         if self._azw3:
             formats.append('AZW3')
 
-        xray_creator = XRayCreator(db, ids, formats=formats, send_to_device=self._send_to_device, create_xray=self._create_xray_when_sending, expand_aliases=self._expand_aliases)
+        xray_creator = XRayCreator(db, ids, formats, self._send_to_device, self._create_xray_when_sending, self._expand_aliases)
         return xray_creator
 
     def config(self):

@@ -42,7 +42,7 @@ class BookConfigWidget(QDialog):
             self._aConnection = HTTPSConnection('www.amazon.com')
 
         for book_id in ids:
-            self._book_settings.append(BookSettings(db, book_id, self._gConnection, self._aConnection))
+            self._book_settings.append(BookSettings(db, book_id, self._gConnection, self._aConnection, expand_aliases))
 
         self.v_layout = QVBoxLayout(self)
 
