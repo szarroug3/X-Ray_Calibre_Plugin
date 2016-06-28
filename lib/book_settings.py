@@ -192,8 +192,8 @@ class BookSettings(object):
 
         return 'https://www.goodreads.com' + urlsearch.group(1)
 
-    def update_aliases(self, url, overwrite=False):
-        goodreads_parser = GoodreadsParser(url, self._gConnection)
+    def update_aliases(self, url, overwrite=False, raise_error_on_page_not_found=False):
+        goodreads_parser = GoodreadsParser(url, self._gConnection, raise_error_on_page_not_found=raise_error_on_page_not_found)
         goodreads_parser.get_characters()
         goodreads_parser.get_settings()
         goodreads_chars =  goodreads_parser.characters

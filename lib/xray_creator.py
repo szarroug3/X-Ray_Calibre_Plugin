@@ -167,9 +167,11 @@ class XRayCreator(object):
                     books['%s_%s' % (book_lookup[book._data['uuid']].book_id, book.path.split('.')[-1].lower())] = {'device_book': book.path,
                         'device_xray': '.'.join(book.path.split('.')[:-1]) + '.sdr', 'device_root': device_root}
             return books
-        except:
+        except (TypeError, AttributeError) as e:
             log('%s Device found but cannot be accessed. It may have been ejected but not unplugged.' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
             return None
+        except Exception as e:
+            log('%s Something unexpectedly went wrong: %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), e))
 
     def _find_device_root(self, device_book):
         """

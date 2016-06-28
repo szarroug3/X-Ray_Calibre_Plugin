@@ -138,28 +138,21 @@ class BookConfigWidget(QDialog):
     def book(self):
         return self._book_settings[self._index]
 
+    def set_status_and_repaint(self, message):
+        self.status.setText(message)
+        self.status.repaint()
+
     def edit_asin(self, val):
         self.book.asin = val
 
     def edit_goodreads_url(self, val):
-        goodreads_string = 'https://www.goodreads.com/'
-        index = 0
-        if val[:len(goodreads_string)] != goodreads_string:
-            for i, letter in enumerate(val):
-                if i < len(goodreads_string):
-                    if letter == goodreads_string[i]:
-                            index += 1
-                    else:
-                        break
-                else:
-                    break
-            self.goodreads_url_edit.setText(goodreads_string + val[index:])
-
         self.book.goodreads_url = val
+        if 'goodreads.com' not in val:
+            self.status.setText('Warning: Invalid Goodreads URL. URL must have goodreads as the domain.')
 
     def search_for_ASIN(self):
         asin = None
-        self.status.setText('Searching for ASIN...')
+        self.set_status_and_repaint('Searching for ASIN...')
         if self.book.title != 'Unknown' and self.book.author != 'Unknown':
             asin = self.book.search_for_asin(self.book.title_and_author)
         if asin:
@@ -179,7 +172,7 @@ class BookConfigWidget(QDialog):
 
     def search_for_goodreads_url(self):
         url = None
-        self.status.setText('Searching for Goodreads url...')
+        self.set_status_and_repaint('Searching for Goodreads url...')
         if self.book.asin:
             url = self.book.search_for_goodreads(self.book.asin)
         if not url and self.book.title != 'Unknown' and self.book.author != 'Unknown':
@@ -195,8 +188,13 @@ class BookConfigWidget(QDialog):
             self.goodreads_url_edit.setText('')
 
     def update_aliases(self):
+        if 'goodreads.com' not in self.goodreads_url_edit.text():
+            self.status.setText('Error: Invalid Goodreads URL. URL must have goodreads as the domain.')
+            return
+
         try:
-            self.book.update_aliases(self.goodreads_url_edit.text(), overwrite=True)
+            self.set_status_and_repaint('Updating aliases...')
+            self.book.update_aliases(self.goodreads_url_edit.text(), overwrite=True, raise_error_on_page_not_found=True)
             self.update_aliases_on_gui()
             self.status.setText('Aliases updated.')
         except:
