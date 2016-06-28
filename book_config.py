@@ -184,8 +184,6 @@ class BookConfigWidget(QDialog):
             self.update_aliases_on_gui()
             self.status.setText('Aliases updated.')
         except:
-            import traceback
-            traceback.print_exc()
             self.status.setText('Invalid Goodreads url.')
 
     def edit_aliases(self, term, val):

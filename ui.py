@@ -31,11 +31,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
     def genesis(self):
         # initial setup here
-        self._send_to_device = prefs['send_to_device']
-        self._create_xray_when_sending = prefs['create_xray_when_sending']
-        self._expand_aliases = prefs['expand_aliases']
-        self._mobi = prefs['mobi']
-        self._azw3 = prefs['azw3']
+        self.apply_settings()
 
         icon = get_icons('images/icon.png')
 
@@ -59,8 +55,6 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         self.qaction.setMenu(self.menu)
 
     def apply_settings(self):
-        from calibre_plugins.xray_creator.config import prefs
-
         self._send_to_device = prefs['send_to_device']
         self._create_xray_when_sending = prefs['create_xray_when_sending']
         self._expand_aliases = prefs['expand_aliases']
