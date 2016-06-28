@@ -1,5 +1,9 @@
 # xray_creator.py
 
+import os
+import sys
+import errno
+
 from datetime import datetime
 from httplib import HTTPSConnection
 
@@ -152,11 +156,36 @@ class XRayCreator(object):
                 break
 
         books = {}
+        device_root = None
         for book in dev.books():
+            if not device_root:
+                device_root = self._find_device_root(book.path)
             if book_lookup.has_key(book._data['uuid']):
                 books['%s_%s' % (book_lookup[book._data['uuid']].book_id, book.path.split('.')[-1].lower())] = {'device_book': book.path,
-                    'device_xray': '.'.join(book.path.split('.')[:-1]) + '.sdr'}
+                    'device_xray': '.'.join(book.path.split('.')[:-1]) + '.sdr', 'device_root': device_root}
         return books
+
+    def _find_device_root(self, device_book):
+        """
+        Given the full path to a book on the device, return the path to the Kindle device
+
+        eg. "C:\", "/Volumes/Kindle"
+        """
+        device_root = None
+
+        if sys.platform == "win32":
+            device_root = os.path.join(device_book.split(os.sep)[0], os.sep)
+        elif sys.platform == "darwin" or "linux" in sys.platform:
+            # Find "documents" in path hierarchy, we want to include the first os.sep so slice one further than we find it
+            index = device_book.index("%sdocuments%s" % (os.sep, os.sep))
+            device_root = device_book[:index+1]
+        else:
+            raise EnvironmentError(errno.EINVAL, "Unknown platform %s" % (sys.platform))
+        magic_file = os.path.join(device_root, "system", "version.txt")
+        if os.path.exists(magic_file) and open(magic_file).readline().startswith("Kindle"):
+            return device_root
+        raise EnvironmentError(errno.ENOENT, "Kindle device not found (%s)" % (device_root))
+
 
     def create_xrays_event(self, abort, log, notifications):
         if log: log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))

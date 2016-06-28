@@ -239,8 +239,10 @@ class Book(object):
                     info['status_message'] = self.FAILED_BOOK_NOT_ON_DEVICE
                     continue
 
-                info['device_book'] = device_books['%s_%s' % (self.book_id, info['format'].lower())]['device_book']
-                info['device_xray'] = device_books['%s_%s' % (self.book_id, info['format'].lower())]['device_xray']
+                device_book = device_books['%s_%s' % (self.book_id, info['format'].lower())]
+                info['device_book'] = device_book['device_book']
+                info['device_xray'] = device_book['device_xray']
+                device_root = device_book['device_root']
 
                 local_xray = os.path.join(info['local_xray'], 'XRAY.asc')
                 if not os.path.exists(local_xray):
@@ -285,7 +287,6 @@ class Book(object):
                         
                     if original_asin and original_asin != new_asin:
                         # if we changed the asin, update the image file name
-                        device_root = os.path.join(info['device_book'].split(os.sep)[0], os.sep)
                         thumbname_orig = os.path.join(device_root, "system", "thumbnails", "thumbnail_%s_EBOK_portrait.jpg" % original_asin)
                         thumbname_new = thumbname_orig.replace(original_asin, new_asin)
 
