@@ -38,6 +38,11 @@ Github Page: https://github.com/szarroug3/X-Ray_Calibre_Plugin
 
 ----------------------------------------------------------------------------------------------------------------------------------
 	1. Book specific preferences
+		- Auto associate split aliases, when enabled, will split aliases up further
+			- i.e If a character on goodreads named "Vin" has a Goodreads alias of "Valette Renoux", this option will add
+				"Valette" and "Renoux" as aliases. You may not want this in cases such as "Timothy Cratchit" who has a
+				Goodreads alias of "Tiny Tim". Having this feature on would add "Tiny", and "Tim" as
+				aliases which is not valid.
 		- Use "," or ", " as a separator for words in aliases list
 	2. Create/Update x-ray files for selected books
 	3. Send previously generated x-ray files to device
