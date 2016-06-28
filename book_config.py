@@ -21,6 +21,7 @@ from calibre_plugins.xray_creator.lib.book_settings import BookSettings
 
 
 class BookConfigWidget(QDialog):
+    ARTICLES = ['The', 'For', 'De', 'And', 'Or', 'Of']
     def __init__(self, db, ids, expand_aliases, parent):
         QDialog.__init__(self, parent)
         self.resize(500,500)
@@ -244,7 +245,17 @@ class BookConfigWidget(QDialog):
             label.setFixedWidth(150)
             self.aliases_layout.addWidget(label, index, 0)
 
-            line_edit = QLineEdit(', '.join(aliases[1]))
+            aliases_title_case = aliases[1]
+            for i in xrange(len(aliases_title_case)):
+                words = aliases_title_case[i].title().split()
+                # we want first word to be title case no matter what it is
+                for j in xrange(1, len(words)):
+                    if words[j] in self.ARTICLES:
+                        words[j] = words[j].lower()
+                aliases_title_case[i] = ' '.join(words)
+
+
+            line_edit = QLineEdit(', '.join(aliases_title_case))
             line_edit.setFixedWidth(350)
             line_edit.textEdited.connect(functools.partial(self.edit_aliases, aliases[0]))
             self.aliases_layout.addWidget(line_edit, index, 1)
