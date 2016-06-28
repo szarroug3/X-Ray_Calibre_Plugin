@@ -8,6 +8,8 @@ __copyright__ = '2016, Samreen Zarroug & Alex Mayer'
 __docformat__ = 'restructuredtext en'
 
 import functools
+import webbrowser
+
 from PyQt5.QtCore import *
 from httplib import HTTPSConnection
 
@@ -52,8 +54,12 @@ class BookConfigWidget(QDialog):
         self.asin.setFixedWidth(100)
         self.asin_edit = QLineEdit('')
         self.asin_edit.textEdited.connect(self.edit_asin)
+        self.asin_browser_button = QPushButton("Open..")
+        self.asin_browser_button.clicked.connect(self.browse_amazon_url)
+        self.asin_browser_button.setToolTip("Open Amazon page for the specified ASIN")
         self.asin_layout.addWidget(self.asin)
         self.asin_layout.addWidget(self.asin_edit)
+        self.asin_layout.addWidget(self.asin_browser_button)
         self.v_layout.addLayout(self.asin_layout)
 
         self.goodreads_layout = QHBoxLayout(None)
@@ -61,8 +67,12 @@ class BookConfigWidget(QDialog):
         self.goodreads_url.setFixedWidth(100)
         self.goodreads_url_edit = QLineEdit('')
         self.goodreads_url_edit.textEdited.connect(self.edit_goodreads_url)
+        self.goodreads_browser_button = QPushButton("Open..")
+        self.goodreads_browser_button.clicked.connect(self.browse_goodreads_url)
+        self.goodreads_browser_button.setToolTip("Open Goodreads page at the specified URL")
         self.goodreads_layout.addWidget(self.goodreads_url)
         self.goodreads_layout.addWidget(self.goodreads_url_edit)
+        self.goodreads_layout.addWidget(self.goodreads_browser_button)
         self.v_layout.addLayout(self.goodreads_layout)
 
         self.update_buttons_layout = QHBoxLayout(None)
@@ -161,6 +171,12 @@ class BookConfigWidget(QDialog):
             self.status.setText('ASIN not found.')
             self.asin_edit.setText('')
 
+    def browse_amazon_url(self):
+        webbrowser.open("https://www.amazon.co.uk/gp/product/%s/" % (self.asin_edit.text()))
+
+    def browse_goodreads_url(self):
+        webbrowser.open(self.goodreads_url_edit.text())
+
     def search_for_goodreads_url(self):
         url = None
         self.status.setText('Searching for Goodreads url...')
@@ -227,11 +243,11 @@ class BookConfigWidget(QDialog):
         # add aliases for current book
         for index, aliases in enumerate(sorted(self.book.aliases.items())):
             label = QLabel(aliases[0] + ':')
-            label.setFixedWidth(125)
+            label.setFixedWidth(150)
             self.aliases_layout.addWidget(label, index, 0)
 
             line_edit = QLineEdit(', '.join(aliases[1]))
-            line_edit.setFixedWidth(300)
+            line_edit.setFixedWidth(350)
             line_edit.textEdited.connect(functools.partial(self.edit_aliases, aliases[0]))
             self.aliases_layout.addWidget(line_edit, index, 1)
 
