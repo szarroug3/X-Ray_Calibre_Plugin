@@ -27,7 +27,7 @@ class XRayCreator(object):
     def books(self):
         return self._books
     
-    def _initialize_books(self):
+    def _initialize_books(self, log):
         self._proxy = False
         self._https_address = None
         self._https_port = None
@@ -67,7 +67,7 @@ class XRayCreator(object):
             book_lookup[uuid]._status = book.FAIL
             book_lookup[uuid]._status_message = book.FAILED_DUPLICATE_UUID
             book_lookup.pop(uuid)
-        self._device_books = self._find_device_books(book_lookup)
+        self._device_books = self._find_device_books(book_lookup, log)
 
     def books_not_failing(self):
         for book in self._books:
@@ -128,7 +128,7 @@ class XRayCreator(object):
                     for fmt in fmts_failed:
                         self._send_failed.append('\t%s: %s' % (fmt['format'], fmt['status_message']))
 
-    def _find_device_books(self, book_lookup):
+    def _find_device_books(self, book_lookup, log):
         """
         Look for the Kindle and return the list of books on it
         """
@@ -158,13 +158,18 @@ class XRayCreator(object):
 
         books = {}
         device_root = None
-        for book in dev.books():
-            if not device_root:
-                device_root = self._find_device_root(book.path)
-            if book_lookup.has_key(book._data['uuid']):
-                books['%s_%s' % (book_lookup[book._data['uuid']].book_id, book.path.split('.')[-1].lower())] = {'device_book': book.path,
-                    'device_xray': '.'.join(book.path.split('.')[:-1]) + '.sdr', 'device_root': device_root}
-        return books
+
+        try:
+            for book in dev.books():
+                if not device_root:
+                    device_root = self._find_device_root(book.path)
+                if book_lookup.has_key(book._data['uuid']):
+                    books['%s_%s' % (book_lookup[book._data['uuid']].book_id, book.path.split('.')[-1].lower())] = {'device_book': book.path,
+                        'device_xray': '.'.join(book.path.split('.')[:-1]) + '.sdr', 'device_root': device_root}
+            return books
+        except:
+            log('%s Device found but cannot be accessed. It may have been ejected but not unplugged.' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+            return None
 
     def _find_device_root(self, device_book):
         """
@@ -191,7 +196,7 @@ class XRayCreator(object):
     def create_xrays_event(self, abort, log, notifications):
         if log: log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         if notifications: notifications.put((0, 'Initializing...'))
-        self._initialize_books()
+        self._initialize_books(log)
         for book_num, book in enumerate(self.books_not_failing()):
             if abort.isSet():
                 return
@@ -226,7 +231,7 @@ class XRayCreator(object):
     def send_xrays_event(self, abort, log, notifications):
         if log: log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         if notifications: notifications.put((0, 'Initializing...'))
-        self._initialize_books()
+        self._initialize_books(log)
         for book_num, book in enumerate(self.books_not_failing()):
             if abort.isSet():
                 return

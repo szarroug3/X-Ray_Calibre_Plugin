@@ -103,6 +103,9 @@ class Book(object):
             if info['status'] is not self.FAIL:
                 yield info
 
+    def formats_not_failing_count(self):
+        return sum([1 for _ in self.formats_not_failing()])
+
     # get book's title, title sort, author and author sort if it exists
     def _get_basic_information(self):
         self._title = self._db.field_for('title', self._book_id)
@@ -351,12 +354,16 @@ class Book(object):
             
             if abort and abort.isSet():
                 return
+            if self.formats_not_failing_count() == 0:
+                return
             if notifications: notifications.put((perc/(total * actions), 'Parsing %s book data' % self.title_and_author))
             if log: log('%s \tParsing book data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
             perc += 1
             self._parse_book()
             
             if abort and abort.isSet():
+                return
+            if self.formats_not_failing_count() == 0:
                 return
             if notifications: notifications.put((perc/(total * actions), 'Creating %s x-ray' % self.title_and_author))
             if log: log('%s \tCreating x-ray...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
@@ -366,6 +373,8 @@ class Book(object):
             self._status_message = None
 
             if abort and abort.isSet():
+                return
+            if self.formats_not_failing_count() == 0:
                 return
             if self._send_to_device:
                 if notifications: notifications.put((perc/(total * actions), 'Sending %s x-ray to device' % self.title_and_author))
@@ -386,6 +395,8 @@ class Book(object):
         self._get_format_specific_information()
 
         if abort and abort.isSet():
+            return
+        if self.formats_not_failing_count() == 0:
             return
         if notifications: notifications.put((perc/(total * actions), 'Sending %s x-ray to device' % self.title_and_author))
         if log: log('%s \tSending x-ray to device...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
