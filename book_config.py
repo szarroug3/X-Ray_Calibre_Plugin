@@ -9,10 +9,9 @@ __docformat__ = 'restructuredtext en'
 
 import functools
 import webbrowser
-
-from PyQt5.QtCore import *
 from httplib import HTTPSConnection
 
+from PyQt5.QtCore import *
 from PyQt5.Qt import QDialog, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout
 from PyQt5.Qt import QLabel, QLineEdit, QPushButton, QScrollArea
 
@@ -21,7 +20,10 @@ from calibre_plugins.xray_creator.lib.book_settings import BookSettings
 
 
 class BookConfigWidget(QDialog):
-    ARTICLES = ['The', 'For', 'De', 'And', 'Or', 'Of']
+    # title case given words except for articles in the middle
+    # i.e the lord ruler would become The Lord Ruler but john the great would become John the Great
+    ARTICLES = ['The', 'For', 'De', 'And', 'Or', 'Of', 'La']
+    TITLE_CASE = lambda self, words: ' '.join([word.lower() if word in self.ARTICLES and index != 0 else word for index, word in enumerate(words.title().split())])
     def __init__(self, db, ids, expand_aliases, parent):
         QDialog.__init__(self, parent)
         self.resize(500,500)
@@ -240,24 +242,14 @@ class BookConfigWidget(QDialog):
         self.aliases_layout.setAlignment(Qt.AlignTop)
 
         # add aliases for current book
-        for index, aliases in enumerate(sorted(self.book.aliases.items())):
-            label = QLabel(aliases[0] + ':')
+        for index, (character, aliases) in enumerate(sorted(self.book.aliases.items())):
+            label = QLabel(character + ':')
             label.setFixedWidth(150)
             self.aliases_layout.addWidget(label, index, 0)
 
-            aliases_title_case = aliases[1]
-            for i in xrange(len(aliases_title_case)):
-                words = aliases_title_case[i].title().split()
-                # we want first word to be title case no matter what it is
-                for j in xrange(1, len(words)):
-                    if words[j] in self.ARTICLES:
-                        words[j] = words[j].lower()
-                aliases_title_case[i] = ' '.join(words)
-
-
-            line_edit = QLineEdit(', '.join(aliases_title_case))
+            line_edit = QLineEdit(', '.join([self.TITLE_CASE(alias) for alias in aliases]))
             line_edit.setFixedWidth(350)
-            line_edit.textEdited.connect(functools.partial(self.edit_aliases, aliases[0]))
+            line_edit.textEdited.connect(functools.partial(self.edit_aliases, character))
             self.aliases_layout.addWidget(line_edit, index, 1)
 
         self.scroll_area.setWidget(self.aliases_widget)

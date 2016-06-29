@@ -36,13 +36,9 @@ class ConfigWidget(QWidget):
 
         self.expand_aliases = QCheckBox('Auto associate split aliases [?]')
         self.expand_aliases.setChecked(prefs['expand_aliases'])
-        self.expand_aliases.setWhatsThis('When enabled, this will split aliases up further.\n\nExample: If a character on goodreads named "Vin" has a Goodreads alias of "Valette Renoux", this option will add "Valette" and "Renoux" as aliases. You may not want this in cases such as "Timothy Cratchit" who has a Goodreads alias of "Tiny Tim". Having this feature on would add "Tiny", and "Tim" as aliases which is not valid.')
-        self.expand_aliases.setToolTip('''When enabled, this will split aliases up further.
-
-        Example: If a character on goodreads named "Vin" has a Goodreads alias of "Valette Renoux",
-        this option will add "Valette" and "Renoux" as aliases. You may not want this in cases such
-        as "Timothy Cratchit" who has a Goodreads alias of "Tiny Tim". Having this feature on would
-        add "Tiny", and "Tim" as aliases which is not valid.''')
+        expand_alias_explanation = 'When enabled, this will split aliases up further.\n\nExample: If a character on goodreads named "Vin" has a Goodreads alias of "Valette Renoux",\nthis option will add "Valette" and "Renoux" as aliases. You may not want this in cases such\nas "Timothy Cratchit" who has a Goodreads alias of "Tiny Tim". Having this feature on would\nadd "Tiny", and "Tim" as aliases which is not valid.'
+        self.expand_aliases.setWhatsThis(expand_alias_explanation)
+        self.expand_aliases.setToolTip(expand_alias_explanation)
         self.l.addWidget(self.expand_aliases)
 
         self.book_types_to_create = QGroupBox()
