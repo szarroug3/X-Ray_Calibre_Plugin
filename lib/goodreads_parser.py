@@ -4,9 +4,10 @@ from lxml import html
 
 # Parses Goodreads page for characters, terms, and quotes
 class GoodreadsParser(object):
-    def __init__(self, url, connection, raise_error_on_page_not_found=False):
+    def __init__(self, url, connection, get_author_profile, raise_error_on_page_not_found=False):
         self._url = url
         self._connection = connection
+        self._get_author_profile = get_author_profile
         self._characters = {}
         self._settings = {}
         self._quotes = []
@@ -31,12 +32,15 @@ class GoodreadsParser(object):
         return self._quotes
 
     def parse(self):
-        if self._page_source is None:
+        if not self._page_source:
             return
 
         self.get_characters()
         self.get_settings()
         self.get_quotes()
+
+    def get_author_profile(self):
+        if self._page_source
 
     def open_url(self, url, raise_error_on_page_not_found=False):
         if 'goodreads.com' in url:
@@ -69,7 +73,7 @@ class GoodreadsParser(object):
         return response
     
     def get_characters(self):
-        if self._page_source is None:
+        if not self._page_source is None:
             return
 
         characters = self._page_source.xpath('//div[@class="clearFloats" and contains(., "Characters")]//div[@class="infoBoxRowItem"]//a')
@@ -88,7 +92,7 @@ class GoodreadsParser(object):
             self._entity_id += 1
 
     def get_settings(self):
-        if self._page_source is None:
+        if not self._page_source:
             return
             
         settings = self._page_source.xpath('//div[@id="bookDataBox"]/div[@class="infoBoxRowItem"]/a[contains(@href, "/places/")]')
@@ -106,7 +110,7 @@ class GoodreadsParser(object):
             self._entity_id += 1
 
     def get_quotes(self):
-        if self._page_source is None:
+        if not self._page_source:
             return
             
         quotes_page = self._page_source.xpath('//a[@class="actionLink" and contains(., "More quotes")]')
@@ -120,6 +124,13 @@ class GoodreadsParser(object):
         else:
             for quote in self._page_source.xpath('//div[@class=" clearFloats bigBox" and contains(., "Quotes from")]//div[@class="bigBoxContent containerWithHeaderContent"]//span[@class="readable"]'):
                 self._quotes.append(quote.text.encode('ascii', 'ignore').strip())
+
+    def get_author_url(self):
+        if not self._page_source:
+            return
+
+
+
 
 class GoodreadsPageDoesNotExist(Exception):
     pass
