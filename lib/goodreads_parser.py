@@ -52,6 +52,11 @@ class GoodreadsParser(object):
             return
 
         self.get_author_profile()
+        # # don't want to fail if it's just the author profile that fails
+        # try:
+        #     self.get_author_profile()
+        # except:
+        #     return
 
     def get_author_profile(self):
         if self._page_source is None:
@@ -177,8 +182,10 @@ class GoodreadsParser(object):
         if self._author_page is None:
             return
 
-        self._author_bio = ' '.join(self._author_page.xpath('//div[@class="aboutAuthorInfo"]/span[contains(@id, "freeTextauthor")]')[0].text_content().split())
-        print self._author_bio
+        author_bio = self._author_page.xpath('//div[@class="aboutAuthorInfo"]/span')
+        author_bio = author_bio[1] if len(author_bio) > 1 else author_bio[0]
+
+        self._author_bio = ' '.join(author_bio.text_content().split())
 
     def get_author_image(self):
         if self._author_page is None:
@@ -198,7 +205,7 @@ class GoodreadsParser(object):
         if len(current_book_asin) == 0:
             current_book_asin = self.open_url(current_book_asin[0].get('href'), return_redirect_url=True)
             current_book_asin = current_book_asin.split('/')
-            current_book_asin = current_book_asin[current_book_asin.index('product')+1]
+            current_book_asin = current_book_asin[current_book_asin.index('product')+1] if 'product' in current_book_asin else None
         for book in books:
             book_data = {'e': 1, 't': book.find('span').text}
             book_page = html.fromstring(self.open_url(book.get('href')))
@@ -211,6 +218,8 @@ class GoodreadsParser(object):
             if not book_amazon_page:
                 continue
             book_asin = book_amazon_page.split('/')
+            if 'product' not in book_asin:
+                continue
             book_asin = book_asin[book_asin.index('product')+1]
             book_data['a'] = book_asin
 
