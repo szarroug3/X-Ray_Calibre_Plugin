@@ -46,6 +46,7 @@ class BookSettings(object):
         self.prefs.setdefault('asin', '')
         self.prefs.setdefault('goodreads_url', '')
         self.prefs.setdefault('aliases', {})
+        self.prefs.setdefault('author_profile', None)
         self.prefs.commit()
 
         self._title = self._db.field_for('title', book_id)
@@ -82,6 +83,7 @@ class BookSettings(object):
         self._aliases = self.prefs['aliases']
         if len(self._aliases.keys()) == 0 and self.goodreads_url != '':
             self.update_aliases(self.goodreads_url)
+
         self.save()
 
     @property
@@ -130,6 +132,14 @@ class BookSettings(object):
         label, aliases = val
         aliases = [x.strip() for x in aliases.split(",") if x.strip()]
         self._aliases[label] =  aliases
+
+    @property
+    def author_profile(self):
+        return self.prefs['author_profile']
+
+    @author_profile.setter
+    def author_profile(self, val):
+        self.prefs['author_profile'] = val
 
     def save(self):
         self.prefs['asin'] = self.asin
