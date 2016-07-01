@@ -2,6 +2,7 @@
 
 import os
 import re
+import json
 import struct
 from glob import glob
 from urllib import urlencode
@@ -129,8 +130,10 @@ class Book(object):
 
     def _parse_goodreads_data(self):
         try:
-            self._parsed_goodreads_data = GoodreadsParser(self._goodreads_url, self._gConnection, send_author_profile=self._send_author_profile)
+            self._parsed_goodreads_data = GoodreadsParser(self._goodreads_url, self._gConnection, create_author_profile=self._send_author_profile)
             self._parsed_goodreads_data.parse()
+            if self._send_author_profile:
+                self._book_settings.author_profile = self._parsed_goodreads_data.author_profile
 
             for char in self._parsed_goodreads_data.characters.values():
                 if char['label'] not in self._aliases.keys():
@@ -234,6 +237,7 @@ class Book(object):
 
     def send_xray(self, device_books, overwrite=True, already_created=True, log=None, abort=None):
         send_author_profile = self._send_author_profile
+        created_author_profile = already_created
         for info in self.formats_not_failing():
             send_xray = True
             try:
@@ -281,8 +285,8 @@ class Book(object):
                 if not send_xray and not send_author_profile:
                     continue 
 
-                if not self._book_settings.author_profile:
-                    if already_created:
+                if send_author_profile and not self._book_settings.author_profile:
+                    if created_author_profile:
                         send_author_profile = False
 
                     elif not self._send_author_profile:
@@ -292,12 +296,15 @@ class Book(object):
                         try:
                             goodreads_parser = GoodreadsParser(self._goodreads_url, self._gConnection, send_author_profile=self._send_author_profile)
                             goodreads_parser.get_author_profile()
+                            created_author_profile = True
                             if not goodreads_parser.author_profile:
                                 send_author_profile = False
+                                if log: log('%s \t\tWarning: Failed to create author profile.' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
 
                             self._book_settings.author_profile = goodreads_parser.author_profile
                         except:
                             send_author_profile = False
+                            if log: log('%s \t\tWarning: Failed to create author profile.' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
 
                 if not send_xray and not send_author_profile:
                     continue 
@@ -316,6 +323,7 @@ class Book(object):
                     if not send_xray and not send_author_profile:
                         continue
 
+                else:
                     if send_xray:
                         for file in device_xray_files:
                             os.remove(file)
@@ -349,22 +357,27 @@ class Book(object):
                 if os.path.exists(tmp_dir):
                     rmtree(tmp_dir)
                 os.mkdir(tmp_dir)
-                copy(local_xray, tmp_dir)
-                original_name = os.path.basename(local_xray)
-                new_name = 'XRAY.entities.%s.asc' % new_asin
-                if not os.path.exists(os.path.join(tmp_dir, new_name)):
-                    os.rename(os.path.join(tmp_dir, original_name), os.path.join(tmp_dir, new_name))
+                if send_xray:
+                    copy(local_xray, tmp_dir)
+                    original_name = os.path.basename(local_xray)
+                    new_name = 'XRAY.entities.%s.asc' % new_asin
+                    if not os.path.exists(os.path.join(tmp_dir, new_name)):
+                        os.rename(os.path.join(tmp_dir, original_name), os.path.join(tmp_dir, new_name))
 
-                # copy file to x-ray folder on device and clean up
-                copy(os.path.join(tmp_dir, 'XRAY.entities.%s.asc' % new_asin), info['device_xray'])
-                rmtree(tmp_dir)
-                info['send_status'] = self.SUCCESS
+                    # copy file to x-ray folder on device and clean up
+                    copy(os.path.join(tmp_dir, new_name), info['device_xray'])
+                    rmtree(tmp_dir)
+                    info['send_status'] = self.SUCCESS
 
-                # one last check to make sure file is actually on the device
-                if not os.path.exists(os.path.join(info['device_xray'], 'XRAY.entities.%s.asc' % new_asin)):
-                    info['send_status'] = self.FAIL
-                    info['status_message'] = self.FAILED_FAILED_TO_SEND_XRAY
-                    continue
+                    # one last check to make sure file is actually on the device
+                    if not os.path.exists(os.path.join(info['device_xray'], 'XRAY.entities.%s.asc' % new_asin)):
+                        info['send_status'] = self.FAIL
+                        info['status_message'] = self.FAILED_FAILED_TO_SEND_XRAY
+
+                if send_author_profile:
+                    author_profile = self._book_settings.author_profile
+                    author_profile['a'] = new_asin
+                    json.dump(author_profile, open(os.path.join(info['device_xray'], 'AuthorProfile.profile.%s.asc' % new_asin), 'w+'))
             except:
                 info['send_status'] = self.FAIL
                 info['status_message'] = self.FAILED_FAILED_TO_SEND_XRAY
