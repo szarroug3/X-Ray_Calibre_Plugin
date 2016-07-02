@@ -4,15 +4,14 @@ from __future__ import (unicode_literals, division, absolute_import,
                         print_function)
 
 __license__   = 'GPL v3'
-__copyright__ = '2016, Samreen Zarroug & Alex Mayer'
+__copyright__ = '2016, Samreen Zarroug, Anthony Toole, & Alex Mayer'
 __docformat__ = 'restructuredtext en'
 
 import functools
 import webbrowser
-
-from PyQt5.QtCore import *
 from httplib import HTTPSConnection
 
+from PyQt5.QtCore import *
 from PyQt5.Qt import QDialog, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout
 from PyQt5.Qt import QLabel, QLineEdit, QPushButton, QScrollArea
 
@@ -21,7 +20,11 @@ from calibre_plugins.xray_creator.lib.book_settings import BookSettings
 
 
 class BookConfigWidget(QDialog):
-    def __init__(self, db, ids, parent):
+    # title case given words except for articles in the middle
+    # i.e the lord ruler would become The Lord Ruler but john the great would become John the Great
+    ARTICLES = ['The', 'For', 'De', 'And', 'Or', 'Of', 'La']
+    TITLE_CASE = lambda self, words: ' '.join([word.lower() if word in self.ARTICLES and index != 0 else word for index, word in enumerate(words.title().split())])
+    def __init__(self, db, ids, expand_aliases, parent):
         QDialog.__init__(self, parent)
         self.resize(500,500)
         self._index = 0
@@ -42,7 +45,7 @@ class BookConfigWidget(QDialog):
             self._aConnection = HTTPSConnection('www.amazon.com')
 
         for book_id in ids:
-            self._book_settings.append(BookSettings(db, book_id, self._gConnection, self._aConnection))
+            self._book_settings.append(BookSettings(db, book_id, self._gConnection, self._aConnection, expand_aliases))
 
         self.v_layout = QVBoxLayout(self)
 
@@ -138,28 +141,21 @@ class BookConfigWidget(QDialog):
     def book(self):
         return self._book_settings[self._index]
 
+    def set_status_and_repaint(self, message):
+        self.status.setText(message)
+        self.status.repaint()
+
     def edit_asin(self, val):
         self.book.asin = val
 
     def edit_goodreads_url(self, val):
-        goodreads_string = 'https://www.goodreads.com/'
-        index = 0
-        if val[:len(goodreads_string)] != goodreads_string:
-            for i, letter in enumerate(val):
-                if i < len(goodreads_string):
-                    if letter == goodreads_string[i]:
-                            index += 1
-                    else:
-                        break
-                else:
-                    break
-            self.goodreads_url_edit.setText(goodreads_string + val[index:])
-
         self.book.goodreads_url = val
+        if 'goodreads.com' not in val:
+            self.status.setText('Warning: Invalid Goodreads URL. URL must have goodreads as the domain.')
 
     def search_for_ASIN(self):
         asin = None
-        self.status.setText('Searching for ASIN...')
+        self.set_status_and_repaint('Searching for ASIN...')
         if self.book.title != 'Unknown' and self.book.author != 'Unknown':
             asin = self.book.search_for_asin(self.book.title_and_author)
         if asin:
@@ -179,7 +175,7 @@ class BookConfigWidget(QDialog):
 
     def search_for_goodreads_url(self):
         url = None
-        self.status.setText('Searching for Goodreads url...')
+        self.set_status_and_repaint('Searching for Goodreads url...')
         if self.book.asin:
             url = self.book.search_for_goodreads(self.book.asin)
         if not url and self.book.title != 'Unknown' and self.book.author != 'Unknown':
@@ -195,8 +191,13 @@ class BookConfigWidget(QDialog):
             self.goodreads_url_edit.setText('')
 
     def update_aliases(self):
+        if 'goodreads.com' not in self.goodreads_url_edit.text():
+            self.status.setText('Error: Invalid Goodreads URL. URL must have goodreads as the domain.')
+            return
+
         try:
-            self.book.update_aliases(self.goodreads_url_edit.text(), overwrite=True)
+            self.set_status_and_repaint('Updating aliases...')
+            self.book.update_aliases(self.goodreads_url_edit.text(), overwrite=True, raise_error_on_page_not_found=True)
             self.update_aliases_on_gui()
             self.status.setText('Aliases updated.')
         except:
@@ -241,14 +242,14 @@ class BookConfigWidget(QDialog):
         self.aliases_layout.setAlignment(Qt.AlignTop)
 
         # add aliases for current book
-        for index, aliases in enumerate(sorted(self.book.aliases.items())):
-            label = QLabel(aliases[0] + ':')
+        for index, (character, aliases) in enumerate(sorted(self.book.aliases.items())):
+            label = QLabel(character + ':')
             label.setFixedWidth(150)
             self.aliases_layout.addWidget(label, index, 0)
 
-            line_edit = QLineEdit(', '.join(aliases[1]))
+            line_edit = QLineEdit(', '.join([self.TITLE_CASE(alias) for alias in aliases]))
             line_edit.setFixedWidth(350)
-            line_edit.textEdited.connect(functools.partial(self.edit_aliases, aliases[0]))
+            line_edit.textEdited.connect(functools.partial(self.edit_aliases, character))
             self.aliases_layout.addWidget(line_edit, index, 1)
 
         self.scroll_area.setWidget(self.aliases_widget)

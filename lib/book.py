@@ -51,7 +51,7 @@ class Book(object):
     # allowed formats
     FMTS = ['mobi', 'azw3']
 
-    def __init__(self, db, book_id, gConnection, aConnection, formats=None, send_to_device=True, create_xray=True):
+    def __init__(self, db, book_id, gConnection, aConnection, formats, send_to_device, create_xray, expand_aliases):
         self._db = db
         self._book_id = book_id
         self._formats = formats
@@ -62,7 +62,7 @@ class Book(object):
         self._format_specific_info = None
 
         book_path = self._db.field_for('path', book_id).replace('/', os.sep)
-        self._book_settings = BookSettings(self._db, self._book_id, gConnection, aConnection)
+        self._book_settings = BookSettings(self._db, self._book_id, gConnection, aConnection, expand_aliases)
 
         self._get_basic_information()
     
@@ -102,6 +102,9 @@ class Book(object):
         for info in self._format_specific_info:
             if info['status'] is not self.FAIL:
                 yield info
+
+    def formats_not_failing_exist(self):
+        return any(self.formats_not_failing())
 
     # get book's title, title sort, author and author sort if it exists
     def _get_basic_information(self):
@@ -153,6 +156,7 @@ class Book(object):
             if not local_book or not os.path.exists(local_book):
                 info['status'] = self.FAIL
                 info['status_message'] = self.FAILED_LOCAL_BOOK_NOT_FOUND
+                self._format_specific_info.append(info)
                 continue
 
             info['local_book'] = local_book
@@ -348,14 +352,14 @@ class Book(object):
             perc += 1
             self._get_format_specific_information()
             
-            if abort and abort.isSet():
+            if abort and abort.isSet() or not self.formats_not_failing_exist():
                 return
             if notifications: notifications.put((perc/(total * actions), 'Parsing %s book data' % self.title_and_author))
             if log: log('%s \tParsing book data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
             perc += 1
             self._parse_book()
             
-            if abort and abort.isSet():
+            if abort and abort.isSet() or not self.formats_not_failing_exist():
                 return
             if notifications: notifications.put((perc/(total * actions), 'Creating %s x-ray' % self.title_and_author))
             if log: log('%s \tCreating x-ray...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
@@ -364,7 +368,7 @@ class Book(object):
             self._status = self.SUCCESS
             self._status_message = None
 
-            if abort and abort.isSet():
+            if abort and abort.isSet() or not self.formats_not_failing_exist():
                 return
             if self._send_to_device:
                 if notifications: notifications.put((perc/(total * actions), 'Sending %s x-ray to device' % self.title_and_author))
@@ -384,8 +388,8 @@ class Book(object):
         perc += 1
         self._get_format_specific_information()
 
-        if abort and abort.isSet():
-            return
+        if abort and abort.isSet() or not self.formats_not_failing_exist():
+                return
         if notifications: notifications.put((perc/(total * actions), 'Sending %s x-ray to device' % self.title_and_author))
         if log: log('%s \tSending x-ray to device...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         self.send_xray(device_books, overwrite=False, already_created=False, log=log, abort=abort, connection=connection)
