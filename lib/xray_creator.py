@@ -28,9 +28,6 @@ class XRayCreator(object):
         return self._books
     
     def _initialize_books(self, log):
-        https_address = None
-        https_port = None
-
         https_proxy = get_proxies(debug=False).get('https', None)
         if https_proxy:
             https_address = ':'.join(https_proxy.split(':')[:-1])
