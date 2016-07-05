@@ -107,7 +107,7 @@ class GoodreadsParser(object):
         return response
     
     def get_characters(self):
-        if self._page_source is None is None:
+        if self._page_source is None:
             return
 
         characters = self._page_source.xpath('//div[@class="clearFloats" and contains(., "Characters")]//div[@class="infoBoxRowItem"]//a')

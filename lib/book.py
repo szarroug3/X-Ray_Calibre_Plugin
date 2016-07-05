@@ -288,10 +288,6 @@ class Book(object):
                 if send_author_profile and not self._book_settings.author_profile:
                     if created_author_profile:
                         send_author_profile = False
-
-                    elif not self._send_author_profile:
-                        send_author_profile = False
-
                     else:
                         try:
                             goodreads_parser = GoodreadsParser(self._goodreads_url, self._gConnection, send_author_profile=self._send_author_profile)
