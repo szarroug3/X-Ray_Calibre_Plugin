@@ -33,7 +33,6 @@ class BookConfigWidget(QDialog):
 
         https_proxy = get_proxies(debug=False).get('https', None)
         if https_proxy:
-            proxy = True
             https_address = ':'.join(https_proxy.split(':')[:-1])
             https_port = int(https_proxy.split(':')[-1])
             gConnection = HTTPSConnection(https_address, https_port)
