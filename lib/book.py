@@ -64,6 +64,7 @@ class Book(object):
         self._status = self.IN_PROGRESS
         self._status_message = None
         self._format_specific_info = None
+        self._gConnection = gConnection
 
         book_path = self._db.field_for('path', book_id).replace('/', os.sep)
         self._book_settings = BookSettings(self._db, self._book_id, self._gConnection, aConnection, expand_aliases)
@@ -234,7 +235,6 @@ class Book(object):
         if log: log('%s \t\tCreating x-ray...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         self._write_xray(info, remove_files_from_dir=remove_files_from_dir)
 
-
     def send_xray(self, device_books, overwrite=True, already_created=True, log=None, abort=None):
         send_author_profile = self._send_author_profile
         created_author_profile = already_created
@@ -312,7 +312,6 @@ class Book(object):
                 device_xray_files = glob(os.path.join(info['device_xray'], 'XRAY.entities.*_' + info['format'].lower() + '*.asc'))
                 device_author_profile_files = glob(os.path.join(info['device_xray'], 'AuthorProfile.profile.*_' + info['format'].lower() + '*.asc'))
                 if not overwrite:
-                    if len(device_xray_files) > 0:
                         info['send_status'] = self.SUCCESS
                         info['status_message'] = 'Book already has x-ray.'
                         send_xray = False
@@ -381,7 +380,6 @@ class Book(object):
             except:
                 info['send_status'] = self.FAIL
                 info['status_message'] = self.FAILED_FAILED_TO_SEND_XRAY
-
 
     def create_xray_event(self, device_books, log=None, notifications=None, abort=None, book_num=None, total=None):
         actions = 4.0

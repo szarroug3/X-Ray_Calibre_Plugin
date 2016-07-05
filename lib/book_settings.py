@@ -3,6 +3,7 @@
 import os
 import re
 from urllib import urlencode
+from urllib2 import urlparse
 
 from calibre_plugins.xray_creator.lib.goodreads_parser import GoodreadsParser
 
@@ -200,7 +201,8 @@ class BookSettings(object):
         if not urlsearch:
             return None
 
-        return 'https://www.goodreads.com' + urlsearch.group(1)
+        url = 'https://www.goodreads.com' + urlsearch.group(1)
+        return urlparse.urljoin(url, urlparse.urlparse(url).path)
 
     def update_aliases(self, url, overwrite=False, raise_error_on_page_not_found=False):
         goodreads_parser = GoodreadsParser(url, self._gConnection, raise_error_on_page_not_found=raise_error_on_page_not_found)
