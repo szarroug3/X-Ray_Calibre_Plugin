@@ -33,17 +33,17 @@ class XRayCreator(object):
         if https_proxy:
             https_address = ':'.join(https_proxy.split(':')[:-1])
             https_port = int(https_proxy.split(':')[-1])
-            gConnection = HTTPSConnection(https_address, https_port)
-            gConnection.set_tunnel('www.goodreads.com', 443)
-            aConnection = HTTPSConnection(https_address, https_port)
-            aConnection.set_tunnel('www.amazon.com', 443)
+            goodreads_conn = HTTPSConnection(https_address, https_port)
+            goodreads_conn.set_tunnel('www.goodreads.com', 443)
+            amazon_conn = HTTPSConnection(https_address, https_port)
+            amazon_conn.set_tunnel('www.amazon.com', 443)
         else:
-            gConnection = HTTPSConnection('www.goodreads.com')
-            aConnection = HTTPSConnection('www.amazon.com')
+            goodreads_conn = HTTPSConnection('www.goodreads.com')
+            amazon_conn = HTTPSConnection('www.amazon.com')
 
         self._books = []
         for book_id in self._book_ids:
-            self._books.append(Book(self._db, book_id, gConnection, aConnection, self._formats,
+            self._books.append(Book(self._db, book_id, goodreads_conn, amazon_conn, self._formats,
                 self._send_to_device, self._create_xray, self._expand_aliases, self._send_author_profile))
         
         self._total_not_failing = 0
