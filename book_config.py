@@ -33,19 +33,18 @@ class BookConfigWidget(QDialog):
 
         https_proxy = get_proxies(debug=False).get('https', None)
         if https_proxy:
-            self._proxy = True
-            self._https_address = ':'.join(https_proxy.split(':')[:-1])
-            self._https_port = int(https_proxy.split(':')[-1])
-            self._gConnection = HTTPSConnection(self._https_address, self._https_port)
-            self._gConnection.set_tunnel('www.goodreads.com', 443)
-            self._aConnection = HTTPSConnection(self._https_address, self._https_port)
-            self._aConnection.set_tunnel('www.amazon.com', 443)
+            https_address = ':'.join(https_proxy.split(':')[:-1])
+            https_port = int(https_proxy.split(':')[-1])
+            goodreads_conn = HTTPSConnection(https_address, https_port)
+            goodreads_conn.set_tunnel('www.goodreads.com', 443)
+            amazon_conn = HTTPSConnection(https_address, https_port)
+            amazon_conn.set_tunnel('www.amazon.com', 443)
         else:
-            self._gConnection = HTTPSConnection('www.goodreads.com')
-            self._aConnection = HTTPSConnection('www.amazon.com')
+            goodreads_conn = HTTPSConnection('www.goodreads.com')
+            amazon_conn = HTTPSConnection('www.amazon.com')
 
         for book_id in ids:
-            self._book_settings.append(BookSettings(db, book_id, self._gConnection, self._aConnection, expand_aliases))
+            self._book_settings.append(BookSettings(db, book_id, goodreads_conn, amazon_conn, expand_aliases))
 
         self.v_layout = QVBoxLayout(self)
 

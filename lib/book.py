@@ -51,7 +51,7 @@ class Book(object):
     # allowed formats
     FMTS = ['mobi', 'azw3']
 
-    def __init__(self, db, book_id, gConnection, aConnection, formats, send_to_device, create_xray, expand_aliases):
+    def __init__(self, db, book_id, goodreads_conn, amazon_conn, formats, send_to_device, create_xray, expand_aliases):
         self._db = db
         self._book_id = book_id
         self._formats = formats
@@ -60,9 +60,10 @@ class Book(object):
         self._status = self.IN_PROGRESS
         self._status_message = None
         self._format_specific_info = None
+        self._goodreads_conn = goodreads_conn
 
         book_path = self._db.field_for('path', book_id).replace('/', os.sep)
-        self._book_settings = BookSettings(self._db, self._book_id, gConnection, aConnection, expand_aliases)
+        self._book_settings = BookSettings(self._db, self._book_id, self._goodreads_conn, amazon_conn, expand_aliases)
 
         self._get_basic_information()
     
@@ -124,9 +125,9 @@ class Book(object):
         self._goodreads_url = self._book_settings.prefs['goodreads_url']
         self._aliases = self._book_settings.prefs['aliases']
 
-    def _parse_goodreads_data(self, connection):
+    def _parse_goodreads_data(self):
         try:
-            self._parsed_goodreads_data = GoodreadsParser(self._goodreads_url, connection)
+            self._parsed_goodreads_data = GoodreadsParser(self._goodreads_url, self._goodreads_conn)
             self._parsed_goodreads_data.parse()
 
             for char in self._parsed_goodreads_data.characters.values():
@@ -212,11 +213,11 @@ class Book(object):
         if info['status'] is self.FAIL:
             raise Exception(info['status_message'])
 
-    def create_xray(self, connection, info, log=None, abort=None, remove_files_from_dir=False):
+    def create_xray(self, info, log=None, abort=None, remove_files_from_dir=False):
         if abort and abort.isSet():
             return
         if log: log('%s \t\tParsing Goodreads data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        self._parse_goodreads_data(connection)
+        self._parse_goodreads_data()
         
         if abort and abort.isSet():
             return
@@ -227,9 +228,8 @@ class Book(object):
             return
         if log: log('%s \t\tCreating x-ray...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         self._write_xray(info, remove_files_from_dir=remove_files_from_dir)
-        return connection
 
-    def send_xray(self, device_books, overwrite=True, already_created=True, log=None, abort=None, connection=None):
+    def send_xray(self, device_books, overwrite=True, already_created=True, log=None, abort=None):
         for info in self.formats_not_failing():
             try:
                 if device_books is None:
@@ -261,7 +261,7 @@ class Book(object):
                         continue
 
                     try:
-                        connection = self.create_xray(connection, info=info, log=log, abort=abort)
+                        self.create_xray(info=info, log=log, abort=abort)
                     except Exception as e:
                         info['send_status'] = self.FAIL
                         info['status_message'] = e
@@ -330,9 +330,7 @@ class Book(object):
                 info['send_status'] = self.FAIL
                 info['status_message'] = self.FAILED_FAILED_TO_SEND_XRAY
 
-        return connection
-
-    def create_xray_event(self, connection, device_books, log=None, notifications=None, abort=None, book_num=None, total=None):
+    def create_xray_event(self, device_books, log=None, notifications=None, abort=None, book_num=None, total=None):
         actions = 4.0
         if self._send_to_device:
             actions += 1
@@ -343,7 +341,7 @@ class Book(object):
             if notifications: notifications.put((perc/(total * actions), 'Parsing %s Goodreads data' % self.title_and_author))
             if log: log('%s \tParsing Goodreads data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
             perc += 1
-            self._parse_goodreads_data(connection)
+            self._parse_goodreads_data()
 
             if abort and abort.isSet():
                 return
@@ -378,7 +376,7 @@ class Book(object):
         except:
             return
 
-    def send_xray_event(self, connection, device_books, log=None, notifications=None, abort=None, book_num=None, total=None):
+    def send_xray_event(self, device_books, log=None, notifications=None, abort=None, book_num=None, total=None):
         actions = 2.0
         perc = book_num * actions
         if abort and abort.isSet():
@@ -392,7 +390,7 @@ class Book(object):
                 return
         if notifications: notifications.put((perc/(total * actions), 'Sending %s x-ray to device' % self.title_and_author))
         if log: log('%s \tSending x-ray to device...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        self.send_xray(device_books, overwrite=False, already_created=False, log=log, abort=abort, connection=connection)
+        self.send_xray(device_books, overwrite=False, already_created=False, log=log, abort=abort)
 
 class ASINUpdater(MetadataUpdater):
     def update(self, fmt):
