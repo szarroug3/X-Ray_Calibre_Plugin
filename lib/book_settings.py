@@ -191,7 +191,7 @@ class BookSettings(object):
         if not urlsearch:
             return None
 
-        # return the fulr URL with the query parameters removed
+        # return the full URL with the query parameters removed
         url = 'https://www.goodreads.com' + urlsearch.group(1)
         return urlparse.urlparse(url)._replace(query=None).geturl()
 
