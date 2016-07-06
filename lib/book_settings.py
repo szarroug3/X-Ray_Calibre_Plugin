@@ -34,11 +34,11 @@ class BookSettings(object):
 
     AMAZON_ASIN_PAT = re.compile(r'data\-asin=\"([a-zA-z0-9]+)\"')
 
-    def __init__(self, db, book_id, gConnection, aConnection, expand_aliases):
+    def __init__(self, db, book_id, goodreads_conn, amazon_conn, expand_aliases):
         self._db = db
         self._book_id = book_id
-        self._gConnection = gConnection
-        self._aConnection = aConnection
+        self._goodreads_conn = goodreads_conn
+        self._amazon_conn = amazon_conn
         self._expand_aliases = expand_aliases
 
         book_path = self._db.field_for('path', book_id).replace('/', os.sep)
@@ -140,14 +140,14 @@ class BookSettings(object):
     def search_for_asin(self, query):
         query = urlencode({'keywords': query})
         try:
-            self._aConnection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, headers=self.HEADERS)
-            response = self._aConnection.getresponse().read()
+            self._amazon_conn.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, headers=self.HEADERS)
+            response = self._amazon_conn.getresponse().read()
         except Exception as e:
             try:
-                self._aConnection.close()
-                self._aConnection.connect()
-                self._aConnection.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, headers=self.HEADERS)
-                response = self._aConnection.getresponse().read()
+                self._amazon_conn.close()
+                self._amazon_conn.connect()
+                self._amazon_conn.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, headers=self.HEADERS)
+                response = self._amazon_conn.getresponse().read()
             except:
                 return None
 
@@ -172,14 +172,14 @@ class BookSettings(object):
     def search_for_goodreads(self, keywords):
         query = urlencode({'q': keywords})
         try:
-            self._gConnection.request('GET', '/search?' + query)
-            response = self._gConnection.getresponse().read()
+            self._goodreads_conn.request('GET', '/search?' + query)
+            response = self._goodreads_conn.getresponse().read()
         except:
             try:
-                self._gConnection.close()
-                self._gConnection.connect()
-                self._gConnection.request('GET', '/search?' + query)
-                response = self._gConnection.getresponse().read()
+                self._goodreads_conn.close()
+                self._goodreads_conn.connect()
+                self._goodreads_conn.request('GET', '/search?' + query)
+                response = self._goodreads_conn.getresponse().read()
             except:
                 return None
         
@@ -191,11 +191,12 @@ class BookSettings(object):
         if not urlsearch:
             return None
 
+        # return the fulr URL with the query parameters removed
         url = 'https://www.goodreads.com' + urlsearch.group(1)
-        return urlparse.urljoin(url, urlparse.urlparse(url).path)
+        return urlparse.urlparse(url)._replace(query=None).geturl()
 
     def update_aliases(self, url, overwrite=False, raise_error_on_page_not_found=False):
-        goodreads_parser = GoodreadsParser(url, self._gConnection, raise_error_on_page_not_found=raise_error_on_page_not_found)
+        goodreads_parser = GoodreadsParser(url, self._goodreads_conn, raise_error_on_page_not_found=raise_error_on_page_not_found)
         goodreads_parser.get_characters()
         goodreads_parser.get_settings()
         goodreads_chars =  goodreads_parser.characters

@@ -51,7 +51,7 @@ class Book(object):
     # allowed formats
     FMTS = ['mobi', 'azw3']
 
-    def __init__(self, db, book_id, gConnection, aConnection, formats, send_to_device, create_xray, expand_aliases):
+    def __init__(self, db, book_id, goodreads_conn, amazon_conn, formats, send_to_device, create_xray, expand_aliases):
         self._db = db
         self._book_id = book_id
         self._formats = formats
@@ -60,10 +60,10 @@ class Book(object):
         self._status = self.IN_PROGRESS
         self._status_message = None
         self._format_specific_info = None
-        self._gConnection = gConnection
+        self._goodreads_conn = goodreads_conn
 
         book_path = self._db.field_for('path', book_id).replace('/', os.sep)
-        self._book_settings = BookSettings(self._db, self._book_id, self._gConnection, aConnection, expand_aliases)
+        self._book_settings = BookSettings(self._db, self._book_id, self._goodreads_conn, amazon_conn, expand_aliases)
 
         self._get_basic_information()
     
@@ -127,7 +127,7 @@ class Book(object):
 
     def _parse_goodreads_data(self):
         try:
-            self._parsed_goodreads_data = GoodreadsParser(self._goodreads_url, self._gConnection)
+            self._parsed_goodreads_data = GoodreadsParser(self._goodreads_url, self._goodreads_conn)
             self._parsed_goodreads_data.parse()
 
             for char in self._parsed_goodreads_data.characters.values():
