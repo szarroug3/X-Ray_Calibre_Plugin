@@ -55,7 +55,7 @@ Preferences:
 	2. Create x-ray for files that don't already have them when sending to device
 		- When sending previously generated x-ray files, x-ray files will be generated for selected books that don't already have
 			a file created
-	3. Auto associate split aliases, when enabled, will split aliases up further
+	3. Auto associate split aliases, when enabled, will split aliases retrieved from Goodreads up
 		- i.e If a character on goodreads named "Vin" has a Goodreads alias of "Valette Renoux", this option will add
 			"Valette" and "Renoux" as aliases. You may not want this in cases such as "Timothy Cratchit" who has a
 			Goodreads alias of "Tiny Tim". Having this feature on would add "Tiny", and "Tim" as
