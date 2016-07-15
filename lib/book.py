@@ -55,7 +55,7 @@ class Book(object):
     def __init__(self, db, book_id, goodreads_conn, amazon_conn, formats, send_to_device, create_xray, expand_aliases, send_author_profile):
         self._db = db
         self._book_id = book_id
-        self._gConnection = gConnection
+        self._goodreads_conn = goodreads_conn
         self._formats = formats
         self._send_to_device = send_to_device
         self._create_xray = create_xray
@@ -290,7 +290,7 @@ class Book(object):
                         send_author_profile = False
                     else:
                         try:
-                            goodreads_parser = GoodreadsParser(self._goodreads_url, self._gConnection, send_author_profile=self._send_author_profile)
+                            goodreads_parser = GoodreadsParser(self._goodreads_url, self._goodreads_conn, send_author_profile=self._send_author_profile)
                             goodreads_parser.get_author_profile()
                             created_author_profile = True
                             if not goodreads_parser.author_profile:
