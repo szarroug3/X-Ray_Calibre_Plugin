@@ -1,5 +1,6 @@
 # goodreads_parser.py
 
+import re
 import base64
 import datetime
 from lxml import html
@@ -7,6 +8,8 @@ from urllib2 import urlopen
 
 # Parses Goodreads page for characters, terms, and quotes
 class GoodreadsParser(object):
+    BOOK_ID_PAT = re.compile(r'\/show\/([\d]+)')
+    ASIN_PAT = re.compile(r'"asin":"(.+?)"')
     def __init__(self, url, connection, raise_error_on_page_not_found=False, create_author_profile=False):
         self._url = url
         self._connection = connection
@@ -16,6 +19,9 @@ class GoodreadsParser(object):
         self._quotes = []
         self._author_profile = None
         self._entity_id = 1
+
+        book_id_search = self.BOOK_ID_PAT.search(url)
+        self._goodreads_book_id = book_id_search.group(1) if book_id_search else None
 
         response = self.open_url(url)
         self._page_source = None
@@ -200,31 +206,23 @@ class GoodreadsParser(object):
             return
 
         self._author_other_books = []
-        books = self._author_page.xpath('//tr[@itemtype="http://schema.org/Book"]/td/a[@class="bookTitle"]')
-        current_book_asin = self._page_source.xpath('//div[@id="asyncBuyButtonContainer"]//a[contains(text(), "Amazon")]')
-        if len(current_book_asin) == 0:
-            current_book_asin = self.open_url(current_book_asin[0].get('href'), return_redirect_url=True)
-            current_book_asin = current_book_asin.split('/')
-            current_book_asin = current_book_asin[current_book_asin.index('product')+1] if 'product' in current_book_asin else None
-        for book in books:
+        current_book_asin = self.open_url('/buttons/glide/' + self._goodreads_book_id)
+        for book in self._author_page.xpath('//tr[@itemtype="http://schema.org/Book"]/td/a[@class="bookTitle"]'):
             book_data = {'e': 1, 't': book.find('span').text}
-            book_page = html.fromstring(self.open_url(book.get('href')))
-            if book_page is None:
+            book_url = book.get('href')
+
+            book_id_search = self.BOOK_ID_PAT.search(book_url)
+            if not book_id_search:
                 continue
-            book_amazon_page = book_page.xpath('//div[@id="asyncBuyButtonContainer"]//a[contains(text(), "Amazon")]')
-            if len(book_amazon_page) == 0:
+            asin_data_page = self.open_url('/buttons/glide/' + book_id_search.group(1))
+            book_asin = self.ASIN_PAT.search(asin_data_page)
+            if not book_asin:
                 continue
-            book_amazon_page = self.open_url(book_amazon_page[0].get('href'), return_redirect_url=True)
-            if not book_amazon_page:
-                continue
-            book_asin = book_amazon_page.split('/')
-            if 'product' not in book_asin:
-                continue
-            book_asin = book_asin[book_asin.index('product')+1]
-            book_data['a'] = book_asin
+            book_asin = book_asin.group(1)
 
             # we dont' want to add the current book as an "other book"
             if book_asin != current_book_asin:
+                book_data['a'] = book_asin
                 self._author_other_books.append(book_data)
 
     def compile_author_profile(self):
