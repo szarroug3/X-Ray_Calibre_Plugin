@@ -308,6 +308,7 @@ class Book(object):
                 device_xray_files = glob(os.path.join(info['device_xray'], 'XRAY.entities.*_' + info['format'].lower() + '*.asc'))
                 device_author_profile_files = glob(os.path.join(info['device_xray'], 'AuthorProfile.profile.*_' + info['format'].lower() + '*.asc'))
                 if not overwrite:
+                    if len(device_xray_files) > 0:
                         info['send_status'] = self.SUCCESS
                         info['status_message'] = 'Book already has x-ray.'
                         send_xray = False
