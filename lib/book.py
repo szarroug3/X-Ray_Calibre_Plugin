@@ -42,6 +42,8 @@ class Book(object):
     FAILED_LOCAL_BOOK_NOT_FOUND = 'Local book not found.'
     FAILED_UNABLE_TO_PARSE_BOOK = 'Unable to parse book.'
     FAILED_UNABLE_TO_UPDATE_ASIN = 'Unable to update ASIN in book on device.'
+    FAILED_CREATE_LOCAL_XRAY_DIR = 'Unable to create local x-ray directory.'
+    FAILED_REMOVE_LOCAL_XRAY = 'Unable to remove local x-ray file.'
     FAILED_UNABLE_TO_WRITE_XRAY = 'Unable to write x-ray file.'
     FAILED_BOOK_NOT_ON_DEVICE = 'The book is not on the device.'
     FAILED_FAILED_TO_CREATE_XRAY = 'Attempted to create x-ray but failed to do so.'
@@ -198,11 +200,19 @@ class Book(object):
                     if not os.path.exists(os.path.dirname(info['local_xray'])):
                         os.mkdir(os.path.dirname(info['local_xray']))
                     os.mkdir(info['local_xray'])
-                    
+            except:
+                info['status'] = self.FAIL
+                info['status_message'] = self.FAILED_CREATE_LOCAL_XRAY_DIR
+
+            try:
                 if remove_files_from_dir:
                     for file in glob(os.path.join(info['local_xray'], '*.asc')):
                         os.remove(file)
+            except:
+                info['status'] = self.FAIL
+                info['status_message'] = self.FAILED_REMOVE_LOCAL_XRAY
 
+            try:
                 xray_db_writer = XRayDBWriter(info['local_xray'], self._goodreads_url, info['parsed_book_data'])
                 xray_db_writer.create_xray()
                 info['status'] = self.SUCCESS
