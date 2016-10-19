@@ -232,7 +232,8 @@ class GoodreadsParser(object):
                             "b": self._author_bio,
                             "i": self._author_image}],
                     "d": int((datetime.datetime.now() - datetime.datetime(1970,1,1)).total_seconds()),
-                    "o": self._author_other_books
+                    "o": self._author_other_books,
+                    "a": book_asin
                 }
 
 class GoodreadsPageDoesNotExist(Exception):

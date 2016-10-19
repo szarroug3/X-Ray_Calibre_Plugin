@@ -38,6 +38,7 @@ class Book(object):
     FAILED_COULD_NOT_CONNECT_TO_GOODREADS = 'Had a problem connecting to Goodreads.'
     FAILED_COULD_NOT_FIND_GOODREADS_PAGE = 'Could not find Goodreads page.'
     FAILED_COULD_NOT_PARSE_GOODREADS_DATA = 'Could not parse Goodreads data.'
+    FAILED_COULD_NOT_FIND_ASIN = 'Could not find ASIN.'
     FAILED_UNSUPPORTED_FORMAT = 'Chosen format is unsupported.'
     FAILED_LOCAL_BOOK_NOT_FOUND = 'Local book not found.'
     FAILED_UNABLE_TO_PARSE_BOOK = 'Unable to parse book.'
@@ -128,7 +129,13 @@ class Book(object):
             self._status_message = self.FAILED_COULD_NOT_FIND_GOODREADS_PAGE
             return
 
+        if not self._book_settings.prefs['asin']:
+            self._status = self.FAIL
+            self._status_message = self.FAILED_COULD_NOT_FIND_ASIN
+            return
+
         self._goodreads_url = self._book_settings.prefs['goodreads_url']
+        self._asin = self._book_settings.prefs['asin']
         self._aliases = self._book_settings.prefs['aliases']
 
     def _parse_goodreads_data(self):
@@ -213,7 +220,7 @@ class Book(object):
                 info['status_message'] = self.FAILED_REMOVE_LOCAL_XRAY
 
             try:
-                xray_db_writer = XRayDBWriter(info['local_xray'], self._goodreads_url, info['parsed_book_data'])
+                xray_db_writer = XRayDBWriter(info['local_xray'], self._goodreads_url, self._asin, info['parsed_book_data'])
                 xray_db_writer.create_xray()
                 info['status'] = self.SUCCESS
                 info['status_message'] = None
@@ -315,8 +322,8 @@ class Book(object):
                 if not send_xray and not send_author_profile:
                     continue 
 
-                device_xray_files = glob(os.path.join(info['device_xray'], 'XRAY.entities.*_' + info['format'].lower() + '*.asc'))
-                device_author_profile_files = glob(os.path.join(info['device_xray'], 'AuthorProfile.profile.*_' + info['format'].lower() + '*.asc'))
+                device_xray_files = glob(os.path.join(info['device_xray'], 'XRAY.entities.%s.asc' % new_asin))
+                device_author_profile_files = glob(os.path.join(info['device_xray'], 'AuthorProfile.profile.%s.asc' % new_asin))
                 if not overwrite:
                     if len(device_xray_files) > 0:
                         info['send_status'] = self.SUCCESS
@@ -340,16 +347,7 @@ class Book(object):
                 try:
                     with open(info['device_book'], 'r+b') as stream:
                         mu = ASINUpdater(stream)
-                        original_asin, new_asin = mu.update(info['format'])
-                        
-                    if original_asin and original_asin != new_asin:
-                        # if we changed the asin, update the image file name
-                        thumbname_orig = os.path.join(device_root, "system", "thumbnails", "thumbnail_%s_EBOK_portrait.jpg" % original_asin)
-                        thumbname_new = thumbname_orig.replace(original_asin, new_asin)
-
-                        # check to make sure file exists before trying to modify it
-                        if os.path.exists(thumbname_orig):
-                            os.rename(thumbname_orig, thumbname_new)
+                        original_asin, new_asin = mu.update(self._asin)
                 except:
                     info['send_status'] = self.FAIL
                     info['status_message'] = self.FAILED_UNABLE_TO_UPDATE_ASIN
@@ -358,21 +356,9 @@ class Book(object):
                 if not os.path.exists(info['device_xray']):
                     os.mkdir(info['device_xray'])
 
-                # copy file to temporary directory and rename to file name with correct asin
-                tmp_dir = os.path.join(os.path.dirname(local_xray), 'tmp')
-                if os.path.exists(tmp_dir):
-                    rmtree(tmp_dir)
-                os.mkdir(tmp_dir)
+                # copy files to kindle and clean up
                 if send_xray:
-                    copy(local_xray, tmp_dir)
-                    original_name = os.path.basename(local_xray)
-                    new_name = 'XRAY.entities.%s.asc' % new_asin
-                    if not os.path.exists(os.path.join(tmp_dir, new_name)):
-                        os.rename(os.path.join(tmp_dir, original_name), os.path.join(tmp_dir, new_name))
-
-                    # copy file to x-ray folder on device and clean up
-                    copy(os.path.join(tmp_dir, new_name), info['device_xray'])
-                    rmtree(tmp_dir)
+                    copy(local_xray, info['device_xray'])
                     info['send_status'] = self.SUCCESS
 
                     # one last check to make sure file is actually on the device
@@ -381,9 +367,7 @@ class Book(object):
                         info['status_message'] = self.FAILED_FAILED_TO_SEND_XRAY
 
                 if send_author_profile:
-                    author_profile = self._book_settings.author_profile
-                    author_profile['a'] = new_asin
-                    json.dump(author_profile, open(os.path.join(info['device_xray'], 'AuthorProfile.profile.%s.asc' % new_asin), 'w+'))
+                    json.dump(self._book_settings.author_profile, open(os.path.join(info['device_xray'], 'AuthorProfile.profile.%s.asc' % new_asin), 'w+'))
             except:
                 info['send_status'] = self.FAIL
                 info['status_message'] = self.FAILED_FAILED_TO_SEND_XRAY
@@ -451,7 +435,7 @@ class Book(object):
         self.send_xray(device_books, overwrite=False, already_created=False, log=log, abort=abort)
 
 class ASINUpdater(MetadataUpdater):
-    def update(self, fmt):
+    def update(self, asin):
         def update_exth_record(rec):
             recs.append(rec)
             if rec[0] in self.original_exth_records:
@@ -463,17 +447,10 @@ class ASINUpdater(MetadataUpdater):
 
         recs = []
         original = None
-        asin = ''
         if 113 in self.original_exth_records:
-            asin = self.original_exth_records[113]
-            original = asin
+            original = self.original_exth_records[113]
         elif 504 in self.original_exth_records:
-            asin = self.original_exth_records[504]
-            original = asin
-
-        if '_' in asin:
-            asin = '_'.join(asin.split('_')[:-1])
-        asin += '_' + fmt.lower()
+            original = self.original_exth_records[504]
 
         if original == asin:
             return (original, asin)
