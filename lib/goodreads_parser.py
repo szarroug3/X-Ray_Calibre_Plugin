@@ -225,6 +225,7 @@ class GoodreadsParser(object):
         book_ids = []
         current_book_asin = self.open_url('/buttons/glide/' + self._goodreads_book_id)
         for book in self._author_page.xpath('//tr[@itemtype="http://schema.org/Book"]/td/a[@class="bookTitle"]'):
+            
             book_data = {'e': 1, 't': book.find('span').text}
             book_url = book.get('href')
 
@@ -250,8 +251,6 @@ class GoodreadsParser(object):
                 book_info = html.fromstring(tooltips_page_info['Book.{0}'.format(book_id)])
                 book_data['desc'] = book_info.xpath('//div[@class="addBookTipDescription"]//span[not(contains(@id, "freeTextContainer"))]')[0].text.strip()
                 self._author_other_books.append(book_data)
-
-        print self._author_other_books
 
     def get_book_image_url(self):
         self._book_image_url = self._page_source.xpath('//div[@class="mainContent"]//div[@id="imagecol"]//img[@id="coverImage"]')[0].get('src')
