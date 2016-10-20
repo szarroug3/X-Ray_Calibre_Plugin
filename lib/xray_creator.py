@@ -86,7 +86,6 @@ class XRayCreator(object):
                     known_info = 'Unknown book'
                 self._create_failed.append('%s: %s' %  (known_info, book.status_message))
                 continue
-
             fmts_completed = []
             fmts_failed = []
             for info in book.format_specific_info:

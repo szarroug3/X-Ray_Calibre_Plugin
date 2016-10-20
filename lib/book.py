@@ -140,7 +140,7 @@ class Book(object):
 
     def _parse_goodreads_data(self):
         try:
-            self._parsed_goodreads_data = GoodreadsParser(self._goodreads_url, self._goodreads_conn, create_author_profile=self._send_author_profile)
+            self._parsed_goodreads_data = GoodreadsParser(self._goodreads_url, self._goodreads_conn, self._asin, create_author_profile=self._send_author_profile)
             self._parsed_goodreads_data.parse()
             if self._send_author_profile:
                 self._book_settings.author_profile = self._parsed_goodreads_data.author_profile
@@ -275,7 +275,7 @@ class Book(object):
                 info['device_xray'] = device_book['device_xray']
                 device_root = device_book['device_root']
 
-                local_xray = os.path.join(info['local_xray'], 'XRAY.asc')
+                local_xray = os.path.join(info['local_xray'], 'XRAY.entities.{0}.asc'.format(self._asin))
                 if not os.path.exists(local_xray):
                     if already_created:
                         info['send_status'] = self.FAIL
@@ -322,8 +322,8 @@ class Book(object):
                 if not send_xray and not send_author_profile:
                     continue 
 
-                device_xray_files = glob(os.path.join(info['device_xray'], 'XRAY.entities.%s.asc' % new_asin))
-                device_author_profile_files = glob(os.path.join(info['device_xray'], 'AuthorProfile.profile.%s.asc' % new_asin))
+                device_xray_files = glob(os.path.join(info['device_xray'], 'XRAY.entities.%s.asc' % self._asin))
+                device_author_profile_files = glob(os.path.join(info['device_xray'], 'AuthorProfile.profile.%s.asc' % self._asin))
                 if not overwrite:
                     if len(device_xray_files) > 0:
                         info['send_status'] = self.SUCCESS
@@ -362,12 +362,12 @@ class Book(object):
                     info['send_status'] = self.SUCCESS
 
                     # one last check to make sure file is actually on the device
-                    if not os.path.exists(os.path.join(info['device_xray'], 'XRAY.entities.%s.asc' % new_asin)):
+                    if not os.path.exists(os.path.join(info['device_xray'], 'XRAY.entities.%s.asc' % self._asin)):
                         info['send_status'] = self.FAIL
                         info['status_message'] = self.FAILED_FAILED_TO_SEND_XRAY
 
                 if send_author_profile:
-                    json.dump(self._book_settings.author_profile, open(os.path.join(info['device_xray'], 'AuthorProfile.profile.%s.asc' % new_asin), 'w+'))
+                    json.dump(self._book_settings.author_profile, open(os.path.join(info['device_xray'], 'AuthorProfile.profile.%s.asc' % self._asin), 'w+'))
             except:
                 info['send_status'] = self.FAIL
                 info['status_message'] = self.FAILED_FAILED_TO_SEND_XRAY
