@@ -55,14 +55,15 @@ class Book(object):
     # allowed formats
     FMTS = ['mobi', 'azw3']
 
-    def __init__(self, db, book_id, goodreads_conn, amazon_conn, formats, send_to_device, create_xray, expand_aliases, send_author_profile):
+    def __init__(self, db, book_id, goodreads_conn, amazon_conn, formats, send_to_device, create_xray, expand_aliases, send_author_profile, send_end_actions):
         self._db = db
         self._book_id = book_id
         self._goodreads_conn = goodreads_conn
         self._formats = formats
         self._send_to_device = send_to_device
         self._create_xray = create_xray
-        self._send_author_profile= send_author_profile
+        self._send_author_profile = send_author_profile
+        self._send_end_actions = send_end_actions
 
         self._status = self.IN_PROGRESS
         self._status_message = None
@@ -140,10 +141,12 @@ class Book(object):
 
     def _parse_goodreads_data(self):
         try:
-            self._parsed_goodreads_data = GoodreadsParser(self._goodreads_url, self._goodreads_conn, self._asin, create_author_profile=self._send_author_profile)
+            self._parsed_goodreads_data = GoodreadsParser(self._goodreads_url, self._goodreads_conn, self._asin, create_author_profile=self._send_author_profile, create_end_actions=self._send_end_actions)
             self._parsed_goodreads_data.parse()
             if self._send_author_profile:
                 self._book_settings.author_profile = self._parsed_goodreads_data.author_profile
+            if self._send_end_actions:
+                self._book_settings.end_actions = self._parsed_goodreads_data.end_actions
 
             for char in self._parsed_goodreads_data.characters.values():
                 if char['label'] not in self._aliases.keys():
@@ -254,7 +257,9 @@ class Book(object):
 
     def send_xray(self, device_books, overwrite=True, already_created=True, log=None, abort=None):
         send_author_profile = self._send_author_profile
+        send_end_actions = self._send_end_actions
         created_author_profile = already_created
+        created_end_actions = already_created
         for info in self.formats_not_failing():
             send_xray = True
             try:
@@ -299,8 +304,8 @@ class Book(object):
                             info['status_message'] = self.FAILED_FAILED_TO_CREATE_XRAY
                             send_xray = False
 
-                if not send_xray and not send_author_profile:
-                    continue 
+                if not send_xray and not send_author_profile and not send_end_actions:
+                    continue
 
                 if send_author_profile and not self._book_settings.author_profile:
                     if created_author_profile:
@@ -319,11 +324,29 @@ class Book(object):
                             send_author_profile = False
                             if log: log('%s \t\tWarning: Failed to create author profile.' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
 
-                if not send_xray and not send_author_profile:
+                if send_end_actions and not self._book_settings.end_actions:
+                    if created_end_actions:
+                        send_end_actions = False
+                    else:
+                        try:
+                            goodreads_parser = GoodreadsParser(self._goodreads_url, self._goodreads_conn, send_end_actions=self._send_end_actions)
+                            goodreads_parser.get_end_actions()
+                            created_end_actions = True
+                            if not goodreads_parser.end_actions:
+                                send_end_actions = False
+                                if log: log('%s \t\tWarning: Failed to create end actions.' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+
+                            self._book_settings.end_actions = goodreads_parser.end_actions
+                        except:
+                            send_end_actions = False
+                            if log: log('%s \t\tWarning: Failed to create end actions.' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+
+                if not send_xray and not send_author_profile and not send_end_actions:
                     continue 
 
                 device_xray_files = glob(os.path.join(info['device_xray'], 'XRAY.entities.%s.asc' % self._asin))
                 device_author_profile_files = glob(os.path.join(info['device_xray'], 'AuthorProfile.profile.%s.asc' % self._asin))
+                device_end_actions_files = glob(os.path.join(info['device_xray'], 'EndActions.data.%s.asc' % self._asin))
                 if not overwrite:
                     if len(device_xray_files) > 0:
                         info['send_status'] = self.SUCCESS
@@ -333,7 +356,10 @@ class Book(object):
                     if send_author_profile and len(device_author_profile_files) > 0:
                         send_author_profile = False
 
-                    if not send_xray and not send_author_profile:
+                    if send_end_actions and len(device_end_actions_files) > 0:
+                        send_end_actions = False
+
+                    if not send_xray and not send_author_profile and not send_end_actions:
                         continue
 
                 else:
@@ -342,6 +368,9 @@ class Book(object):
                             os.remove(file)
                     if send_author_profile:
                         for file in device_author_profile_files:
+                            os.remove(file)
+                    if send_end_actions:
+                        for file in device_end_actions_files:
                             os.remove(file)
 
                 try:
@@ -368,6 +397,9 @@ class Book(object):
 
                 if send_author_profile:
                     json.dump(self._book_settings.author_profile, open(os.path.join(info['device_xray'], 'AuthorProfile.profile.%s.asc' % self._asin), 'w+'))
+
+                if send_end_actions:
+                    json.dump(self._book_settings.end_actions, open(os.path.join(info['device_xray'], 'EndActions.data.%s.asc' % self._asin), 'w+'))
             except:
                 info['send_status'] = self.FAIL
                 info['status_message'] = self.FAILED_FAILED_TO_SEND_XRAY

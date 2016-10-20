@@ -18,6 +18,7 @@ prefs.defaults['send_to_device'] = True
 prefs.defaults['create_xray_when_sending'] = True
 prefs.defaults['expand_aliases'] = True
 prefs.defaults['create_send_author_profile_with_xray'] = False
+prefs.defaults['create_send_end_actions_with_xray'] = False
 prefs.defaults['mobi'] = True
 prefs.defaults['azw3'] = True
 
@@ -51,6 +52,10 @@ class ConfigWidget(QWidget):
         self.create_send_author_profile_with_xray.setChecked(prefs['create_send_author_profile_with_xray'])
         self.l.addWidget(self.create_send_author_profile_with_xray)
 
+        self.create_send_end_actions_with_xray = QCheckBox('Create/Send end actions with x-ray')
+        self.create_send_end_actions_with_xray.setChecked(prefs['create_send_end_actions_with_xray'])
+        self.l.addWidget(self.create_send_end_actions_with_xray)
+
         self.separator_b = QFrame()
         self.separator_b.setFrameStyle(QFrame.HLine)
         self.separator_b.setFrameShadow(QFrame.Sunken)
@@ -75,5 +80,6 @@ class ConfigWidget(QWidget):
         prefs['create_xray_when_sending'] = self.create_xray_when_sending.isChecked()
         prefs['expand_aliases'] = self.expand_aliases.isChecked()
         prefs['create_send_author_profile_with_xray'] = self.create_send_author_profile_with_xray.isChecked()
+        prefs['create_send_end_actions_with_xray'] = self.create_send_end_actions_with_xray.isChecked()
         prefs['mobi'] = self.mobi.isChecked()
         prefs['azw3'] = self.azw3.isChecked()
