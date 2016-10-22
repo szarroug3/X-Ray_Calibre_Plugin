@@ -31,6 +31,7 @@ class Book(object):
     SUCCESS = 0
     IN_PROGRESS = 1
     FAIL = 2
+    WARNING = 3
 
     # Status Messages
     FAILED_BASIC_INFORMATION_MISSING = 'Missing title, title sort, author, and/or author sort.'
@@ -55,18 +56,22 @@ class Book(object):
     # allowed formats
     FMTS = ['mobi', 'azw3']
 
-    def __init__(self, db, book_id, goodreads_conn, amazon_conn, formats, send_to_device, create_xray, expand_aliases, send_author_profile, send_end_actions):
+    def __init__(self, db, book_id, goodreads_conn, amazon_conn, formats, send_to_device, create_xray_when_sending, expand_aliases,
+        create_send_xray, create_send_author_profile, create_send_start_actions, create_send_end_actions):
         self._db = db
         self._book_id = book_id
         self._goodreads_conn = goodreads_conn
         self._formats = formats
         self._send_to_device = send_to_device
-        self._create_xray = create_xray
-        self._send_author_profile = send_author_profile
-        self._send_end_actions = send_end_actions
+        self._create_xray_when_sending = create_xray_when_sending
+        self._create_send_xray = create_send_xray
+        self._create_send_author_profile = create_send_author_profile
+        self._create_send_start_actions = create_send_start_actions
+        self._create_send_end_actions = create_send_end_actions
 
         self._status = self.IN_PROGRESS
         self._status_message = None
+        self._local_non_xray = None
         self._format_specific_info = None
         self._goodreads_conn = goodreads_conn
 
@@ -141,11 +146,15 @@ class Book(object):
 
     def _parse_goodreads_data(self):
         try:
-            self._parsed_goodreads_data = GoodreadsParser(self._goodreads_url, self._goodreads_conn, self._asin, create_author_profile=self._send_author_profile, create_end_actions=self._send_end_actions)
+            self._parsed_goodreads_data = GoodreadsParser(self._goodreads_url, self._goodreads_conn, self._asin,
+                create_xray=self._create_send_xray, create_author_profile=self._create_send_author_profile,
+                create_start_actions=self._create_send_start_actions, create_end_actions=self._create_send_end_actions)
             self._parsed_goodreads_data.parse()
-            if self._send_author_profile:
+            if self._create_send_author_profile:
                 self._book_settings.author_profile = self._parsed_goodreads_data.author_profile
-            if self._send_end_actions:
+            if self._create_send_start_actions:
+                self._book_settings.start_actions = self._parsed_goodreads_data.start_actions
+            if self._create_send_end_actions:
                 self._book_settings.end_actions = self._parsed_goodreads_data.end_actions
 
             for char in self._parsed_goodreads_data.characters.values():
@@ -180,6 +189,8 @@ class Book(object):
 
             info['local_book'] = local_book
             info['local_xray'] = os.path.join('.'.join(local_book.split('.')[:-1]) + '.sdr', fmt.lower())
+            if not self._local_non_xray:
+                self._local_non_xray = '.'.join(local_book.split('.')[:-1]) + '.sdr'
             info['status'] = self.IN_PROGRESS
             info['status_message'] = None
             self._format_specific_info.append(info)
@@ -202,7 +213,7 @@ class Book(object):
         if info['status'] is self.FAIL:
             raise Exception(info['status_message'])
 
-    def _write_xray(self, info=None, remove_files_from_dir=True):
+    def _write_xray(self, info=None, remove_files_from_dir=True, log=None):
         def _write(info, remove_files):
             try:
                 # make sure local xray directory exists; create it if it doesn't
@@ -216,20 +227,18 @@ class Book(object):
 
             try:
                 if remove_files_from_dir:
-                    for file in glob(os.path.join(info['local_xray'], '*.asc')):
+                    for file in glob(os.path.join(info['local_xray'], 'XRAY.entities.*.asc')):
                         os.remove(file)
             except:
-                info['status'] = self.FAIL
-                info['status_message'] = self.FAILED_REMOVE_LOCAL_XRAY
+                if log: log('%s \t\tWarning: Failed to remove old x-ray.' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+                return
 
             try:
                 xray_db_writer = XRayDBWriter(info['local_xray'], self._goodreads_url, self._asin, info['parsed_book_data'])
                 xray_db_writer.create_xray()
-                info['status'] = self.SUCCESS
-                info['status_message'] = None
             except:
-                info['status'] = self.FAIL
-                info['status_message'] = self.FAILED_UNABLE_TO_WRITE_XRAY
+                if log: log('%s \t\tWarning: Failed to create x-ray.' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+                return
 
         if not info:
             for info in self.formats_not_failing():
@@ -239,7 +248,7 @@ class Book(object):
         if info['status'] is self.FAIL:
             raise Exception(info['status_message'])
 
-    def create_xray(self, info, log=None, abort=None, remove_files_from_dir=False):
+    def create_files(self, info, log=None, abort=None, remove_files_from_dir=False):
         if abort and abort.isSet():
             return
         if log: log('%s \t\tParsing Goodreads data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
@@ -255,10 +264,14 @@ class Book(object):
         if log: log('%s \t\tCreating x-ray...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         self._write_xray(info, remove_files_from_dir=remove_files_from_dir)
 
-    def send_xray(self, device_books, overwrite=True, already_created=True, log=None, abort=None):
-        send_author_profile = self._send_author_profile
-        send_end_actions = self._send_end_actions
+    def send_files(self, device_books, overwrite=True, already_created=True, log=None, abort=None):
+        create_send_xray = self._create_send_xray
+        create_send_author_profile = self._create_send_author_profile
+        create_send_start_actions = self._create_send_start_actions
+        create_send_end_actions = self._create_send_end_actions
+        created_xray = already_created
         created_author_profile = already_created
+        created_start_actions = already_created
         created_end_actions = already_created
         for info in self.formats_not_failing():
             send_xray = True
@@ -287,13 +300,13 @@ class Book(object):
                         info['status_message'] = self.FAILED_FAILED_TO_CREATE_XRAY
                         send_xray = False
 
-                    elif not self._create_xray:
+                    elif not self._create_xray_when_sending:
                         info['send_status'] = self.FAIL
                         info['status_message'] = self.FAILED_PREFERENCES_SET_TO_NOT_CREATE_XRAY
                         send_xray = False
                     else:
                         try:
-                            self.create_xray(info=info, log=log, abort=abort)
+                            self.create_files(info=info, log=log, abort=abort)
                         except Exception as e:
                             info['send_status'] = self.FAIL
                             info['status_message'] = e
@@ -304,48 +317,67 @@ class Book(object):
                             info['status_message'] = self.FAILED_FAILED_TO_CREATE_XRAY
                             send_xray = False
 
-                if not send_xray and not send_author_profile and not send_end_actions:
+                if not send_xray and not create_send_author_profile and not create_send_start_actions and not create_send_end_actions:
                     continue
 
-                if send_author_profile and not self._book_settings.author_profile:
+                if create_send_author_profile and not self._book_settings.author_profile:
                     if created_author_profile:
-                        send_author_profile = False
+                        create_send_author_profile = False
                     else:
                         try:
-                            goodreads_parser = GoodreadsParser(self._goodreads_url, self._goodreads_conn, send_author_profile=self._send_author_profile)
+                            goodreads_parser = GoodreadsParser(self._goodreads_url, self._goodreads_conn, create_send_author_profile=self._create_send_author_profile)
                             goodreads_parser.get_author_profile()
                             created_author_profile = True
                             if not goodreads_parser.author_profile:
-                                send_author_profile = False
+                                create_send_author_profile = False
+                                self.status = self.WARNING
                                 if log: log('%s \t\tWarning: Failed to create author profile.' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
 
                             self._book_settings.author_profile = goodreads_parser.author_profile
                         except:
-                            send_author_profile = False
+                            create_send_author_profile = False
                             if log: log('%s \t\tWarning: Failed to create author profile.' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
 
-                if send_end_actions and not self._book_settings.end_actions:
-                    if created_end_actions:
-                        send_end_actions = False
+                if create_send_start_actions and not self._book_settings.start_actions:
+                    if created_start_actions:
+                        create_send_start_actions = False
                     else:
                         try:
-                            goodreads_parser = GoodreadsParser(self._goodreads_url, self._goodreads_conn, send_end_actions=self._send_end_actions)
+                            goodreads_parser = GoodreadsParser(self._goodreads_url, self._goodreads_conn, create_send_start_actions=self._create_send_start_actions)
+                            goodreads_parser.get_start_actions()
+                            created_start_actions = True
+                            if not goodreads_parser.start_actions:
+                                create_send_start_actions = False
+                                if log: log('%s \t\tWarning: Failed to create start actions.' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+
+                            self._book_settings.start_actions = goodreads_parser.start_actions
+                        except:
+                            create_send_start_actions = False
+                            if log: log('%s \t\tWarning: Failed to create start actions.' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+
+                if create_send_end_actions and not self._book_settings.end_actions:
+                    if created_end_actions:
+                        create_send_end_actions = False
+                    else:
+                        try:
+                            goodreads_parser = GoodreadsParser(self._goodreads_url, self._goodreads_conn, create_send_end_actions=self._create_send_end_actions)
                             goodreads_parser.get_end_actions()
                             created_end_actions = True
                             if not goodreads_parser.end_actions:
-                                send_end_actions = False
+                                create_send_end_actions = False
                                 if log: log('%s \t\tWarning: Failed to create end actions.' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
 
                             self._book_settings.end_actions = goodreads_parser.end_actions
                         except:
-                            send_end_actions = False
+                            create_send_end_actions = False
                             if log: log('%s \t\tWarning: Failed to create end actions.' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
 
-                if not send_xray and not send_author_profile and not send_end_actions:
+                if not send_xray and not create_send_author_profile and not create_send_end_actions:
                     continue 
 
                 device_xray_files = glob(os.path.join(info['device_xray'], 'XRAY.entities.%s.asc' % self._asin))
                 device_author_profile_files = glob(os.path.join(info['device_xray'], 'AuthorProfile.profile.%s.asc' % self._asin))
+                device_start_actions_files = glob(os.path.join(info['device_xray'], 'StartActions.data.%s.asc' % self._asin))
                 device_end_actions_files = glob(os.path.join(info['device_xray'], 'EndActions.data.%s.asc' % self._asin))
                 if not overwrite:
                     if len(device_xray_files) > 0:
@@ -353,23 +385,29 @@ class Book(object):
                         info['status_message'] = 'Book already has x-ray.'
                         send_xray = False
 
-                    if send_author_profile and len(device_author_profile_files) > 0:
-                        send_author_profile = False
+                    if create_send_author_profile and len(device_author_profile_files) > 0:
+                        create_send_author_profile = False
 
-                    if send_end_actions and len(device_end_actions_files) > 0:
-                        send_end_actions = False
+                    if create_send_start_actions and len(device_start_actions_files) > 0:
+                        create_send_start_actions = False
 
-                    if not send_xray and not send_author_profile and not send_end_actions:
+                    if create_send_end_actions and len(device_end_actions_files) > 0:
+                        create_send_end_actions = False
+
+                    if not send_xray and not create_send_author_profile and not create_send_start_actions and not create_send_end_actions:
                         continue
 
                 else:
                     if send_xray:
                         for file in device_xray_files:
                             os.remove(file)
-                    if send_author_profile:
+                    if create_send_author_profile:
                         for file in device_author_profile_files:
                             os.remove(file)
-                    if send_end_actions:
+                    if create_send_start_actions:
+                        for file in device_start_actions_files:
+                            os.remove(file)
+                    if create_send_end_actions:
                         for file in device_end_actions_files:
                             os.remove(file)
 
@@ -395,20 +433,32 @@ class Book(object):
                         info['send_status'] = self.FAIL
                         info['status_message'] = self.FAILED_FAILED_TO_SEND_XRAY
 
-                if send_author_profile:
+                if create_send_author_profile:
                     json.dump(self._book_settings.author_profile, open(os.path.join(info['device_xray'], 'AuthorProfile.profile.%s.asc' % self._asin), 'w+'))
 
-                if send_end_actions:
+                if create_send_start_actions:
+                    json.dump(self._book_settings.start_actions, open(os.path.join(info['device_xray'], 'StartActions.data.%s.asc' % self._asin), 'w+'))
+
+                if create_send_end_actions:
                     json.dump(self._book_settings.end_actions, open(os.path.join(info['device_xray'], 'EndActions.data.%s.asc' % self._asin), 'w+'))
             except:
                 info['send_status'] = self.FAIL
                 info['status_message'] = self.FAILED_FAILED_TO_SEND_XRAY
 
-    def create_xray_event(self, device_books, log=None, notifications=None, abort=None, book_num=None, total=None):
-        actions = 4.0
+    def create_files_event(self, device_books, log=None, notifications=None, abort=None, book_num=None, total=None):
+        actions = 2.0
+        if self._create_send_xray:
+            actions += 2
+        if self._create_send_author_profile:
+            actions += 1
+        if self._create_send_start_actions:
+            actions += 1
+        if self._create_send_end_actions:
+            actions += 1
         if self._send_to_device:
             actions += 1
         perc = book_num * actions
+
         try:
             if abort and abort.isSet():
                 return
@@ -423,20 +473,43 @@ class Book(object):
             if log: log('%s \tGetting format specific data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
             perc += 1
             self._get_format_specific_information()
+        
+            if abort and abort.isSet() or not self.formats_not_failing_exist():
+                return
+            if self._create_send_xray:
+                if notifications: notifications.put((perc/(total * actions), 'Parsing %s book data' % self.title_and_author))
+                if log: log('%s \tParsing book data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+                perc += 1
+                self._parse_book()
+                if notifications: notifications.put((perc/(total * actions), 'Creating %s x-ray' % self.title_and_author))
+                if log: log('%s \tCreating x-ray...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+                perc += 1
+                self._write_xray()
             
             if abort and abort.isSet() or not self.formats_not_failing_exist():
                 return
-            if notifications: notifications.put((perc/(total * actions), 'Parsing %s book data' % self.title_and_author))
-            if log: log('%s \tParsing book data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-            perc += 1
-            self._parse_book()
+            if self._create_send_author_profile:
+                if notifications: notifications.put((perc/(total * actions), 'Creating %s author profile' % self.title_and_author))
+                if log: log('%s \tCreating author profile...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+                perc += 1
+                self._write_author_profile()
             
             if abort and abort.isSet() or not self.formats_not_failing_exist():
                 return
-            if notifications: notifications.put((perc/(total * actions), 'Creating %s x-ray' % self.title_and_author))
-            if log: log('%s \tCreating x-ray...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-            perc += 1
-            self._write_xray()
+            if self._create_send_start_actions:
+                if notifications: notifications.put((perc/(total * actions), 'Creating %s start actions' % self.title_and_author))
+                if log: log('%s \tCreating start actions...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+                perc += 1
+                self._write_start_actions()
+            
+            if abort and abort.isSet() or not self.formats_not_failing_exist():
+                return
+            if self._create_send_end_actions:
+                if notifications: notifications.put((perc/(total * actions), 'Creating %s end actions' % self.title_and_author))
+                if log: log('%s \tCreating end actions...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+                perc += 1
+                self._write_end_actions()
+
             self._status = self.SUCCESS
             self._status_message = None
 
@@ -446,11 +519,11 @@ class Book(object):
                 if notifications: notifications.put((perc/(total * actions), 'Sending %s x-ray to device' % self.title_and_author))
                 if log: log('%s \tSending x-ray to device...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
                 perc += 1
-                self.send_xray(device_books)
+                self.send_files(device_books)
         except:
             return
 
-    def send_xray_event(self, device_books, log=None, notifications=None, abort=None, book_num=None, total=None):
+    def send_files_event(self, device_books, log=None, notifications=None, abort=None, book_num=None, total=None):
         actions = 2.0
         perc = book_num * actions
         if abort and abort.isSet():
@@ -464,7 +537,7 @@ class Book(object):
                 return
         if notifications: notifications.put((perc/(total * actions), 'Sending %s x-ray to device' % self.title_and_author))
         if log: log('%s \tSending x-ray to device...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        self.send_xray(device_books, overwrite=False, already_created=False, log=log, abort=abort)
+        self.send_files(device_books, overwrite=False, already_created=False, log=log, abort=abort)
 
 class ASINUpdater(MetadataUpdater):
     def update(self, asin):

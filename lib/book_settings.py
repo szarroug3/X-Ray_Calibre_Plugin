@@ -215,7 +215,7 @@ class BookSettings(object):
         return urlparse.urlparse(url)._replace(query=None).geturl()
 
     def update_aliases(self, url, overwrite=False, raise_error_on_page_not_found=False):
-        goodreads_parser = GoodreadsParser(url, self._goodreads_conn, self._asin, raise_error_on_page_not_found=raise_error_on_page_not_found)
+        goodreads_parser = GoodreadsParser(url, self._goodreads_conn, self._asin, create_xray=True, raise_error_on_page_not_found=raise_error_on_page_not_found)
         goodreads_parser.get_characters()
         goodreads_parser.get_settings()
         goodreads_chars =  goodreads_parser.characters

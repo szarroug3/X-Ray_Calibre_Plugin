@@ -14,11 +14,13 @@ class GoodreadsPageDoesNotExist(Exception):
 class GoodreadsParser(object):
     BOOK_ID_PAT = re.compile(r'\/show\/([\d]+)')
     ASIN_PAT = re.compile(r'"asin":"(.+?)"')
-    def __init__(self, url, connection, asin, raise_error_on_page_not_found=False, create_author_profile=False, create_end_actions=False):
+    def __init__(self, url, connection, asin, raise_error_on_page_not_found=False, create_xray=False, create_author_profile=False, create_end_actions=False, create_start_actions=False):
         self._url = url
         self._connection = connection
         self._asin = asin
+        self._create_acreate_xray = create_xray
         self._create_author_profile = create_author_profile
+        self._create_start_actions = create_start_actions
         self._create_end_actions = create_end_actions
         self._characters = {}
         self._settings = {}
@@ -49,6 +51,10 @@ class GoodreadsParser(object):
         return self._author_profile
     
     @property
+    def start_actions(self):
+        return self._start_actions
+    
+    @property
     def end_actions(self):
         return self._end_actions
     
@@ -60,13 +66,20 @@ class GoodreadsParser(object):
         if self._page_source is None:
             return
 
-        self.get_characters()
-        self.get_settings()
-        self.get_quotes()
+        if self._create_xray:
+            self.get_characters()
+            self.get_settings()
+            self.get_quotes()
 
         if self._create_author_profile:
             try:
                 self.get_author_profile()
+            except:
+                pass
+
+        if self._create_start_actions:
+            try:
+                self.get_start_actions()
             except:
                 pass
 
@@ -90,19 +103,103 @@ class GoodreadsParser(object):
         self.get_author_other_books()
         self.compile_author_profile()
 
+    def get_start_actions(self):
+        if self._page_source is None:
+            return
+
+        if not self._create_author_profile:
+            self.get_author_page()
+
+        if self._author_page is None:
+            return
+
+        if not self._create_author_profile:
+            self.get_author_name()
+            self.get_author_bio()
+            self.get_author_image()
+            self.get_author_other_books()
+
+        self.get_num_pages_and_reading_time()
+        self.get_book_image_url()
+        self.compile_start_actions()
+
     def get_end_actions(self):
         if self._page_source is None:
             return
 
-        # this is usually run if we're creating an author profile
+        # these are usually run if we're creating an author profile
         # if it's not, we need to run it to get the author's other books
-        if not self._create_author_profile:
+        if not self._create_author_profile and not self._create_start_actions:
+            self.get_author_page()
+        if self._author_page is None:
+            return
+
+        if not self._create_author_profile and not self._create_start_actions:
+            self.get_author_name()
+            self.get_author_bio()
+            self.get_author_image()
             self.get_author_other_books()
 
-        self.get_book_image_url()
-        self.get_book_rating()
+        if not self._create_start_actions:
+            self.get_book_image_url()
+
         self.get_customer_recommendations()
         self.compile_end_actions()
+
+    def compile_author_profile(self):
+        self._author_profile = {"u": [{"y": 277,
+                            "l": [x["a"] for x in self._author_other_books],
+                            "n": self._author_name,
+                            "b": self._author_bio,
+                            "i": self._author_image}],
+                    "d": int((datetime.datetime.now() - datetime.datetime(1970,1,1)).total_seconds()),
+                    "o": self._author_other_books,
+                    "a": self._asin
+                }
+
+    def compile_start_actions(self):
+        timestamp = int((datetime.datetime.now() - datetime.datetime(1970,1,1)).total_seconds())
+        self._start_actions = self.BASE_START_ACTIONS
+
+        self._start_actions['bookInfo']['asin'] = self._asin
+        self._start_actions['bookInfo']['timestamp'] = timestamp
+        self._start_actions['bookInfo']['imageUrl'] = self._book_image_url
+
+        # putting fake ASIN because real one isn't needed -- idk why it's required at all
+        self._start_actions['data']['authorBios']['authors'].append({'class': 'authorBio', 'name': self._author_name, 'bio': self._author_bio, 'imageUrl': self._author_image_url, 'asin': 'XXXXXXXXXX'})
+
+        if self._author_recommendations is not None:
+            self._start_actions['data']['authorRecs'] = {'class': 'featuredRecommendationList',
+                                                        'recommendations': self._author_recommendations}
+            # since we're using the same recommendations from the end actions, we need to replace the class to match what the kindle expects
+            for rec in self._start_actions['data']['authorRecs']['recommendations']:
+                rec['class'] = 'recommendation'
+
+        self._start_actions['data']['bookDescription'] = self.get_book_info_from_tooltips((self._goodreads_book_id, self._book_image_url))[0]
+        self._start_actions['data']['currentBook'] = self._start_actions['data']['bookDescription']
+
+        self._start_actions['data']['grokShelfInfo']['asin'] = self._asin
+
+        self._start_actions['data']['readingPages']['pagesInBook'] = self._num_pages
+        for locale, formatted_time in self._start_actions['data']['readingTime']['formattedTime'].items():
+            self._start_actions['data']['readingTime']['formattedTime'][locale] = formatted_time.replace('$H', str(self._reading_time_hours)).replace('$M', str(self._reading_time_minutes))
+
+    def compile_end_actions(self):
+        timestamp = int((datetime.datetime.now() - datetime.datetime(1970,1,1)).total_seconds())
+        self._end_actions = self.BASE_END_ACTIONS
+
+        self._end_actions['bookInfo']['asin'] = self._asin
+        self._end_actions['bookInfo']['timestamp'] = timestamp
+        self._end_actions['bookInfo']['imageUrl'] = self._book_image_url
+
+        self._end_actions['data']['authorBios']['authors'].append({'class': 'authorBio', 'name': self._author_name, 'bio': self._author_bio, 'imageUrl': self._author_image_url})
+
+        if self._author_recommendations is not None:
+            self._end_actions['data']['authorRecs'] = {'class': 'featuredRecommendationList',
+                                                        'recommendations': self._author_recommendations}
+        if self._cust_recommendations is not None:
+            self._end_actions['data']['customersWhoBoughtRecs'] = {'class': 'featuredRecommendationList',
+                                                        'recommendations': self._cust_recommendations}
 
     def open_url(self, url, raise_error_on_page_not_found=False, return_redirect_url=False):
         if 'goodreads.com' in url:
@@ -267,6 +364,8 @@ class GoodreadsParser(object):
 
 
     def get_book_info_from_tooltips(self, book_info):
+        if type(book_info) == tuple:
+            book_info = [book_info]
         book_data = []
         link_pattern = 'resources[Book.{0}][type]=Book&resources[Book.{0}][id]={0}'
         tooltips_page_url = '/tooltips?' + "&".join([link_pattern.format(book_id) for book_id, image_url in book_info])
@@ -307,36 +406,14 @@ class GoodreadsParser(object):
     def get_book_image_url(self):
         self._book_image_url = self._page_source.xpath('//div[@class="mainContent"]//div[@id="imagecol"]//img[@id="coverImage"]')[0].get('src')
 
-    def get_book_rating(self):
-        self._book_rating = float(self._page_source.xpath('//div[@class="mainContent"]//div[@id="metacol"]//span[@class="value rating"]/span')[0].text)
+    def get_num_pages_and_reading_time(self):
+        if not self._page_source:
+            return
 
-    def compile_author_profile(self):
-        self._author_profile = {"u": [{"y": 277,
-                            "l": [x["a"] for x in self._author_other_books],
-                            "n": self._author_name,
-                            "b": self._author_bio,
-                            "i": self._author_image}],
-                    "d": int((datetime.datetime.now() - datetime.datetime(1970,1,1)).total_seconds()),
-                    "o": self._author_other_books,
-                    "a": self._asin
-                }
-
-    def compile_end_actions(self):
-        timestamp = int((datetime.datetime.now() - datetime.datetime(1970,1,1)).total_seconds())
-        self._end_actions = self.BASE_END_ACTIONS
-
-        self._end_actions['bookInfo']['asin'] = self._asin
-        self._end_actions['bookInfo']['timestamp'] = timestamp
-        self._end_actions['bookInfo']['imageUrl'] = self._book_image_url
-
-        self._end_actions['data']['authorBios']['authors'].append({"class": "authorBio", "name": self._author_name, "bio": self._author_bio, "imageUrl": self._author_image_url})
-
-        if self._author_recommendations is not None:
-            self._end_actions['data']['authorRecs'] = {'class': 'featuredRecommendationList',
-                                                        'recommendations': self._author_recommendations}
-        if self._cust_recommendations is not None:
-            self._end_actions['data']['customersWhoBoughtRecs'] = {'class': 'featuredRecommendationList',
-                                                        'recommendations': self._cust_recommendations}
+        self._num_pages = int(self._page_source.xpath('//span[@itemprop="numberOfPages"]')[0].text.split()[0])
+        total_minutes = self._num_pages * 2
+        self._reading_time_hours = total_minutes / 60
+        self._reading_time_minutes = total_minutes - (self._reading_time_hours * 60)
 
 
 
@@ -842,6 +919,1007 @@ class GoodreadsParser(object):
             u"authorBios": {
                 u"class": u"authorBioList",
                 u"authors": []
+            }
+        }
+    }
+
+    BASE_START_ACTIONS = {
+        u"bookInfo":{
+            u"class":u"bookInfo",
+            u"contentType":u"EBOK",
+            u"refTagSuffix":u"AAAgAAA"
+        },
+        u"widgets":[
+            {
+                u"id":u"welcomeTextWidget",
+                u"metricsTag":u"wtw",
+                u"options":{
+                    u"dataKey":u"welcomeText",
+                    u"displayLimitKey":u"welcomeWidget",
+                    u"displayLimit":1
+                },
+                u"class":u"simpleText"
+            },
+            {
+                u"id":u"timeToReadWidget",
+                u"metricsTag":u"ttr",
+                u"options":{
+                    u"timeDataKey":u"readingTime",
+                    u"pageDataKey":u"readingPages"
+                },
+                u"class":u"readingTime"
+            },
+            {
+                u"id":u"xray",
+                u"metricsTag":u"xray",
+                u"options":{
+                    u"preferredTypeOrder":[
+                        u"images"
+                    ],
+                    u"imagesThreshold":4,
+                    u"imagesFormat":u"mosaic"
+                },
+                u"class":u"xrayTeaser",
+                u"strings":{
+                    u"imagesDescription":{
+                        u"de":u"Bl\u00e4ttern Sie durch alle %{numImages}-Bilder in diesem Buch.",
+                        u"en":u"Flip through all %{numImages} images in the book.",
+                        u"en-US":u"Flip through all %{numImages} images in the book.",
+                        u"es":u"Hojear todas las %{numImages} im\u00e1genes del libro.",
+                        u"fr":u"Feuilleter les %{numImages} images de ce livre.",
+                        u"it":u"Sfoglia tutte le %{numImages} immagini nel libro.",
+                        u"ja":u"\u3053\u306e\u672c\u306e%{numImages}\u500b\u306e\u753b\u50cf\u3059\u3079\u3066\u3092\u898b\u3089\u308c\u307e\u3059\u3002",
+                        u"nl":u"Blader door alle %{numImages} afbeeldingen in het boek.",
+                        u"pt-BR":u"Percorrer todas as %{numImages} imagens no eBook.",
+                        u"ru":u"\u041f\u0440\u043e\u0441\u043c\u043e\u0442\u0440\u0438\u0442\u0435 \u0432\u0441\u0435 %{numImages} \u0438\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u0439 \u0432 \u043a\u043d\u0438\u0433\u0435.",
+                        u"zh-CN":u"\u6d4f\u89c8\u4e66\u4e2d\u5168\u90e8 %{numImages} \u5f20\u56fe\u7247\u3002"
+                    },
+                    u"imagesButtonText":{
+                        u"de":u"Alle Bilder ansehen",
+                        u"en":u"See All Images",
+                        u"en-US":u"See All Images",
+                        u"es":u"Ver todas las im\u00e1genes",
+                        u"fr":u"Voir toutes les images",
+                        u"it":u"Vedi tutte le immagini",
+                        u"ja":u"\u3059\u3079\u3066\u306e\u753b\u50cf\u3092\u898b\u308b",
+                        u"nl":u"Alle afbeeldingen weergeven",
+                        u"pt-BR":u"Ver todas as imagens",
+                        u"ru":u"\u041f\u043e\u0441\u043c\u043e\u0442\u0440\u0435\u0442\u044c \u0432\u0441\u0435 \u0438\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u044f",
+                        u"zh-CN":u"\u67e5\u770b\u5168\u90e8\u56fe\u7247"
+                    },
+                    u"entitiesButtonText":{
+                        u"de":u"\u00d6ffnen Sie X-Ray",
+                        u"en-US":u"Open X-Ray",
+                        u"ru":u"\u041e\u0442\u043a\u0440\u044b\u0442\u044c X-Ray",
+                        u"pt-BR":u"Abrir X-Ray",
+                        u"ja":u"X-Ray\u3092\u958b\u304f",
+                        u"en":u"Open X-Ray",
+                        u"it":u"Apri X-Ray",
+                        u"fr":u"Ouvrir X-Ray",
+                        u"zh-CN":u"\u6253\u5f00X-Ray",
+                        u"es":u"Abrir X-Ray",
+                        u"nl":u"X-Ray openen"
+                    },
+                    u"entitiesDescription":{
+                        u"de":u"Durchsuchen Sie Leute, Ausdr\u00fccke und Bilder in diesem Buch.",
+                        u"en":u"Explore people, terms and images in this book.",
+                        u"en-US":u"Explore people, terms, and images in this book.",
+                        u"es":u"Explora personas, t\u00e9rminos e im\u00e1genes de este libro.",
+                        u"fr":u"Explorer les personnages, les termes et les images de ce livre.",
+                        u"it":u"Esplora persone, termini e immagini in questo libro.",
+                        u"ja":u"\u3053\u306e\u672c\u306e\u767b\u5834\u4eba\u7269\u3001\u30c8\u30d4\u30c3\u30af\u3001\u753b\u50cf\u3092\u4e00\u5ea6\u306b\u78ba\u8a8d\u3067\u304d\u307e\u3059\u3002",
+                        u"nl":u"Mensen, termen en afbeeldingen in dit boek ontdekken.",
+                        u"pt-BR":u"Explorar pessoas, termos e imagens neste eBook.",
+                        u"ru":u"\u0418\u0437\u0443\u0447\u0430\u0439\u0442\u0435 \u043b\u044e\u0434\u0435\u0439, \u0442\u0435\u0440\u043c\u0438\u043d\u044b \u0438 \u0438\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u044f \u0432 \u044d\u0442\u043e\u0439 \u043a\u043d\u0438\u0433\u0435.",
+                        u"zh-CN":u"\u63a2\u7d22\u672c\u4e66\u4e2d\u7684\u4eba\u7269\u3001\u672f\u8bed\u548c\u56fe\u7247\u3002"
+                    }
+                }
+            },
+            {
+                u"id":u"kuTeaserWidget",
+                u"metricsTag":u"dtb",
+                u"options":{
+                    u"dynamicButtonDataKey":u"kuTeaserData",
+                    u"dynamicButtonActionKey":u"kuUrlAction",
+                    u"displayIfClicked":True,
+                    u"clickOnlyOnce":False,
+                    u"displayLimitKey":u"kuTeaserWidget",
+                    u"refTagPartial":u"r_kut",
+                    u"featureKey":u"kuTeaser",
+                    u"displayLimit":3
+                },
+                u"class":u"dynamicButtonWidget"
+            },
+            {
+                u"id":u"positionInSeriesWidgetWithText",
+                u"metricsTag":u"pist",
+                u"options":{
+                    u"seriesPositionDataKey":u"seriesPosition"
+                },
+                u"class":u"positionInSeries",
+                u"strings":{
+                    u"text":{
+                        u"de":u"Dies ist das Buch Nr. %{position} von %{total} der Serie %{seriesName}",
+                        u"en":u"This is book %{position} of %{total} in %{seriesName}",
+                        u"en-US":u"This is book %{position} of %{total} in %{seriesName}",
+                        u"es":u"Este es el libro %{position} de %{total} en %{seriesName}",
+                        u"fr":u"Ce livre est le %{position}e sur %{total} de la s\u00e9rie %{seriesName}",
+                        u"it":u"Questo libro \u00e8 il %{position} libro su %{total} libri nella serie %{seriesName}",
+                        u"ja":u"\u3053\u306e\u672c\u306f%{seriesName}\u306e\u5168%{total}\u518a\u306e\u3046\u3061%{position}\u518a\u76ee\u3067\u3059\u3002",
+                        u"nl":u"Dit is boek %{position} van %{total} van %{seriesName}",
+                        u"pt-BR":u"Esse \u00e9 o eBook %{position} de %{total} em %{seriesName}",
+                        u"ru":u"\u042d\u0442\u043e \u043a\u043d\u0438\u0433\u0430 %{position} \u0438\u0437 %{total} \u0432 \u0441\u0435\u0440\u0438\u0438 \u00ab%{seriesName}\u00bb",
+                        u"zh-CN":u"\u8fd9\u662f %{seriesName} \u4e2d\u7684\u7b2c %{position} \u672c\u56fe\u4e66\uff08\u5171 %{total} \u672c\uff09"
+                    }
+                }
+            },
+            {
+                u"id":u"previousBookInTheSeriesWidget",
+                u"metricsTag":u"pbits",
+                u"options":{
+                    u"dataKey":u"previousBookInTheSeries",
+                    u"refTagPartial":u"pbits"
+                },
+                u"class":u"bookDetail",
+                u"strings":{
+                    u"title":{
+                        u"de":u"Vorherige B\u00fccher der Serie:u",
+                        u"en":u"Previous book in the series:u",
+                        u"en-US":u"Previous book in the series:u",
+                        u"es":u"Libros anteriores de la serie:u",
+                        u"fr":u"Livre pr\u00e9c\u00e9dent dans la s\u00e9rie\u00a0:u",
+                        u"it":u"Libro precedente nella serie:u",
+                        u"ja":u"\u30b7\u30ea\u30fc\u30ba\u306e\u524d\u5dfb:u",
+                        u"nl":u"Vorige boek in de reeks:u",
+                        u"pt-BR":u"eBook anterior da s\u00e9rie",
+                        u"ru":u"\u041f\u0440\u0435\u0434\u044b\u0434\u0443\u0449\u0430\u044f \u043a\u043d\u0438\u0433\u0430 \u0441\u0435\u0440\u0438\u0438:u",
+                        u"zh-CN":u"\u7cfb\u5217\u4e2d\u7684\u4e0a\u4e00\u672c\u56fe\u4e66\uff1a"
+                    }
+                }
+            },
+            {
+                u"id":u"aboutTheAuthorWidget",
+                u"metricsTag":u"ata",
+                u"options":{
+                    u"dataKey":u"authorBios",
+                    u"refTagPartial":u"r_ata",
+                    u"subscriptionInfoDataKey":u"authorSubscriptions",
+                    u"followInfoDataKey":u"followSubscriptions"
+                },
+                u"class":u"authors"
+            },
+            {
+                u"id":u"authorNamesListWidget",
+                u"metricsTag":u"anl",
+                u"options":{
+                    u"dataKey":u"authorNames",
+                    u"refTagPartial":u"r_anl"
+                },
+                u"class":u"authorNames"
+            },
+            {
+                u"id":u"authorRecsShovelerWidget",
+                u"metricsTag":u"ra",
+                u"options":{
+                    u"dataKey":u"authorRecs",
+                    u"refTagPartial":u"r_a"
+                },
+                u"class":u"shoveler"
+            },
+            {
+                u"id":u"authorRecsShovelerWidgetWithTitleNoPlaceholderSingleAuthor",
+                u"metricsTag":u"ratsa",
+                u"options":{
+                    u"dataKey":u"authorRecs",
+                    u"refTagPartial":u"r_a"
+                },
+                u"class":u"shoveler",
+                u"strings":{
+                    u"title":{
+                        u"de":u"Mehr vom Autor",
+                        u"en":u"More by the author",
+                        u"en-US":u"More by the author",
+                        u"es":u"M\u00e1s por el autor",
+                        u"fr":u"Autres livres du m\u00eame auteur",
+                        u"it":u"Altri titoli dell'autore",
+                        u"ja":u"\u3053\u306e\u8457\u8005\u306e\u305d\u306e\u4ed6\u306e\u4f5c\u54c1",
+                        u"nl":u"Meer van de auteur",
+                        u"pt-BR":u"Mais do autor",
+                        u"ru":u"\u0411\u043e\u043b\u044c\u0448\u0435 \u043f\u0440\u043e\u0438\u0437\u0432\u0435\u0434\u0435\u043d\u0438\u0439 \u0430\u0432\u0442\u043e\u0440\u0430",
+                        u"zh-CN":u"\u8be5\u4f5c\u8005\u7684\u66f4\u591a\u4f5c\u54c1"
+                    }
+                }
+            },
+            {
+                u"id":u"authorRecsShovelerWidgetWithTitleNoPlaceholderMultipleAuthors",
+                u"metricsTag":u"ratma",
+                u"options":{
+                    u"dataKey":u"authorRecs",
+                    u"refTagPartial":u"r_a"
+                },
+                u"class":u"shoveler",
+                u"strings":{
+                    u"title":{
+                        u"de":u"Mehr von den Autoren",
+                        u"en":u"More by the authors",
+                        u"en-US":u"More by the authors",
+                        u"es":u"M\u00e1s por autores",
+                        u"fr":u"Autres livres des m\u00eames auteurs",
+                        u"it":u"Altri titoli degli autori",
+                        u"ja":u"\u3053\u308c\u3089\u306e\u8457\u8005\u306e\u4ed6\u306e\u4f5c\u54c1",
+                        u"nl":u"Meer van de auteurs",
+                        u"pt-BR":u"Mais dos autores",
+                        u"ru":u"\u0411\u043e\u043b\u044c\u0448\u0435 \u043f\u0440\u043e\u0438\u0437\u0432\u0435\u0434\u0435\u043d\u0438\u0439 \u0430\u0432\u0442\u043e\u0440\u043e\u0432",
+                        u"zh-CN":u"\u8fd9\u4e9b\u4f5c\u8005\u7684\u66f4\u591a\u4f5c\u54c1"
+                    }
+                }
+            },
+            {
+                u"id":u"markAsReadingWidget",
+                u"metricsTag":u"gmar",
+                u"options":{
+                    u"dataKey":u"grokShelfInfo"
+                },
+                u"class":u"markReading"
+            },
+            {
+                u"id":u"grokTeaserWidget",
+                u"class":u"grokTeaser",
+                u"metricsTag":u"gt",
+                u"options":{
+                    u"displayLimitKey":u"grokTeaser",
+                    u"displayLimit":3
+                }
+            },
+            {
+                u"id":u"upsell3PPhoneAppWidget",
+                u"metricsTag":u"us3pa",
+                u"options":{
+                    u"dynamicButtonDataKey":u"upsell3PPhoneAppData",
+                    u"dynamicButtonActionKey":u"upsell3PPhoneAppUrlAction",
+                    u"displayIfClicked":True,
+                    u"clickOnlyOnce":False,
+                    u"displayLimitKey":u"upsell3PPhoneAppWidget",
+                    u"refTagPartial":u"r_us3pa",
+                    u"featureKey":u"upsell3PPhoneApp",
+                    u"displayLimit":3
+                },
+                u"class":u"dynamicButtonWidget"
+            },
+            {
+                u"id":u"audibleNarration",
+                u"metricsTag":u"audnar",
+                u"options":{
+                    u"refTagPartial":u"r_aud"
+                },
+                u"class":u"audible"
+            },
+            {
+                u"id":u"citationRecsShovelerWidget",
+                u"metricsTag":u"rc",
+                u"options":{
+                    u"dataKey":u"citationRecs",
+                    u"refTagPartial":u"r_c"
+                },
+                u"class":u"shoveler"
+            },
+            {
+                u"id":u"readerSettingsWidget",
+                u"class":u"readerSettings",
+                u"metricsTag":u"rs"
+            },
+            {
+                u"id":u"leftNavCitationsFeaturedList",
+                u"metricsTag":u"lnrc",
+                u"options":{
+                    u"dataKey":u"leftNavCitationRecs",
+                    u"refTagPartial":u"ln_r_c"
+                },
+                u"class":u"featuredList",
+                u"strings":{
+                    u"panelRowTitle":{
+                        u"de":u"In diesem Buch erw\u00e4hnt",
+                        u"en":u"Mentioned in this Book",
+                        u"en-US":u"Mentioned in this Book",
+                        u"es":u"Mencionado en este libro",
+                        u"fr":u"Mentionn\u00e9s dans ce livre",
+                        u"it":u"Menzionati in questo libro",
+                        u"ja":u"\u3053\u306e\u4f5c\u54c1\u306b\u51fa\u3066\u304f\u308b\u672c",
+                        u"nl":u"Genoemd in dit boek",
+                        u"pt-BR":u"Mencionado neste eBook",
+                        u"ru":u"\u0423\u043f\u043e\u043c\u0438\u043d\u0430\u0435\u0442\u0441\u044f \u0432 \u044d\u0442\u043e\u0439 \u043a\u043d\u0438\u0433\u0435",
+                        u"zh-CN":u"\u672c\u4e66\u63d0\u53ca\u7684"
+                    },
+                    u"title":{
+                        u"de":u"In diesem Buch erw\u00e4hnt",
+                        u"en":u"Mentioned in this Book",
+                        u"en-US":u"Mentioned in this Book",
+                        u"es":u"Mencionado en este libro",
+                        u"fr":u"Mentionn\u00e9s dans ce livre",
+                        u"it":u"Menzionati in questo libro",
+                        u"ja":u"\u3053\u306e\u4f5c\u54c1\u306b\u51fa\u3066\u304f\u308b\u672c",
+                        u"nl":u"Genoemd in dit boek",
+                        u"pt-BR":u"Mencionado neste eBook",
+                        u"ru":u"\u0423\u043f\u043e\u043c\u0438\u043d\u0430\u0435\u0442\u0441\u044f \u0432 \u044d\u0442\u043e\u0439 \u043a\u043d\u0438\u0433\u0435",
+                        u"zh-CN":u"\u672c\u4e66\u63d0\u53ca\u7684"
+                    }
+                }
+            },
+            {
+                u"id":u"bookDescriptionWidget",
+                u"metricsTag":u"bd",
+                u"options":{
+                    u"dataKey":u"bookDescription",
+                    u"refTagPartial":u"r_bd"
+                },
+                u"class":u"bookDetail",
+                u"strings":{
+                    u"title":{
+                        u"de":u"Buchbeschreibung, Bewertungen, Rezensionen und mehr",
+                        u"en":u"Book description, ratings, reviews and more",
+                        u"en-US":u"Book description, ratings, reviews and more",
+                        u"es":u"Descripci\u00f3n del libro, calificaciones, rese\u00f1as y m\u00e1s",
+                        u"fr":u"Description du livre, \u00e9valuations, commentaires et plus",
+                        u"it":u"Descrizione libro, valutazioni, recensioni e altro",
+                        u"ja":u"\u672c\u306e\u8a73\u7d30\u3001\u8a55\u4fa1\u3001\u30ec\u30d3\u30e5\u30fc\u306a\u3069",
+                        u"nl":u"Beschrijving van het boek, beoordelingen, recensies en meer",
+                        u"pt-BR":u"Descri\u00e7\u00e3o de eBook, classifica\u00e7\u00f5es, avalia\u00e7\u00f5es e muito mais",
+                        u"ru":u"\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u043a\u043d\u0438\u0433\u0438, \u043e\u0446\u0435\u043d\u043a\u0438, \u043e\u0442\u0437\u044b\u0432\u044b \u0438 \u0434\u0440.",
+                        u"zh-CN":u"\u56fe\u4e66\u63cf\u8ff0\u3001\u8bc4\u5206\u53ca\u5176\u4ed6"
+                    }
+                }
+            },
+            {
+                u"id":u"headerWidget",
+                u"metricsTag":u"hdrw",
+                u"options":{
+                    u"dataKey":u"currentBook",
+                    u"refTagPartial":u"hdrw",
+                    u"initialLines":-1,
+                    u"moreLines":-1
+                },
+                u"class":u"header",
+                u"strings":{
+                    u"title":{
+                        u"de":u"Beschreibung",
+                        u"en":u"Description",
+                        u"en-US":u"Description",
+                        u"es":u"Descripci\u00f3n",
+                        u"fr":u"Description",
+                        u"it":u"Descrizione",
+                        u"ja":u"\u8aac\u660e",
+                        u"nl":u"Beschrijving",
+                        u"pt-BR":u"Descri\u00e7\u00e3o",
+                        u"ru":u"\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435",
+                        u"zh-CN":u"\u63cf\u8ff0"
+                    }
+                }
+            },
+            {
+                u"id":u"authorRecsBookGridWidgetBuyButtonNotVisible",
+                u"metricsTag":u"ra",
+                u"options":{
+                    u"dataKey":u"authorFeaturedRecs",
+                    u"buyInStore":False,
+                    u"buyButtonVisible":False,
+                    u"refTagPartial":u"r_a"
+                },
+                u"class":u"bookGrid"
+            },
+            {
+                u"id":u"authorRecsBookGridWidgetWithTitleSingleAuthorBuyButtonNotVisible",
+                u"metricsTag":u"ratsa",
+                u"options":{
+                    u"dataKey":u"authorFeaturedRecs",
+                    u"buyInStore":False,
+                    u"buyButtonVisible":False,
+                    u"refTagPartial":u"r_a"
+                },
+                u"class":u"bookGrid",
+                u"strings":{
+                    u"title":{
+                        u"de":u"Mehr vom Autor",
+                        u"en":u"More by the author",
+                        u"en-US":u"More by the author",
+                        u"es":u"M\u00e1s por el autor",
+                        u"fr":u"Autres livres du m\u00eame auteur",
+                        u"it":u"Altri titoli dell'autore",
+                        u"ja":u"\u3053\u306e\u8457\u8005\u306e\u305d\u306e\u4ed6\u306e\u4f5c\u54c1",
+                        u"nl":u"Meer van de auteur",
+                        u"pt-BR":u"Mais do autor",
+                        u"ru":u"\u0411\u043e\u043b\u044c\u0448\u0435 \u043f\u0440\u043e\u0438\u0437\u0432\u0435\u0434\u0435\u043d\u0438\u0439 \u0430\u0432\u0442\u043e\u0440\u0430",
+                        u"zh-CN":u"\u8be5\u4f5c\u8005\u7684\u66f4\u591a\u4f5c\u54c1"
+                    }
+                }
+            },
+            {
+                u"id":u"authorRecsBookGridWidgetWithTitleMultipleAuthorsBuyButtonNotVisible",
+                u"metricsTag":u"ratma",
+                u"options":{
+                    u"dataKey":u"authorFeaturedRecs",
+                    u"buyInStore":False,
+                    u"buyButtonVisible":False,
+                    u"refTagPartial":u"r_a"
+                },
+                u"class":u"bookGrid",
+                u"strings":{
+                    u"title":{
+                        u"de":u"Mehr von den Autoren",
+                        u"en":u"More by the authors",
+                        u"en-US":u"More by the authors",
+                        u"es":u"M\u00e1s por autores",
+                        u"fr":u"Autres livres des m\u00eames auteurs",
+                        u"it":u"Altri titoli degli autori",
+                        u"ja":u"\u3053\u308c\u3089\u306e\u8457\u8005\u306e\u4ed6\u306e\u4f5c\u54c1",
+                        u"nl":u"Meer van de auteurs",
+                        u"pt-BR":u"Mais dos autores",
+                        u"ru":u"\u0411\u043e\u043b\u044c\u0448\u0435 \u043f\u0440\u043e\u0438\u0437\u0432\u0435\u0434\u0435\u043d\u0438\u0439 \u0430\u0432\u0442\u043e\u0440\u043e\u0432",
+                        u"zh-CN":u"\u8fd9\u4e9b\u4f5c\u8005\u7684\u66f4\u591a\u4f5c\u54c1"
+                    }
+                }
+            },
+            {
+                u"id":u"authorRecsBookGridWidgetBuyInApp",
+                u"metricsTag":u"ra",
+                u"options":{
+                    u"dataKey":u"authorFeaturedRecs",
+                    u"buyInStore":False,
+                    u"buyButtonVisible":True,
+                    u"refTagPartial":u"r_a"
+                },
+                u"class":u"bookGrid"
+            },
+            {
+                u"id":u"authorRecsBookGridWidgetWithTitleSingleAuthorBuyInApp",
+                u"metricsTag":u"ratsa",
+                u"options":{
+                    u"dataKey":u"authorFeaturedRecs",
+                    u"buyInStore":False,
+                    u"buyButtonVisible":True,
+                    u"refTagPartial":u"r_a"
+                },
+                u"class":u"bookGrid",
+                u"strings":{
+                    u"title":{
+                        u"de":u"Mehr vom Autor",
+                        u"en":u"More by the author",
+                        u"en-US":u"More by the author",
+                        u"es":u"M\u00e1s por el autor",
+                        u"fr":u"Autres livres du m\u00eame auteur",
+                        u"it":u"Altri titoli dell'autore",
+                        u"ja":u"\u3053\u306e\u8457\u8005\u306e\u305d\u306e\u4ed6\u306e\u4f5c\u54c1",
+                        u"nl":u"Meer van de auteur",
+                        u"pt-BR":u"Mais do autor",
+                        u"ru":u"\u0411\u043e\u043b\u044c\u0448\u0435 \u043f\u0440\u043e\u0438\u0437\u0432\u0435\u0434\u0435\u043d\u0438\u0439 \u0430\u0432\u0442\u043e\u0440\u0430",
+                        u"zh-CN":u"\u8be5\u4f5c\u8005\u7684\u66f4\u591a\u4f5c\u54c1"
+                    }
+                }
+            },
+            {
+                u"id":u"authorRecsBookGridWidgetWithTitleMultipleAuthorsBuyInApp",
+                u"metricsTag":u"ratma",
+                u"options":{
+                    u"dataKey":u"authorFeaturedRecs",
+                    u"buyInStore":False,
+                    u"buyButtonVisible":True,
+                    u"refTagPartial":u"r_a"
+                },
+                u"class":u"bookGrid",
+                u"strings":{
+                    u"title":{
+                        u"de":u"Mehr von den Autoren",
+                        u"en":u"More by the authors",
+                        u"en-US":u"More by the authors",
+                        u"es":u"M\u00e1s por autores",
+                        u"fr":u"Autres livres des m\u00eames auteurs",
+                        u"it":u"Altri titoli degli autori",
+                        u"ja":u"\u3053\u308c\u3089\u306e\u8457\u8005\u306e\u4ed6\u306e\u4f5c\u54c1",
+                        u"nl":u"Meer van de auteurs",
+                        u"pt-BR":u"Mais dos autores",
+                        u"ru":u"\u0411\u043e\u043b\u044c\u0448\u0435 \u043f\u0440\u043e\u0438\u0437\u0432\u0435\u0434\u0435\u043d\u0438\u0439 \u0430\u0432\u0442\u043e\u0440\u043e\u0432",
+                        u"zh-CN":u"\u8fd9\u4e9b\u4f5c\u8005\u7684\u66f4\u591a\u4f5c\u54c1"
+                    }
+                }
+            },
+            {
+                u"id":u"citationRecsBookGridWidgetBuyButtonNotVisible",
+                u"metricsTag":u"rc",
+                u"options":{
+                    u"dataKey":u"citationFeaturedRecs",
+                    u"buyInStore":True,
+                    u"buyButtonVisible":False,
+                    u"refTagPartial":u"r_c"
+                },
+                u"class":u"bookGrid"
+            },
+            {
+                u"id":u"citationRecsBookGridWidgetBuyInApp",
+                u"metricsTag":u"rc",
+                u"options":{
+                    u"dataKey":u"citationFeaturedRecs",
+                    u"buyInStore":False,
+                    u"buyButtonVisible":True,
+                    u"refTagPartial":u"r_c"
+                },
+                u"class":u"bookGrid"
+            }
+        ],
+        u"layouts":[
+            {
+                u"metricsTag":u"glf",
+                u"options":{
+                    u"providesHeaderInfo":True
+                },
+                u"class":u"groupedLayoutWithFooter",
+                u"strings":{
+                    u"seriesGroup":{
+                        u"de":u"Infos zur Serie",
+                        u"en":u"About the series",
+                        u"en-US":u"About the series",
+                        u"es":u"Acerca de la serie",
+                        u"fr":u"\u00c0 propos de cette s\u00e9rie",
+                        u"it":u"Informazioni sulle serie",
+                        u"ja":u"\u3053\u306e\u30b7\u30ea\u30fc\u30ba\u306b\u3064\u3044\u3066",
+                        u"nl":u"Over de reeks",
+                        u"pt-BR":u"Informa\u00e7\u00f5es da s\u00e9rie",
+                        u"ru":u"\u041e\u0431 \u044d\u0442\u043e\u0439 \u0441\u0435\u0440\u0438\u0438",
+                        u"zh-CN":u"\u5173\u4e8e\u7cfb\u5217"
+                    },
+                    u"xrayGroup":{
+                        u"de":u"X-Ray",
+                        u"en-US":u"X-Ray",
+                        u"ru":u"X-Ray",
+                        u"pt-BR":u"X-Ray",
+                        u"ja":u"X-Ray",
+                        u"en":u"X-Ray",
+                        u"it":u"X-Ray",
+                        u"fr":u"X-Ray",
+                        u"zh-CN":u"X-Ray",
+                        u"es":u"X-Ray",
+                        u"nl":u"X-Ray"
+                    },
+                    u"authorsGroupWithSingleAuthor":{
+                        u"de":u"\u00dcber den Autor",
+                        u"en":u"About the author",
+                        u"en-US":u"About the author",
+                        u"es":u"Acerca del autor",
+                        u"fr":u"\u00c0 propos de l'auteur",
+                        u"it":u"Informazioni sull'autore",
+                        u"ja":u"\u8457\u8005\u306b\u3064\u3044\u3066",
+                        u"nl":u"Over de auteur",
+                        u"pt-BR":u"Informa\u00e7\u00f5es do autor",
+                        u"ru":u"\u041e\u0431 \u0430\u0432\u0442\u043e\u0440\u0435",
+                        u"zh-CN":u"\u5173\u4e8e\u4f5c\u8005"
+                    },
+                    u"readingTimeGroup":{
+                        u"de":u"Typische Lesezeit",
+                        u"en":u"Typical time to read",
+                        u"en-US":u"Typical time to read",
+                        u"es":u"Tiempo de lectura t\u00edpico",
+                        u"fr":u"Temps de lecture typique",
+                        u"it":u"Tempo di lettura tipico",
+                        u"ja":u"\u8aad\u307f\u7d42\u3048\u308b\u307e\u3067\u306e\u5e73\u5747\u7684\u306a\u6642\u9593",
+                        u"nl":u"Gebruikelijke leestijd",
+                        u"pt-BR":u"Tempo t\u00edpico para leitura",
+                        u"ru":u"\u0421\u0440\u0435\u0434\u043d\u0435\u0435 \u0432\u0440\u0435\u043c\u044f \u0447\u0442\u0435\u043d\u0438\u044f",
+                        u"zh-CN":u"\u5e38\u89c4\u9605\u8bfb\u65f6\u95f4"
+                    },
+                    u"citationsGroup":{
+                        u"de":u"In diesem Buch erw\u00e4hnt",
+                        u"en":u"Mentioned in this book",
+                        u"en-US":u"Mentioned in this book",
+                        u"es":u"Mencionado en este libro",
+                        u"fr":u"Mentionn\u00e9s dans ce livre",
+                        u"it":u"Menzionati in questo libro",
+                        u"ja":u"\u3053\u306e\u4f5c\u54c1\u306b\u51fa\u3066\u304f\u308b\u672c",
+                        u"nl":u"Genoemd in dit boek",
+                        u"pt-BR":u"Mencionado neste eBook",
+                        u"ru":u"\u0423\u043f\u043e\u043c\u0438\u043d\u0430\u0435\u0442\u0441\u044f \u0432 \u044d\u0442\u043e\u0439 \u043a\u043d\u0438\u0433\u0435",
+                        u"zh-CN":u"\u672c\u4e66\u63d0\u53ca\u7684"
+                    },
+                    u"welcomeGroup":{
+                        u"de":u"Willkommen!",
+                        u"en":u"Welcome!",
+                        u"en-US":u"Welcome!",
+                        u"es":u"\u00a1Bienvenido!",
+                        u"fr":u"Bienvenue\u00a0!",
+                        u"it":u"Benvenuto!",
+                        u"ja":u"\u3088\u3046\u3053\u305d!",
+                        u"nl":u"Welkom",
+                        u"pt-BR":u"Bem-vindo!",
+                        u"ru":u"\u0414\u043e\u0431\u0440\u043e \u043f\u043e\u0436\u0430\u043b\u043e\u0432\u0430\u0442\u044c!",
+                        u"zh-CN":u"\u6b22\u8fce\uff01"
+                    },
+                    u"audibleGroup":{
+                        u"de":u"Auf Audible-Erz\u00e4hlung erweitern",
+                        u"en":u"Upgrade to Audible Narration",
+                        u"en-US":u"Upgrade to Audible Narration",
+                        u"es":u"Actualizar a narraci\u00f3n Audible",
+                        u"fr":u"Passer \u00e0 la narration Audible",
+                        u"it":u"Passa alla narrazione Audible",
+                        u"ja":u"Audible\u30ca\u30ec\u30fc\u30b7\u30e7\u30f3\u3078\u30a2\u30c3\u30d7\u30b0\u30ec\u30fc\u30c9",
+                        u"nl":u"Upgraden naar Audible Narration",
+                        u"pt-BR":u"Atualizar para narra\u00e7\u00e3o Audible",
+                        u"ru":u"\u041f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0434\u043e\u0441\u0442\u0443\u043f \u043a \u0437\u0430\u043a\u0430\u0434\u0440\u043e\u0432\u043e\u043c\u0443 \u0442\u0435\u043a\u0441\u0442\u0443 Audible",
+                        u"zh-CN":u"\u5347\u7ea7\u5230\u3016Audible Narration\u3017"
+                    }
+                },
+                u"widgetPlacements":{
+                    u"footer":[
+                        {
+                            u"widgetSlots":[
+                                [
+                                    u"readerSettingsWidget"
+                                ]
+                            ]
+                        }
+                    ],
+                    u"body":[
+                        {
+                            u"titleKey":u"welcomeGroup",
+                            u"widgetSlots":[
+                                [
+                                    u"welcomeTextWidget"
+                                ]
+                            ]
+                        },
+                        {
+                            u"widgetSlots":[
+                                [
+                                    u"headerWidget"
+                                ]
+                            ]
+                        },
+                        {
+                            u"titleKey":u"readingTimeGroup",
+                            u"widgetSlots":[
+                                [
+                                    u"timeToReadWidget"
+                                ]
+                            ]
+                        },
+                        {
+                            u"widgetSlots":[
+                                [
+                                    u"markAsReadingWidget"
+                                ]
+                            ]
+                        },
+                        {
+                            u"titleKey":u"audibleGroup",
+                            u"widgetSlots":[
+                                [
+                                    u"audibleNarration"
+                                ]
+                            ]
+                        },
+                        {
+                            u"titleKey":u"seriesGroup",
+                            u"widgetSlots":[
+                                [
+                                    u"positionInSeriesWidgetWithText"
+                                ],
+                                [
+                                    u"previousBookInTheSeriesWidget"
+                                ]
+                            ]
+                        },
+                        {
+                            u"titleKey":u"authorsGroupWithSingleAuthor",
+                            u"widgetSlots":[
+                                [
+                                    u"aboutTheAuthorWidget"
+                                ],
+                                [
+                                    u"authorNamesListWidget"
+                                ],
+                                [
+                                    u"authorRecsBookGridWidgetWithTitleSingleAuthorBuyInApp",
+                                    u"authorRecsShovelerWidgetWithTitleNoPlaceholderSingleAuthor"
+                                ]
+                            ]
+                        },
+                        {
+                            u"titleKey":u"xrayGroup",
+                            u"widgetSlots":[
+                                [
+                                    u"xray"
+                                ]
+                            ]
+                        },
+                        {
+                            u"widgetSlots":[
+                                [
+                                    u"grokTeaserWidget"
+                                ]
+                            ]
+                        },
+                        {
+                            u"titleKey":u"citationsGroup",
+                            u"widgetSlots":[
+                                [
+                                    u"citationRecsBookGridWidgetBuyInApp",
+                                    u"citationRecsShovelerWidget"
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                u"requiredWidgets":[
+                    u"headerWidget"
+                ]
+            },
+            {
+                u"metricsTag":u"glf",
+                u"class":u"groupedLayoutWithFooter",
+                u"strings":{
+                    u"seriesGroup":{
+                        u"de":u"Infos zur Serie",
+                        u"en":u"About the series",
+                        u"en-US":u"About the series",
+                        u"es":u"Acerca de la serie",
+                        u"fr":u"\u00c0 propos de cette s\u00e9rie",
+                        u"it":u"Informazioni sulle serie",
+                        u"ja":u"\u3053\u306e\u30b7\u30ea\u30fc\u30ba\u306b\u3064\u3044\u3066",
+                        u"nl":u"Over de reeks",
+                        u"pt-BR":u"Informa\u00e7\u00f5es da s\u00e9rie",
+                        u"ru":u"\u041e\u0431 \u044d\u0442\u043e\u0439 \u0441\u0435\u0440\u0438\u0438",
+                        u"zh-CN":u"\u5173\u4e8e\u7cfb\u5217"
+                    },
+                    u"xrayGroup":{
+                        u"de":u"X-Ray",
+                        u"en-US":u"X-Ray",
+                        u"ru":u"X-Ray",
+                        u"pt-BR":u"X-Ray",
+                        u"ja":u"X-Ray",
+                        u"en":u"X-Ray",
+                        u"it":u"X-Ray",
+                        u"fr":u"X-Ray",
+                        u"zh-CN":u"X-Ray",
+                        u"es":u"X-Ray",
+                        u"nl":u"X-Ray"
+                    },
+                    u"bookDescriptionEInkGroup":{
+                        u"de":u"Im Shop anschauen",
+                        u"en":u"See in store",
+                        u"en-US":u"See in store",
+                        u"es":u"Ver en tienda",
+                        u"fr":u"Voir dans la boutique",
+                        u"it":u"Visualizza nel Negozio",
+                        u"ja":u"\u30b9\u30c8\u30a2\u3067\u898b\u308b",
+                        u"nl":u"Weergeven in de winkel",
+                        u"pt-BR":u"Ver na loja",
+                        u"ru":u"\u041f\u043e\u0441\u043c\u043e\u0442\u0440\u0435\u0442\u044c \u0432 \u043c\u0430\u0433\u0430\u0437\u0438\u043d\u0435",
+                        u"zh-CN":u"\u5728\u5546\u5e97\u4e2d\u67e5\u770b"
+                    },
+                    u"authorsGroupWithSingleAuthor":{
+                        u"de":u"\u00dcber den Autor",
+                        u"en":u"About the author",
+                        u"en-US":u"About the author",
+                        u"es":u"Acerca del autor",
+                        u"fr":u"\u00c0 propos de l'auteur",
+                        u"it":u"Informazioni sull'autore",
+                        u"ja":u"\u8457\u8005\u306b\u3064\u3044\u3066",
+                        u"nl":u"Over de auteur",
+                        u"pt-BR":u"Informa\u00e7\u00f5es do autor",
+                        u"ru":u"\u041e\u0431 \u0430\u0432\u0442\u043e\u0440\u0435",
+                        u"zh-CN":u"\u5173\u4e8e\u4f5c\u8005"
+                    },
+                    u"readingTimeGroup":{
+                        u"de":u"Typische Lesezeit",
+                        u"en":u"Typical time to read",
+                        u"en-US":u"Typical time to read",
+                        u"es":u"Tiempo de lectura t\u00edpico",
+                        u"fr":u"Temps de lecture typique",
+                        u"it":u"Tempo di lettura tipico",
+                        u"ja":u"\u8aad\u307f\u7d42\u3048\u308b\u307e\u3067\u306e\u5e73\u5747\u7684\u306a\u6642\u9593",
+                        u"nl":u"Gebruikelijke leestijd",
+                        u"pt-BR":u"Tempo t\u00edpico para leitura",
+                        u"ru":u"\u0421\u0440\u0435\u0434\u043d\u0435\u0435 \u0432\u0440\u0435\u043c\u044f \u0447\u0442\u0435\u043d\u0438\u044f",
+                        u"zh-CN":u"\u5e38\u89c4\u9605\u8bfb\u65f6\u95f4"
+                    },
+                    u"citationsGroup":{
+                        u"de":u"In diesem Buch erw\u00e4hnt",
+                        u"en":u"Mentioned in this book",
+                        u"en-US":u"Mentioned in this book",
+                        u"es":u"Mencionado en este libro",
+                        u"fr":u"Mentionn\u00e9s dans ce livre",
+                        u"it":u"Menzionati in questo libro",
+                        u"ja":u"\u3053\u306e\u4f5c\u54c1\u306b\u51fa\u3066\u304f\u308b\u672c",
+                        u"nl":u"Genoemd in dit boek",
+                        u"pt-BR":u"Mencionado neste eBook",
+                        u"ru":u"\u0423\u043f\u043e\u043c\u0438\u043d\u0430\u0435\u0442\u0441\u044f \u0432 \u044d\u0442\u043e\u0439 \u043a\u043d\u0438\u0433\u0435",
+                        u"zh-CN":u"\u672c\u4e66\u63d0\u53ca\u7684"
+                    },
+                    u"welcomeGroup":{
+                        u"de":u"Willkommen!",
+                        u"en":u"Welcome!",
+                        u"en-US":u"Welcome!",
+                        u"es":u"\u00a1Bienvenido!",
+                        u"fr":u"Bienvenue\u00a0!",
+                        u"it":u"Benvenuto!",
+                        u"ja":u"\u3088\u3046\u3053\u305d!",
+                        u"nl":u"Welkom",
+                        u"pt-BR":u"Bem-vindo!",
+                        u"ru":u"\u0414\u043e\u0431\u0440\u043e \u043f\u043e\u0436\u0430\u043b\u043e\u0432\u0430\u0442\u044c!",
+                        u"zh-CN":u"\u6b22\u8fce\uff01"
+                    },
+                    u"audibleGroup":{
+                        u"de":u"Auf Audible-Erz\u00e4hlung erweitern",
+                        u"en":u"Upgrade to Audible Narration",
+                        u"en-US":u"Upgrade to Audible Narration",
+                        u"es":u"Actualizar a narraci\u00f3n Audible",
+                        u"fr":u"Passer \u00e0 la narration Audible",
+                        u"it":u"Passa alla narrazione Audible",
+                        u"ja":u"Audible\u30ca\u30ec\u30fc\u30b7\u30e7\u30f3\u3078\u30a2\u30c3\u30d7\u30b0\u30ec\u30fc\u30c9",
+                        u"nl":u"Upgraden naar Audible Narration",
+                        u"pt-BR":u"Atualizar para narra\u00e7\u00e3o Audible",
+                        u"ru":u"\u041f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0434\u043e\u0441\u0442\u0443\u043f \u043a \u0437\u0430\u043a\u0430\u0434\u0440\u043e\u0432\u043e\u043c\u0443 \u0442\u0435\u043a\u0441\u0442\u0443 Audible",
+                        u"zh-CN":u"\u5347\u7ea7\u5230\u3016Audible Narration\u3017"
+                    }
+                },
+                u"widgetPlacements":{
+                    u"footer":[
+                        {
+                            u"widgetSlots":[
+                                [
+                                    u"readerSettingsWidget"
+                                ]
+                            ]
+                        }
+                    ],
+                    u"body":[
+                        {
+                            u"titleKey":u"welcomeGroup",
+                            u"widgetSlots":[
+                                [
+                                    u"welcomeTextWidget"
+                                ]
+                            ]
+                        },
+                        {
+                            u"titleKey":u"bookDescriptionEInkGroup",
+                            u"widgetSlots":[
+                                [
+                                    u"bookDescriptionWidget"
+                                ]
+                            ]
+                        },
+                        {
+                            u"titleKey":u"readingTimeGroup",
+                            u"widgetSlots":[
+                                [
+                                    u"timeToReadWidget"
+                                ]
+                            ]
+                        },
+                        {
+                            u"widgetSlots":[
+                                [
+                                    u"markAsReadingWidget"
+                                ]
+                            ]
+                        },
+                        {
+                            u"titleKey":u"audibleGroup",
+                            u"widgetSlots":[
+                                [
+                                    u"audibleNarration"
+                                ]
+                            ]
+                        },
+                        {
+                            u"titleKey":u"seriesGroup",
+                            u"widgetSlots":[
+                                [
+                                    u"positionInSeriesWidgetWithText"
+                                ],
+                                [
+                                    u"previousBookInTheSeriesWidget"
+                                ]
+                            ]
+                        },
+                        {
+                            u"titleKey":u"authorsGroupWithSingleAuthor",
+                            u"widgetSlots":[
+                                [
+                                    u"aboutTheAuthorWidget"
+                                ],
+                                [
+                                    u"authorNamesListWidget"
+                                ],
+                                [
+                                    u"authorRecsBookGridWidgetWithTitleSingleAuthorBuyInApp",
+                                    u"authorRecsShovelerWidgetWithTitleNoPlaceholderSingleAuthor"
+                                ]
+                            ]
+                        },
+                        {
+                            u"titleKey":u"xrayGroup",
+                            u"widgetSlots":[
+                                [
+                                    u"xray"
+                                ]
+                            ]
+                        },
+                        {
+                            u"widgetSlots":[
+                                [
+                                    u"grokTeaserWidget"
+                                ]
+                            ]
+                        },
+                        {
+                            u"titleKey":u"citationsGroup",
+                            u"widgetSlots":[
+                                [
+                                    u"citationRecsBookGridWidgetBuyInApp",
+                                    u"citationRecsShovelerWidget"
+                                ]
+                            ]
+                        }
+                    ]
+                }
+            }
+        ],
+        u"data":{
+            u"welcomeText":{
+                u"class":u"dynamicText",
+                u"localizedText":{
+                    u"de":u"\u201e\u00dcber dieses Buch\u201c zeigt Ihnen zus\u00e4tzliche Informationen \u00fcber Ihr Buch, wenn Sie es das erste mal \u00f6ffnen. Sie k\u00f6nnen es jederzeit im linken Men\u00fc \u00f6ffnen.",
+                    u"en":u"About This Book shows you additional information about your book the first time you open it. You can access it at any time from the menu.",
+                    u"en-US":u"About This Book shows you additional information about your book the first time you open it. You can access it at any time from the menu.",
+                    u"es":u"Acerca del libro te muestra informaci\u00f3n adicional sobre un libro la primera vez que lo abres. Puedes acceder a esta funci\u00f3n en cualquier momento desde el men\u00fa.",
+                    u"fr":u"\u00c0 propos du livre pr\u00e9sente des informations additionnelles sur un livre quand vous l'ouvrez pour la premi\u00e8re fois. Vous pouvez y acc\u00e9der \u00e0 tout moment depuis le menu.",
+                    u"it":u"Informazioni sul libro presenta informazioni aggiuntive sul libro la prima volta che lo apri. Puoi accedervi in qualsiasi momento dal menu.",
+                    u"ja":u"\u672c\u3092\u521d\u3081\u3066\u958b\u304f\u3068\u3001\u672c\u306e\u8a73\u7d30\u60c5\u5831\u3092\u8868\u793a\u3059\u308b\u300c\u3053\u306e\u672c\u306b\u3064\u3044\u3066\u300d\u30c0\u30a4\u30a2\u30ed\u30b0\u30dc\u30c3\u30af\u30b9\u304c\u958b\u304d\u307e\u3059\u3002\u3053\u306e\u30c0\u30a4\u30a2\u30ed\u30b0\u306f\u30e1\u30cb\u30e5\u30fc\u304b\u3089\u3044\u3064\u3067\u3082\u958b\u304f\u3053\u3068\u304c\u3067\u304d\u307e\u3059\u3002",
+                    u"nl":u"In Over dit boek wordt aanvullende informatie weergegeven over uw boek bij de eerste keer dat u dit opent. U kunt dit op elk gewenst moment bekijken in het menu.",
+                    u"pt-BR":u"O recurso Informa\u00e7\u00f5es do eBook mostra-lhe informa\u00e7\u00f5es adicionais do eBook na primeira vez que abri-lo. \u00c9 poss\u00edvel acess\u00e1-lo a qualquer momento no menu.",
+                    u"ru":u"\u0421 \u043f\u043e\u043c\u043e\u0449\u044c\u044e \u0444\u0443\u043d\u043a\u0446\u0438\u0438 \u00ab\u041e \u043a\u043d\u0438\u0433\u0435\u00bb \u0432\u044b \u0432\u0438\u0434\u0438\u0442\u0435 \u0434\u043e\u043f\u043e\u043b\u043d\u0438\u0442\u0435\u043b\u044c\u043d\u0443\u044e \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044e \u043e \u043a\u043d\u0438\u0433\u0435, \u043a\u043e\u0433\u0434\u0430 \u043e\u0442\u043a\u0440\u044b\u0432\u0430\u0435\u0442\u0435 \u043a\u043d\u0438\u0433\u0443 \u0432\u043f\u0435\u0440\u0432\u044b\u0435. \u041a\u043e\u0441\u043d\u0438\u0442\u0435\u0441\u044c \u043a\u043d\u043e\u043f\u043a\u0438 \u00ab\u041c\u0435\u043d\u044e\u00bb, \u0447\u0442\u043e\u0431\u044b \u043e\u0442\u043a\u0440\u044b\u0442\u044c \u0444\u0443\u043d\u043a\u0446\u0438\u044e \u0432 \u043b\u044e\u0431\u043e\u0435 \u0432\u0440\u0435\u043c\u044f.",
+                    u"zh-CN":u"\u3010\u5173\u4e8e\u672c\u4e66\u3011\u4f1a\u5728\u60a8\u7b2c\u4e00\u6b21\u6253\u5f00\u672c\u4e66\u65f6\u4e3a\u60a8\u663e\u793a\u76f8\u5173\u4fe1\u606f\u3002\u60a8\u53ef\u4ee5\u968f\u65f6\u901a\u8fc7\u83dc\u5355\u8fdb\u884c\u8bbf\u95ee\u3002"
+                },
+                u"localizedSubtext":{
+                    u"de":u"Sie k\u00f6nnen Anpassungen vornehmen, wenn \u201eInfos zum Buch\u201c erscheint, indem Sie auf den den Link f\u00fcr Einstellungen tippen.",
+                    u"en":u"You can adjust when About This Book appears by tapping the Settings link below.",
+                    u"en-US":u"You can adjust when About This Book appears by tapping the Settings link below.",
+                    u"es":u"Puedes ajustar cuando se muestra Acerca del libro pulsando en el enlace a Configuraci\u00f3n que hay a continuaci\u00f3n.",
+                    u"fr":u"Vous pouvez choisir d'activer ou non l'option \u00c0 propos du livre en touchant le lien Param\u00e8tres ci-dessous.",
+                    u"it":u"Puoi regolare la visualizzazione di Informazioni sul libro toccando il link Impostazioni qui sotto.",
+                    u"ja":u"\u300c\u3053\u306e\u672c\u306b\u3064\u3044\u3066\u300d\u306e\u8868\u793a\u306f\u3001\u4e0b\u306e\u300c\u8a2d\u5b9a\u300d\u30ea\u30f3\u30af\u3092\u30bf\u30c3\u30d7\u3057\u3066\u5909\u66f4\u3067\u304d\u307e\u3059\u3002",
+                    u"nl":u"U kunt aanpassen wanneer Over dit boek wordt weergegeven door hieronder op de link Instellingen te tikken.",
+                    u"pt-BR":u"\u00c9 poss\u00edvel ajustar quando o recurso Informa\u00e7\u00f5es do eBook aparece ao tocar em Configura\u00e7\u00f5es no link abaixo.",
+                    u"ru":u"\u041a\u043e\u0441\u043d\u0438\u0442\u0435\u0441\u044c \u0441\u0441\u044b\u043b\u043a\u0438 \u00ab\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438\u00bb, \u0447\u0442\u043e\u0431\u044b \u043d\u0430\u0441\u0442\u0440\u043e\u0438\u0442\u044c \u0444\u0443\u043d\u043a\u0446\u0438\u044e \u00ab\u041e \u043a\u043d\u0438\u0433\u0435\u00bb.",
+                    u"zh-CN":u"\u60a8\u53ef\u4ee5\u70b9\u51fb\u4e0b\u65b9\u7684\u3010\u8bbe\u7f6e\u3011\u94fe\u63a5\u8c03\u6574\u3010\u5173\u4e8e\u672c\u4e66\u3011\u7684\u663e\u793a\u9891\u7387\u3002"
+                }
+            },
+            u"grokShelfInfo":{
+                u"class":u"goodReadsShelfInfo",
+                u"shelves":[
+                    u"to-read"
+                ]
+            },
+            u"authorBios":{
+                u"class":u"authorBioList",
+                u"authors":[]
+            },
+            u"readingTime":{
+                u"class":u"time",
+                u"formattedTime":{
+                    u"de":u"$H Stunden und $M Minuten",
+                    u"en-US":u"$H hours and $M minutes",
+                    u"ru":u"$H\u00a0\u0447 \u0432 $M\u00a0\u043c\u0432\u043d",
+                    u"pt-BR":u"$H horas e $M minutos",
+                    u"ja":u"$H\u6642\u9593$M\u5206",
+                    u"en":u"$H hours and $M minutes",
+                    u"it":u"$H ore e $M minuti",
+                    u"fr":u"$H heures et $M minutes",
+                    u"zh-CN":u"$H \u5c0f\u65f6 $M \u5206\u949f",
+                    u"es":u"$H horas y $M minutos",
+                    u"nl":u"$H uur en $M minuten"
+                }
+            },
+            u"readingPages":{
+                u"class":u"pages"
             }
         }
     }

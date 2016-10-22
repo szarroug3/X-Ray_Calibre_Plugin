@@ -15,14 +15,16 @@ from calibre_plugins.xray_creator.lib.book import Book
 class XRayCreator(object):
     HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/html", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0"}
 
-    def __init__(self, db, book_ids, formats, send_to_device, create_xray, expand_aliases, send_author_profile, send_end_actions):
+    def __init__(self, db, book_ids, formats, send_to_device, create_xray_when_sending, expand_aliases, create_send_xray, send_author_profile, send_start_actions, send_end_actions):
         self._db = db
         self._book_ids = book_ids
         self._formats = formats
         self._send_to_device = send_to_device
-        self._create_xray = create_xray
+        self._create_xray_when_sending = create_xray_when_sending
         self._expand_aliases = expand_aliases
+        self._create_send_xray = create_send_xray
         self._send_author_profile = send_author_profile
+        self._send_start_actions = send_start_actions
         self._send_end_actions = send_end_actions
 
     @property
@@ -45,8 +47,9 @@ class XRayCreator(object):
         self._books = []
         for book_id in self._book_ids:
             self._books.append(Book(self._db, book_id, goodreads_conn, amazon_conn, self._formats,
-                self._send_to_device, self._create_xray, self._expand_aliases, self._send_author_profile,
-                self._send_end_actions))
+                self._send_to_device, self._create_xray_when_sending, self._expand_aliases,
+                self._create_send_xray, self._send_author_profile,
+                self._send_start_actions, self._send_end_actions))
         
         self._total_not_failing = 0
         book_lookup = {}
@@ -192,7 +195,7 @@ class XRayCreator(object):
         raise EnvironmentError(errno.ENOENT, "Kindle device not found (%s)" % (device_root))
 
 
-    def create_xrays_event(self, abort, log, notifications):
+    def create_files_event(self, abort, log, notifications):
         if log: log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         if notifications: notifications.put((0, 'Initializing...'))
         self._initialize_books(log)
@@ -200,7 +203,7 @@ class XRayCreator(object):
             if abort.isSet():
                 return
             if log: log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
-            book.create_xray_event(self._device_books, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
+            book.create_files_event(self._device_books, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
 
         self.get_results_create()
         log('\nX-Ray Creation:')
@@ -227,7 +230,7 @@ class XRayCreator(object):
                         log('\t\t%s' % line)
 
 
-    def send_xrays_event(self, abort, log, notifications):
+    def send_files_event(self, abort, log, notifications):
         if log: log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         if notifications: notifications.put((0, 'Initializing...'))
         self._initialize_books(log)
@@ -235,7 +238,7 @@ class XRayCreator(object):
             if abort.isSet():
                 return
             if log: log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
-            book.send_xray_event(self._device_books, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
+            book.send_files_event(self._device_books, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
 
         self.get_results_send()
         if len(self._send_completed) > 0:

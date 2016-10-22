@@ -7,7 +7,7 @@ __license__   = 'GPL v3'
 __copyright__ = '2016, Samreen Zarroug, Anthony Toole, & Alex Mayer'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QGroupBox, QFrame
+from PyQt5.Qt import QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QCheckBox, QGroupBox, QFrame
 
 from calibre.utils.config import JSONConfig
 
@@ -17,8 +17,10 @@ prefs = JSONConfig('plugins/xray_creator')
 prefs.defaults['send_to_device'] = True
 prefs.defaults['create_xray_when_sending'] = True
 prefs.defaults['expand_aliases'] = True
-prefs.defaults['create_send_author_profile_with_xray'] = False
-prefs.defaults['create_send_end_actions_with_xray'] = False
+prefs.defaults['create_send_xray'] = True
+prefs.defaults['create_send_author_profile'] = False
+prefs.defaults['create_send_start_actions'] = False
+prefs.defaults['create_send_end_actions'] = False
 prefs.defaults['mobi'] = True
 prefs.defaults['azw3'] = True
 
@@ -48,13 +50,27 @@ class ConfigWidget(QWidget):
         self.separator_a.setFrameShadow(QFrame.Sunken)
         self.l.addWidget(self.separator_a)
 
-        self.create_send_author_profile_with_xray = QCheckBox('Create/Send author profile with x-ray')
-        self.create_send_author_profile_with_xray.setChecked(prefs['create_send_author_profile_with_xray'])
-        self.l.addWidget(self.create_send_author_profile_with_xray)
+        self.files_to_create = QGroupBox()
+        self.files_to_create.setTitle('Files to create/send')
+        self.files_to_create.setLayout(QGridLayout (self.files_to_create))
 
-        self.create_send_end_actions_with_xray = QCheckBox('Create/Send end actions with x-ray')
-        self.create_send_end_actions_with_xray.setChecked(prefs['create_send_end_actions_with_xray'])
-        self.l.addWidget(self.create_send_end_actions_with_xray)
+        self.create_send_xray = QCheckBox('X-Ray')
+        self.create_send_xray.setChecked(prefs['create_send_xray'])
+        self.files_to_create.layout().addWidget(self.create_send_xray, 0, 0)
+
+        self.create_send_author_profile = QCheckBox('Author Profile')
+        self.create_send_author_profile.setChecked(prefs['create_send_author_profile'])
+        self.files_to_create.layout().addWidget(self.create_send_author_profile, 1, 0)
+
+        self.create_send_start_actions = QCheckBox('Start Actions')
+        self.create_send_start_actions.setChecked(prefs['create_send_start_actions'])
+        self.files_to_create.layout().addWidget(self.create_send_start_actions, 0, 1)
+
+        self.create_send_end_actions = QCheckBox('End Actions')
+        self.create_send_end_actions.setChecked(prefs['create_send_end_actions'])
+        self.files_to_create.layout().addWidget(self.create_send_end_actions, 1, 1)
+
+        self.l.addWidget(self.files_to_create)
 
         self.separator_b = QFrame()
         self.separator_b.setFrameStyle(QFrame.HLine)
@@ -79,7 +95,9 @@ class ConfigWidget(QWidget):
         prefs['send_to_device'] = self.send_to_device.isChecked()
         prefs['create_xray_when_sending'] = self.create_xray_when_sending.isChecked()
         prefs['expand_aliases'] = self.expand_aliases.isChecked()
-        prefs['create_send_author_profile_with_xray'] = self.create_send_author_profile_with_xray.isChecked()
-        prefs['create_send_end_actions_with_xray'] = self.create_send_end_actions_with_xray.isChecked()
+        prefs['create_send_xray'] = self.create_send_xray.isChecked()
+        prefs['create_send_author_profile'] = self.create_send_author_profile.isChecked()
+        prefs['create_send_start_actions'] = self.create_send_start_actions.isChecked()
+        prefs['create_send_end_actions'] = self.create_send_end_actions.isChecked()
         prefs['mobi'] = self.mobi.isChecked()
         prefs['azw3'] = self.azw3.isChecked()
