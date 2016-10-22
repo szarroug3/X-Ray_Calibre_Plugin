@@ -7,7 +7,8 @@ __license__   = 'GPL v3'
 __copyright__ = '2016, Samreen Zarroug, Anthony Toole, & Alex Mayer'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QCheckBox, QGroupBox, QFrame
+from PyQt5.Qt import QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox, QFrame
+from PyQt5.Qt import QButtonGroup, QRadioButton, QCheckBox
 
 from calibre.utils.config import JSONConfig
 
@@ -21,6 +22,7 @@ prefs.defaults['create_send_xray'] = True
 prefs.defaults['create_send_author_profile'] = False
 prefs.defaults['create_send_start_actions'] = False
 prefs.defaults['create_send_end_actions'] = False
+prefs.defaults['file_preference'] = 'MOBI'
 prefs.defaults['mobi'] = True
 prefs.defaults['azw3'] = True
 
@@ -52,7 +54,7 @@ class ConfigWidget(QWidget):
 
         self.files_to_create = QGroupBox()
         self.files_to_create.setTitle('Files to create/send')
-        self.files_to_create.setLayout(QGridLayout (self.files_to_create))
+        self.files_to_create.setLayout(QGridLayout(self.files_to_create))
 
         self.create_send_xray = QCheckBox('X-Ray')
         self.create_send_xray.setChecked(prefs['create_send_xray'])
@@ -69,7 +71,6 @@ class ConfigWidget(QWidget):
         self.create_send_end_actions = QCheckBox('End Actions')
         self.create_send_end_actions.setChecked(prefs['create_send_end_actions'])
         self.files_to_create.layout().addWidget(self.create_send_end_actions, 1, 1)
-
         self.l.addWidget(self.files_to_create)
 
         self.separator_b = QFrame()
@@ -79,7 +80,7 @@ class ConfigWidget(QWidget):
 
         self.book_types_to_create = QGroupBox()
         self.book_types_to_create.setTitle('Book types to create x-ray files for')
-        self.book_types_to_create.setLayout(QHBoxLayout (self.book_types_to_create))
+        self.book_types_to_create.setLayout(QHBoxLayout(self.book_types_to_create))
 
         self.mobi = QCheckBox('MOBI')
         self.mobi.setChecked(prefs['mobi'])
@@ -88,8 +89,23 @@ class ConfigWidget(QWidget):
         self.azw3 = QCheckBox('AZW3')
         self.azw3.setChecked(prefs['azw3'])
         self.book_types_to_create.layout().addWidget(self.azw3)
-
         self.l.addWidget(self.book_types_to_create)
+
+        self.file_preference_layout = QGroupBox()
+        self.file_preference_layout.setTitle('If device has both (mobi and azw3) formats, prefer:')
+        self.file_preference_layout.setLayout(QHBoxLayout(self.file_preference_layout))
+
+        self.file_preference_group = QButtonGroup()
+        self.file_preference_mobi = QRadioButton('MOBI')
+        self.file_preference_mobi.setChecked(prefs['file_preference'] == 'MOBI')
+        self.file_preference_group.addButton(self.file_preference_mobi)
+        self.file_preference_layout.layout().addWidget(self.file_preference_mobi)
+
+        self.file_preference_azw3 = QRadioButton('AZW3')
+        self.file_preference_azw3.setChecked(prefs['file_preference'] == 'AZW3')
+        self.file_preference_group.addButton(self.file_preference_azw3)
+        self.file_preference_layout.layout().addWidget(self.file_preference_azw3)
+        self.l.addWidget(self.file_preference_layout)
 
     def save_settings(self):
         prefs['send_to_device'] = self.send_to_device.isChecked()
@@ -99,5 +115,9 @@ class ConfigWidget(QWidget):
         prefs['create_send_author_profile'] = self.create_send_author_profile.isChecked()
         prefs['create_send_start_actions'] = self.create_send_start_actions.isChecked()
         prefs['create_send_end_actions'] = self.create_send_end_actions.isChecked()
+        if self.file_preference_mobi.isChecked():
+            prefs['file_preference'] = 'MOBI'
+        elif self.file_preference_azw3.isChecked():
+            prefs['file_preference'] = 'AZW3'
         prefs['mobi'] = self.mobi.isChecked()
         prefs['azw3'] = self.azw3.isChecked()

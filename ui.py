@@ -40,11 +40,11 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
                 'Book Specific Preferences', None, 'CTRL+SHIFT+ALT+Z',
                 'Set preferences specific to the book', self.book_config)
         self.create_menu_action(self.menu, 'X-Ray Creator Create/Update Button',
-                'Create/Update X-Rays', None, 'CTRL+SHIFT+ALT+X',
-                'Create/Update x-rays for chosen books', self.create_xrays)
-        self.create_menu_action(self.menu, 'Send Local X-Rays to Device',
-                'Sends X-Ray Files to Device', None, 'CTRL+SHIFT+ALT+C',
-                'Sends x-Ray files to device', self.send_xrays)
+                'Create/Update Files', None, 'CTRL+SHIFT+ALT+X',
+                'Create/Update files for chosen books', self.create_files)
+        self.create_menu_action(self.menu, 'Send Local Files to Device',
+                'Sends Files to Device', None, 'CTRL+SHIFT+ALT+C',
+                'Sends files to device', self.send_files)
 
         self.menu.addSeparator()
 
@@ -62,19 +62,20 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         self._create_send_author_profile = prefs['create_send_author_profile']
         self._create_send_start_actions = prefs['create_send_start_actions']
         self._create_send_end_actions = prefs['create_send_end_actions']
+        self._file_preference = prefs['file_preference']
         self._mobi = prefs['mobi']
         self._azw3 = prefs['azw3']
 
-    def create_xrays(self):
-        xray_creator = self._get_books('Cannot create X-Rays')
+    def create_files(self):
+        xray_creator = self._get_books('Cannot create Files')
         if xray_creator:
-            job = ThreadedJob('create_xray', 'Creating X-Ray Files', xray_creator.create_files_event, (), {}, Dispatcher(self.created_xrays))
+            job = ThreadedJob('create_files', 'Creating Files', xray_creator.create_files_event, (), {}, Dispatcher(self.created_files))
             self.gui.job_manager.run_threaded_job(job)
 
-    def send_xrays(self):
-        xray_creator = self._get_books('Cannot send X-Rays')
+    def send_files(self):
+        xray_creator = self._get_books('Cannot send Files')
         if xray_creator:
-            job = ThreadedJob('create_xray', 'Sending X-Ray Files to Device', xray_creator.send_files_event, (), {}, Dispatcher(self.sent_xrays))
+            job = ThreadedJob('send_files', 'Sending Files to Device', xray_creator.send_files_event, (), {}, Dispatcher(self.sent_files))
             self.gui.job_manager.run_threaded_job(job)
 
     def book_config(self):
@@ -90,10 +91,10 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
         book_configs = BookConfigWidget(db, ids, self._expand_aliases, self.gui)
 
-    def created_xrays(self, job):
+    def created_files(self, job):
         pass
 
-    def sent_xrays(self, job):
+    def send_files(self, job):
         pass
 
     def _get_books(self, error_msg):
@@ -120,7 +121,8 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         if self._azw3:
             formats.append('AZW3')
 
-        xray_creator = XRayCreator(db, ids, formats, self._send_to_device, self._create_xray_when_sending, self._expand_aliases, self._create_send_xray, self._create_send_author_profile, self_create._send_start_actions, self._create_send_end_actions)
+        xray_creator = XRayCreator(db, ids, formats, self._send_to_device, self._create_xray_when_sending, self._expand_aliases, self._create_send_xray,
+            self._create_send_author_profile, self._create_send_start_actions, self._create_send_end_actions, self._file_preference)
         return xray_creator
 
     def config(self):

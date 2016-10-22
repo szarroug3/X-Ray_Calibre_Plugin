@@ -47,8 +47,6 @@ class BookSettings(object):
         self.prefs.setdefault('asin', '')
         self.prefs.setdefault('goodreads_url', '')
         self.prefs.setdefault('aliases', {})
-        self.prefs.setdefault('author_profile', None)
-        self.prefs.setdefault('end_actions', None)
         self.prefs.commit()
 
         self._title = self._db.field_for('title', book_id)
@@ -135,22 +133,6 @@ class BookSettings(object):
         aliases = [x.strip() for x in aliases.split(",") if x.strip()]
         self._aliases[label] =  aliases
 
-    @property
-    def author_profile(self):
-        return self.prefs['author_profile']
-
-    @property
-    def end_actions(self):
-        return self.prefs['end_actions']
-
-    @author_profile.setter
-    def author_profile(self, val):
-        self.prefs['author_profile'] = val
-        
-    @end_actions.setter
-    def end_actions(self, val):
-        self.prefs['end_actions'] = val
-
     def save(self):
         self.prefs['asin'] = self.asin
         self.prefs['goodreads_url'] = self.goodreads_url
@@ -218,7 +200,7 @@ class BookSettings(object):
         goodreads_parser = GoodreadsParser(url, self._goodreads_conn, self._asin, create_xray=True, raise_error_on_page_not_found=raise_error_on_page_not_found)
         goodreads_parser.get_characters()
         goodreads_parser.get_settings()
-        goodreads_chars =  goodreads_parser.characters
+        goodreads_chars = goodreads_parser.characters
 
         if overwrite:
             self.prefs['aliases'] = {}
