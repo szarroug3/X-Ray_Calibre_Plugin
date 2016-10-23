@@ -73,7 +73,6 @@ class BookOld(object):
         self._goodreads_conn = goodreads_conn
 
         book_path = os.path.join(self.LIBRARY, self._db.field_for('path', book_id).replace('/', os.sep))
-        print book_path
         self._book_settings = BookSettings(self._db, self._book_id, self._goodreads_conn, amazon_conn, expand_aliases)
 
         self._get_basic_information()
