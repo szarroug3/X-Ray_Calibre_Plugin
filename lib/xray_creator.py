@@ -14,19 +14,20 @@ from calibre.devices.scanner import DeviceScanner
 from calibre_plugins.xray_creator.lib.book import Book
 
 class XRayCreator(object):
-    def __init__(self, db, book_ids, formats, send_to_device, create_xray_when_sending, expand_aliases,
+    def __init__(self, db, book_ids, formats, send_to_device, create_files_when_sending, expand_aliases,
         create_send_xray, create_send_author_profile, create_send_start_actions, create_send_end_actions, file_preference):
         self._db = db
         self._book_ids = book_ids
         self._formats = formats
         self._send_to_device = send_to_device
-        self._create_xray_when_sending = create_xray_when_sending
+        self._create_files_when_sending = create_files_when_sending
         self._expand_aliases = expand_aliases
         self._create_send_xray = create_send_xray
         self._create_send_author_profile = create_send_author_profile
         self._create_send_start_actions = create_send_start_actions
         self._create_send_end_actions = create_send_end_actions
         self._file_preference = file_preference
+        self._num_of_formats_found_on_device = -1
 
     @property
     def books(self):
@@ -48,7 +49,7 @@ class XRayCreator(object):
         self._books = []
         for book_id in self._book_ids:
             self._books.append(Book(self._db, book_id, goodreads_conn, amazon_conn, self._formats,
-                self._send_to_device, self._create_xray_when_sending, self._expand_aliases,
+                self._send_to_device, self._create_files_when_sending, self._expand_aliases,
                 self._create_send_xray, self._create_send_author_profile, self._create_send_start_actions,
                 self._create_send_end_actions, self._file_preference))
         
@@ -135,34 +136,36 @@ class XRayCreator(object):
                 fmts_failed = []
                 if self._create_send_xray and hasattr(book, '_xray_send_status'):
                     if book.xray_send_status == book.FAIL:
-                        if hasattr(book, '_xray_sent_fmt'):
-                            fmts_failed.append('X-Ray ({0}): {1}'.format(book.xray_sent_fmt, book.xray_send_status_message))
+                        if hasattr(book, '_xray_send_fmt'):
+                            fmts_failed.append('X-Ray ({0}): {1}'.format(book.xray_send_fmt, book.xray_send_status_message))
                         else:
                             fmts_failed.append('X-Ray: {0}'.format(book.xray_send_status_message))
                     else:
-                        fmts_completed.append('X-Ray ({0})'.format(book.xray_sent_fmt))
-                if self._create_send_author_profile and book.author_profile_status != book.FAIL:
-                    if book.author_profile_send_status == book.FAIL:
-                        fmts_failed.append('Author Profile: {0}'.format(book.author_profile_send_status_message))
+                        fmts_completed.append('X-Ray ({0})'.format(book.xray_send_fmt))
+                if self._create_send_author_profile:
+                    if book.author_profile_status == book.FAIL:
+                        fmts_failed.append('Author Profile: {0}'.format(book.author_profile_status_message))
                     else:
-                        fmts_completed.append('Author Profile')
-                if self._create_send_start_actions and book.start_actions_status != book.FAIL:
-                    if book.start_actions_send_status == book.FAIL:
-                        fmts_failed.append('Start Actions: {0}'.format(book.start_actions_send_status_message))
+                        if book.author_profile_send_status == book.FAIL:
+                            fmts_failed.append('Author Profile: {0}'.format(book.author_profile_send_status_message))
+                        else:
+                            fmts_completed.append('Author Profile')
+                if self._create_send_start_actions:
+                    if book.start_actions_status == book.FAIL:
+                        fmts_failed.append('Start Actions: {0}'.format(book.start_actions_status_message))
                     else:
-                        fmts_completed.append('Start Actions')
-                if self._create_send_end_actions and book.end_actions_status != book.FAIL:
-                    if book.end_actions_send_status == book.FAIL:
-                        fmts_failed.append('End Actions: {0}'.format(book.end_actions_send_status_message))
+                        if book.start_actions_send_status == book.FAIL:
+                            fmts_failed.append('Start Actions: {0}'.format(book.start_actions_send_status_message))
+                        else:
+                            fmts_completed.append('Start Actions')
+                if self._create_send_end_actions:
+                    if book.end_actions_status == book.FAIL:
+                        fmts_failed.append('End Actions: {0}'.format(book.end_actions_status_message))
                     else:
-                        fmts_completed.append('End Actions')
-
-                if len(fmts_completed) > 0:
-                    self._create_completed.append('{0}: {1}'.format(book.title_and_author, ', '.join(fmts_completed)))
-                if len(fmts_failed) > 0:
-                    self._create_failed.append('{0}:'.format(book.title_and_author))
-                    for fmt_info in fmts_failed:
-                        self._create_failed.append('    {0}'.format(fmt_info))
+                        if book.end_actions_send_status == book.FAIL:
+                            fmts_failed.append('End Actions: {0}'.format(book.end_actions_send_status_message))
+                        else:
+                            fmts_completed.append('End Actions')
 
                 if len(fmts_completed) > 0:
                     self._send_completed.append('{0}: {1}'.format(book.title_and_author, ', '.join(fmts_completed)))
@@ -202,6 +205,7 @@ class XRayCreator(object):
                 dev = d
                 break
 
+        self._num_of_formats_found_on_device = 0
         try:
             books = defaultdict(dict)
             for book in dev.books():
@@ -212,11 +216,14 @@ class XRayCreator(object):
                         continue
                     books[book_id][fmt] = {'device_book': book.path,
                         'device_sdr': '.'.join(book.path.split('.')[:-1]) + '.sdr'}
+                    self._num_of_formats_found_on_device += 1
             return books
         except (TypeError, AttributeError) as e:
+            self._num_of_formats_found_on_device = -1
             log('%s Device found but cannot be accessed. It may have been ejected but not unplugged.' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
             return None
         except Exception as e:
+            self._num_of_formats_found_on_device = -1
             log('%s Something unexpectedly went wrong: %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), e))
 
     def _find_device_root(self, device_book):
@@ -239,7 +246,6 @@ class XRayCreator(object):
         if os.path.exists(magic_file) and open(magic_file).readline().startswith("Kindle"):
             return device_root
         raise EnvironmentError(errno.ENOENT, "Kindle device not found (%s)" % (device_root))
-
 
     def create_files_event(self, abort, log, notifications):
         if log: log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
@@ -283,18 +289,29 @@ class XRayCreator(object):
         if log: log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         if notifications: notifications.put((0, 'Initializing...'))
         self._initialize_books(log)
+
+        # something went wrong; we've already printed a message
+        if self._num_of_formats_found_on_device == -1:
+            if notifications: notifications.put((100, ' Unable to send files.'))
+            if log: log('{0} No device is connected.'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
+            return
+        if self._num_of_formats_found_on_device == 0:
+            if notifications: notifications.put((100, ' Unable to send files.'))
+            if log: log('{0} No matching books found on device. It may have been ejected but not unplugged.'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
+            return
+
         for book_num, book in enumerate(self.books_not_failing()):
             if abort.isSet():
                 return
             if log: log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
             book.send_files_event(self._device_books, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
 
-        # self.get_results_send()
-        # if len(self._send_completed) > 0:
-        #     log('\nBooks Completed:')
-        #     for line in self._send_completed:
-        #         log('    %s' % line)
-        # if len(self._send_failed) > 0:
-        #     log('\nBooks Failed:')
-        #     for line in self._send_failed:
-        #         log('    %s' % line)
+        self.get_results_send()
+        if len(self._send_completed) > 0:
+            log('\nBooks Completed:')
+            for line in self._send_completed:
+                log('    %s' % line)
+        if len(self._send_failed) > 0:
+            log('\nBooks Failed:')
+            for line in self._send_failed:
+                log('    %s' % line)

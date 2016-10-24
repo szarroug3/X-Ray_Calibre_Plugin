@@ -56,7 +56,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
     def apply_settings(self):
         self._send_to_device = prefs['send_to_device']
-        self._create_xray_when_sending = prefs['create_xray_when_sending']
+        self._create_files_when_sending = prefs['create_files_when_sending']
         self._expand_aliases = prefs['expand_aliases']
         self._create_send_xray = prefs['create_send_xray']
         self._create_send_author_profile = prefs['create_send_author_profile']
@@ -94,7 +94,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
     def created_files(self, job):
         pass
 
-    def send_files(self, job):
+    def sent_files(self, job):
         pass
 
     def _get_books(self, error_msg):
@@ -116,7 +116,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         if self._azw3:
             formats.append('azw3')
 
-        xray_creator = XRayCreator(db, ids, formats, self._send_to_device, self._create_xray_when_sending, self._expand_aliases, self._create_send_xray,
+        xray_creator = XRayCreator(db, ids, formats, self._send_to_device, self._create_files_when_sending, self._expand_aliases, self._create_send_xray,
             self._create_send_author_profile, self._create_send_start_actions, self._create_send_end_actions, self._file_preference)
         return xray_creator
 

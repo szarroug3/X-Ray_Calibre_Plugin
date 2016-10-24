@@ -17,7 +17,7 @@ prefs = JSONConfig('plugins/xray_creator')
 
 # Set defaults
 prefs.defaults['send_to_device'] = True
-prefs.defaults['create_xray_when_sending'] = True
+prefs.defaults['create_files_when_sending'] = True
 prefs.defaults['expand_aliases'] = True
 prefs.defaults['create_send_xray'] = True
 prefs.defaults['create_send_author_profile'] = False
@@ -38,9 +38,9 @@ class ConfigWidget(QWidget):
         self.send_to_device.setChecked(prefs['send_to_device'])
         self.l.addWidget(self.send_to_device)
 
-        self.create_xray_when_sending = QCheckBox('Create x-ray for files that don\'t already have them when sending to device')
-        self.create_xray_when_sending.setChecked(prefs['create_xray_when_sending'])
-        self.l.addWidget(self.create_xray_when_sending)
+        self.create_files_when_sending = QCheckBox('Create x-ray for files that don\'t already have them when sending to device')
+        self.create_files_when_sending.setChecked(prefs['create_files_when_sending'])
+        self.l.addWidget(self.create_files_when_sending)
 
         self.expand_aliases = QCheckBox('Auto associate split aliases [?]')
         self.expand_aliases.setChecked(prefs['expand_aliases'])
@@ -122,7 +122,7 @@ class ConfigWidget(QWidget):
 
     def save_settings(self):
         prefs['send_to_device'] = self.send_to_device.isChecked()
-        prefs['create_xray_when_sending'] = self.create_xray_when_sending.isChecked()
+        prefs['create_files_when_sending'] = self.create_files_when_sending.isChecked()
         prefs['expand_aliases'] = self.expand_aliases.isChecked()
         prefs['create_send_xray'] = self.create_send_xray.isChecked()
         prefs['create_send_author_profile'] = self.create_send_author_profile.isChecked()
