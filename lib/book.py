@@ -353,7 +353,7 @@ class Book(object):
                                             create_start_actions=create_start_actions, create_end_actions=create_end_actions)
                 if create_xray_format_info:
                     if log: log('{0}    Creating {1} x-ray...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S'), self.title_and_author))
-                    self._parse_book()
+                    self._parse_book(create_xray_format_info['format'], self._xray_format_information[create_xray_format_info['format']])
                     self._write_xray(self._xray_format_information[create_xray_format_info['format']])
                     if os.path.exists(create_xray_format_info['local']):
                         self._files_to_send['xray'] = create_xray_format_info
@@ -371,8 +371,6 @@ class Book(object):
                 if log: log('{0}    Sending files to device...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
                 self._send_files(device_books)
         except:
-            import traceback
-            traceback.print_exc()
             return
 
     def _parse_goodreads_data(self, create_xray=None, create_author_profile=None, create_start_actions=None, create_end_actions=None):
@@ -390,7 +388,7 @@ class Book(object):
                 create_start_actions=create_start_actions, create_end_actions=create_end_actions)
             goodreads_data.parse()
 
-            if self._create_send_xray:
+            if create_xray:
                 self._goodreads_xray = goodreads_data.xray
                 for char in self._goodreads_xray['characters'].values():
                     if char['label'] not in self._aliases.keys():
@@ -398,11 +396,11 @@ class Book(object):
 
                 self._book_settings.prefs['aliases'] = self._aliases
 
-            if self._create_send_author_profile:
+            if self.create_author_profile:
                 self._goodreads_author_profile = goodreads_data.author_profile
-            if self._create_send_start_actions:
+            if self.create_start_actions:
                 self._goodreads_start_actions = goodreads_data.start_actions
-            if self._create_send_end_actions:
+            if self.create_end_actions:
                 self._goodreads_end_actions = goodreads_data.end_actions
         except:
             self._status = self.FAIL
@@ -595,7 +593,7 @@ class Book(object):
 
         if self._create_send_xray:
             # figure out which format to send
-            formats_not_failing = [fmt for fmt, info in self._xray_format_information]
+            formats_not_failing = [fmt for fmt, info in self._xray_format_information.items()]
             common_formats = list(set(self._formats_on_device).intersection(formats_not_failing))
 
             if len(common_formats) == 0:
@@ -685,7 +683,7 @@ class Book(object):
             if self._create_send_xray and self._send_to_device.has_key('xray') and fmt == self._send_to_device['xray']['format']:
                 self._xray_send_status = self.FAIL
                 self._xray_send_status_message = self.FAILED_UNABLE_TO_UPDATE_ASIN
-                self._xray_send_fmt = format_picked
+                self._xray_send_fmt = self._files_to_send['xray']['format']
                 if self._files_to_send.has_key('xray'): del self._files_to_send['xray']
             if number_of_failed_asin_updates == len(self._formats_on_device):
                 if self._create_send_author_profile:
@@ -711,7 +709,7 @@ class Book(object):
                     os.remove('{0}.old'.format(device_filename))
                 if filetype == 'xray':
                     self._xray_send_status = self.SUCCESS
-                    self._xray_send_fmt = format_picked
+                    self._xray_send_fmt = self._files_to_send['xray']['format']
                 elif filetype == 'author_profile':
                     self._author_profile_send_status = self.SUCCESS
                 elif filetype == 'start_actions':
@@ -723,7 +721,7 @@ class Book(object):
                 if filetype == 'xray':
                     self._xray_send_status = self.FAIL
                     self._xray_send_status_message = self.FAILED_UNABLE_TO_SEND_XRAY
-                    self._xray_send_fmt = format_picked
+                    self._xray_send_fmt = self._xray_send_fmt
                 elif filetype == 'author_profile':
                     self._author_profile_send_status = self.FAIL
                     self._author_profile_send_status_message = self.FAILED_UNABLE_TO_SEND_AUTHOR_PROFILE
