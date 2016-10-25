@@ -17,7 +17,7 @@ class BookParser(object):
         self._book_path = book_path
         self._excerpt_data = {}
         self._entity_data = {}
-        self._quotes = goodreads_data.quotes
+        self._quotes = goodreads_data['quotes']
         self._notable_clips = []
         self._aliases = {}
 
@@ -25,49 +25,32 @@ class BookParser(object):
         if book_type.lower() == 'azw3':
             self._offset = -16
             
-        for char, char_data in goodreads_data.characters.items():
+        for char, char_data in goodreads_data['characters'].items():
             original = char_data['label']
             label = original.lower()
             desc = char_data['description']
             self._entity_data[label] = {'original_label': original, 'entity_id': char, 'description': desc, 'type': 1, 'mentions': 0, 'excerpt_ids': [], 'occurrence': []}
 
-        for setting, setting_data in goodreads_data.settings.items():
+        for setting, setting_data in goodreads_data['settings'].items():
             original = setting_data['label']
             label = original.lower()
             desc = setting_data['description']
             self._entity_data[label] = {'original_label': original, 'entity_id': setting, 'description': desc, 'type': 2, 'mentions': 0, 'excerpt_ids': [], 'occurrence': []}
 
         for term, alias_list in aliases.items():
-            if term.lower() in self.entity_data.keys():
+            if term.lower() in self._entity_data.keys():
                 for alias in alias_list:
                     self._aliases[alias.lower()] = term.lower()
 
-        words_list = self._aliases.keys() + self.entity_data.keys()
+        words_list = self._aliases.keys() + self._entity_data.keys()
 
         # named this way to keep same format as other regex's above
         escaped_word_list = [re.escape(word) for word in words_list]
         self.WORD_PAT = re.compile(r'(\b' + r'\b|\b'.join(escaped_word_list) + r'\b)', re.I)
 
     @property
-    def erl(self):
-        return self._erl
-    
-    @property
-    def excerpt_data(self):
-        return self._excerpt_data
-
-    @property
-    def notable_clips(self):
-        return self._notable_clips
-    
-
-    @property
-    def entity_data(self):
-        return self._entity_data
-
-    @property
-    def codec(self):
-        return self._codec   
+    def parsed_data(self):
+        return self._parsed_data
 
     def parse(self, log=None):
         self._book_html = MobiExtractor(self._book_path, open(os.devnull, 'w')).extract_text()
@@ -78,15 +61,15 @@ class BookParser(object):
         if log: log('%s\t\t\tGetting paragraphs...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         for node in re.finditer(self.PARAGRAPH_PAT, self._book_html):
             # get plain text from paragraph and locations of letters from beginning of file
-            results = [(word.group(0)[1:-1].decode(self.codec), word.start(0)) for word in re.finditer(self.PLAIN_TEXT_PAT, node.group(0))]
+            results = [(word.group(0)[1:-1].decode(self._codec), word.start(0)) for word in re.finditer(self.PLAIN_TEXT_PAT, node.group(0))]
             word_loc = {'words': '', 'locs': [], 'char_sizes': []}
             for group, loc in results:
                 start = node.start(0) + loc + 1 + self._offset
                 for char in group:
                     word_loc['words'] += char
                     word_loc['locs'].append(start)
-                    start += len(char.encode(self.codec))
-                    word_loc['char_sizes'].append(len(char.encode(self.codec)))
+                    start += len(char.encode(self._codec))
+                    word_loc['char_sizes'].append(len(char.encode(self._codec)))
             if len(word_loc['locs']) > 0:
                 paragraph_data.append((word_loc, word_loc['locs'][0]))
 
@@ -96,11 +79,11 @@ class BookParser(object):
         if log: log('%s\t\t\t\tNumber of paragraphs: %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), len(paragraph_data)))
         for word_loc, para_start in paragraph_data:
             rel_ent = []
-            if len(self.entity_data.keys()) > 0:
+            if len(self._entity_data.keys()) > 0:
             # for each match found, fill in entity_data and excerpt_data information
                 for match in re.finditer(self.WORD_PAT, word_loc['words']):
-                    matched_word = match.group(1).decode(self.codec).lower()
-                    if matched_word in self.entity_data.keys():
+                    matched_word = match.group(1).decode(self._codec).lower()
+                    if matched_word in self._entity_data.keys():
                         term = matched_word
                     elif matched_word in self._aliases.keys():
                         term = self._aliases[matched_word]
@@ -127,6 +110,12 @@ class BookParser(object):
             rand_excerpt = randrange(0, excerpt_id - 1)
             if rand_excerpt not in self._notable_clips:
                 self._notable_clips.append(rand_excerpt)
+
+        self._parsed_data = {'erl': self._erl,
+                                'excerpt_data': self._excerpt_data,
+                                'notable_clips': self._notable_clips,
+                                'entity_data': self._entity_data,
+                                'codec': self._codec}
 
     def _find_start(self, start, string):
         previous_space = string[:start].rfind(' ')

@@ -196,7 +196,7 @@ class BookConfigWidget(QDialog):
 
         try:
             self.set_status_and_repaint('Updating aliases...')
-            self.book.update_aliases(self.goodreads_url_edit.text(), overwrite=True, raise_error_on_page_not_found=True)
+            self.book.update_aliases(self.goodreads_url_edit.text(), raise_error_on_page_not_found=True)
             self.update_aliases_on_gui()
             self.status.setText('Aliases updated.')
         except:

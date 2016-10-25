@@ -5,18 +5,18 @@ import os
 from calibre_plugins.xray_creator.lib.db_writer import DBWriter
 
 class XRayDBWriter(object):
-    def __init__(self, xray_directory, goodreads_url, parsed_data):
-        self._filename = os.path.join(xray_directory, 'XRAY.asc')
+    def __init__(self, xray_directory, goodreads_url, asin, parsed_data):
+        self._filename = os.path.join(xray_directory, 'XRAY.entities.{0}.asc'.format(asin))
         if not os.path.exists(xray_directory): os.mkdir(xray_directory)
         self._goodreads_url = goodreads_url
         self._db_writer = DBWriter(self._filename)
-        self._erl = parsed_data.erl
-        self._excerpt_data = parsed_data.excerpt_data
-        self._notable_clips = parsed_data.notable_clips
-        self._entity_data = parsed_data.entity_data
-        self._codec = parsed_data.codec
+        self._erl = parsed_data['erl']
+        self._excerpt_data = parsed_data['excerpt_data']
+        self._notable_clips = parsed_data['notable_clips']
+        self._entity_data = parsed_data['entity_data']
+        self._codec = parsed_data['codec']
 
-    def create_xray(self):
+    def write_xray(self):
         self.fill_book_metadata()
         self.fill_entity()
         self.fill_entity_description()
