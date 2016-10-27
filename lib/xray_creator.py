@@ -14,8 +14,8 @@ from calibre.devices.scanner import DeviceScanner
 from calibre_plugins.xray_creator.lib.book import Book
 
 class XRayCreator(object):
-    def __init__(self, db, book_ids, formats, send_to_device, create_files_when_sending, expand_aliases,
-        create_send_xray, create_send_author_profile, create_send_start_actions, create_send_end_actions, file_preference):
+    def __init__(self, db, book_ids, formats, send_to_device, create_files_when_sending, expand_aliases, create_send_xray,
+                    create_send_author_profile, create_send_start_actions, create_send_end_actions, file_preference):
         self._db = db
         self._book_ids = book_ids
         self._formats = formats
@@ -96,24 +96,27 @@ class XRayCreator(object):
             fmts_completed = []
             fmts_failed = []
             if self._create_send_xray:
-                for fmt, info in book.xray_formats_failing():
-                    fmt_failed.append('X-Ray ({0}): {1}'.format(fmt, info['status_message']))
-                if book.xray_formats_not_failing_exist():
-                    completed_xray_formats = [fmt for fmt, info in book.xray_formats_not_failing()]
-                    fmts_completed.append('X-Ray ({0})'.format(', '.join(completed_xray_formats)))
+                if book.xray_status == book.FAIL:
+                    fmts_failed.append('X-Ray: {0}'.format(book.xray_status_message))
+                else:
+                    for fmt, info in book.xray_formats_failing():
+                        fmts_failed.append('X-Ray ({0}): {1}'.format(fmt, info['status_message']))
+                    if book.xray_formats_not_failing_exist():
+                        completed_xray_formats = [fmt for fmt, info in book.xray_formats_not_failing()]
+                        fmts_completed.append('X-Ray ({0})'.format(', '.join(completed_xray_formats)))
             if self._create_send_author_profile:
                 if book.author_profile_status == book.FAIL:
-                    fmt_failed.append('Author Profile: {0}'.format(book.author_profile_status_message))
+                    fmts_failed.append('Author Profile: {0}'.format(book.author_profile_status_message))
                 else:
                     fmts_completed.append('Author Profile')
             if self._create_send_start_actions:
                 if book.start_actions_status == book.FAIL:
-                    fmt_failed.append('Start Actions: {0}'.format(book.start_actions_status_message))
+                    fmts_failed.append('Start Actions: {0}'.format(book.start_actions_status_message))
                 else:
                     fmts_completed.append('Start Actions')
             if self._create_send_end_actions:
                 if book.end_actions_status == book.FAIL:
-                    fmt_failed.append('End Actions: {0}'.format(book.end_actions_status_message))
+                    fmts_failed.append('End Actions: {0}'.format(book.end_actions_status_message))
                 else:
                     fmts_completed.append('End Actions')
 
@@ -174,8 +177,7 @@ class XRayCreator(object):
                     for fmt_info in fmts_failed:
                         self._send_failed.append('    {0}'.format(fmt_info))
         except:
-            import traceback
-            traceback.print_exc()
+            return
 
     def _find_device_books(self, book_lookup, log):
         """

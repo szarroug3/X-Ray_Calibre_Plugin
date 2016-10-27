@@ -117,7 +117,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
             formats.append('azw3')
 
         xray_creator = XRayCreator(db, ids, formats, self._send_to_device, self._create_files_when_sending, self._expand_aliases, self._create_send_xray,
-            self._create_send_author_profile, self._create_send_start_actions, self._create_send_end_actions, self._file_preference)
+                                    self._create_send_author_profile, self._create_send_start_actions, self._create_send_end_actions, self._file_preference)
         return xray_creator
 
     def config(self):

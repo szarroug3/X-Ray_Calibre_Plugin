@@ -36,18 +36,22 @@ class Book(object):
     FAILED_COULD_NOT_PARSE_GOODREADS_DATA = 'Could not parse Goodreads data.'
     FAILED_UNABLE_TO_PARSE_BOOK = 'Unable to parse book.'
     FAILED_REMOVE_LOCAL_XRAY = 'Unable to remove local x-ray.'
+    FAILED_UNABLE_TO_CREATE_XRAY = 'Unable to create x-ray.'
     FAILED_UNABLE_TO_WRITE_XRAY = 'Unable to write x-ray.'
     FAILED_UNABLE_TO_SEND_XRAY = 'Unable to send x-ray.'
     FAILED_BOOK_ALREADY_HAS_XRAY = 'Device already has x-ray for this book.'
     FAILED_REMOVE_LOCAL_AUTHOR_PROFILE = 'Unable to remove local author profile.'
+    FAILED_UNABLE_TO_CREATE_AUTHOR_PROFILE = 'Unable to create author profile.'
     FAILED_UNABLE_TO_WRITE_AUTHOR_PROFILE = 'Unable to write author profile.'
     FAILED_UNABLE_TO_SEND_AUTHOR_PROFILE = 'Unable to send author profile.'
     FAILED_BOOK_ALREADY_HAS_AUTHOR_PROFILE = 'Device already has author profile for this book.'
     FAILED_REMOVE_LOCAL_START_ACTIONS = 'Unable to remove local start actions.'
+    FAILED_UNABLE_TO_CREATE_START_ACTIONS = 'Unable to create start actions.'
     FAILED_UNABLE_TO_WRITE_START_ACTIONS = 'Unable to write start actions.'
     FAILED_UNABLE_TO_SEND_START_ACTIONS = 'Unable to send start actions.'
     FAILED_BOOK_ALREADY_HAS_START_ACTIONS = 'Device already has start actions for this book.'
     FAILED_REMOVE_LOCAL_END_ACTIONS = 'Unable to remove local end actions.'
+    FAILED_UNABLE_TO_CREATE_END_ACTIONS = 'Unable to create end actions.'
     FAILED_UNABLE_TO_WRITE_END_ACTIONS = 'Unable to write end actions.'
     FAILED_UNABLE_TO_SEND_END_ACTIONS = 'Unable to send end actions.'
     FAILED_BOOK_ALREADY_HAS_END_ACTIONS = 'Device already has end actions for this book.'
@@ -89,6 +93,14 @@ class Book(object):
     @property
     def status_message(self):
         return self._status_message
+
+    @property
+    def xray_status(self):
+        return self._xray_status
+
+    @property
+    def xray_status_message(self):
+        return self._xray_status_message
 
     @property
     def xray_send_status(self):
@@ -188,8 +200,8 @@ class Book(object):
 
     def _get_basic_information(self):
         self._title = self._db.field_for('title', self._book_id)
-
         self._author = ' & '.join(self._db.field_for('authors', self._book_id))
+
         if self._title == 'Unknown' or self._author == 'Unknown':
             self._status = self.FAIL
             self._status_message = self.FAILED_BASIC_INFORMATION_MISSING
@@ -218,6 +230,8 @@ class Book(object):
     def _get_basic_xray_information(self):
         self._aliases = self._book_settings.prefs['aliases']
         self._xray_format_information = {}
+        self._xray_status = self.IN_PROGRESS
+        self._xray_status_message = None
 
         for fmt in self._formats:
             info = {'status': self.IN_PROGRESS, 'status_message': None}
@@ -282,7 +296,7 @@ class Book(object):
             # Creating Files
             if abort and abort.isSet():
                 return
-            if self._create_send_xray and self.xray_formats_not_failing_exist():
+            if self._create_send_xray and self.xray_formats_not_failing_exist() and self._xray_status != self.FAIL:
                 if notifications: notifications.put((perc/(total * actions), 'Parsing {0} book data'.format(self.title_and_author)))
                 if log: log('{0}    Creating x-ray...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
                 if log: log('{0}        Parsing book data...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
@@ -295,11 +309,12 @@ class Book(object):
                     if log: log('{0}        Writing x-ray...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
                     for fmt, info in self.xray_formats_not_failing():
                         self._write_xray(info)
+                    self._xray_status = self.SUCCESS
                 perc += 1
 
             if abort and abort.isSet():
                 return
-            if self._create_send_author_profile:
+            if self._create_send_author_profile and self._author_profile_status != self.FAIL:
                 if notifications: notifications.put((perc/(total * actions), 'Writing {0} author profile'.format(self.title_and_author)))
                 if log: log('{0}    Writing author profile...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
                 self._write_author_profile()
@@ -307,7 +322,7 @@ class Book(object):
 
             if abort and abort.isSet():
                 return
-            if self._create_send_start_actions:
+            if self._create_send_start_actions and self._start_actions_status != self.FAIL:
                 if notifications: notifications.put((perc/(total * actions), 'Writing {0} start actions'.format(self.title_and_author)))
                 if log: log('{0}    Writing start actions...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
                 self._write_start_actions()
@@ -315,7 +330,7 @@ class Book(object):
 
             if abort and abort.isSet():
                 return
-            if self._create_send_end_actions:
+            if self._create_send_end_actions and self._end_actions_status != self.FAIL:
                 if notifications: notifications.put((perc/(total * actions), 'Writing {0} end actions'.format(self.title_and_author)))
                 if log: log('{0}    Writing end actions...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
                 self._write_end_actions()
@@ -351,19 +366,25 @@ class Book(object):
                 create_xray = True if create_xray_format_info != None else False
                 self._parse_goodreads_data(create_xray=create_xray, create_author_profile=create_author_profile,
                                             create_start_actions=create_start_actions, create_end_actions=create_end_actions)
-                if create_xray_format_info:
+                if self._status is self.FAIL:
+                    return
+                if create_xray_format_info and self._xray_status != self.FAIL:
                     if log: log('{0}    Creating {1} x-ray...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S'), self.title_and_author))
                     self._parse_book(create_xray_format_info['format'], self._xray_format_information[create_xray_format_info['format']])
-                    self._write_xray(self._xray_format_information[create_xray_format_info['format']])
-                    if os.path.exists(create_xray_format_info['local']):
-                        self._files_to_send['xray'] = create_xray_format_info
-                if create_author_profile:
+
+                    if self._xray_format_information[create_xray_format_info['format']]['status'] != self.FAIL:
+                        self._write_xray(self._xray_format_information[create_xray_format_info['format']])
+
+                        if os.path.exists(create_xray_format_info['local']):
+                            self._files_to_send['xray'] = create_xray_format_info
+
+                if create_author_profile and self._author_profile_status != self.FAIL:
                     if log: log('{0}    Creating {1} author profile...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S'), self.title_and_author))
                     self._write_author_profile()
-                if create_start_actions:
+                if create_start_actions and self._start_actions_status != self.FAIL:
                     if log: log('{0}    Creating {1} start actions...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S'), self.title_and_author))
                     self._write_start_actions()
-                if create_end_actions:
+                if create_end_actions and self._end_actions_status != self.FAIL:
                     if log: log('{0}    Creating {1} end actions...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S'), self.title_and_author))
                     self._write_end_actions()
 
@@ -389,19 +410,35 @@ class Book(object):
             goodreads_data.parse()
 
             if create_xray:
-                self._goodreads_xray = goodreads_data.xray
-                for char in self._goodreads_xray['characters'].values():
-                    if char['label'] not in self._aliases.keys():
-                        self._aliases[char['label']] = char['aliases']
+                if goodreads_data.xray:
+                    self._goodreads_xray = goodreads_data.xray
+                    for char in self._goodreads_xray['characters'].values():
+                        if char['label'] not in self._aliases.keys():
+                            self._aliases[char['label']] = char['aliases']
 
-                self._book_settings.prefs['aliases'] = self._aliases
-
-            if self.create_author_profile:
-                self._goodreads_author_profile = goodreads_data.author_profile
-            if self.create_start_actions:
-                self._goodreads_start_actions = goodreads_data.start_actions
-            if self.create_end_actions:
-                self._goodreads_end_actions = goodreads_data.end_actions
+                    self._book_settings.prefs['aliases'] = self._aliases
+                    self._xray_status = self.SUCCESS
+                else:
+                    self._xray_status = self.FAIL
+                    self._xray_status_message = self.FAILED_UNABLE_TO_CREATE_XRAY
+            if create_author_profile:
+                if goodreads_data.author_profile:
+                    self._goodreads_author_profile = goodreads_data.author_profile
+                else:
+                    self._author_profile_status = self.FAIL
+                    self._author_profile_status_message = self.FAILED_UNABLE_TO_CREATE_AUTHOR_PROFILE
+            if create_start_actions:
+                if goodreads_data.start_actions:
+                    self._goodreads_start_actions = goodreads_data.start_actions
+                else:
+                    self._start_actions_status = self.FAIL
+                    self._start_actions_status_message = self.FAILED_UNABLE_TO_CREATE_START_ACTIONS
+            if create_end_actions:
+                if goodreads_data.end_actions:
+                    self._goodreads_end_actions = goodreads_data.end_actions
+                else:
+                    self._end_actions_status = self.FAIL
+                    self._end_actions_status_message = self.FAILED_UNABLE_TO_CREATE_END_ACTIONS
         except:
             self._status = self.FAIL
             self._status_message = self.FAILED_COULD_NOT_PARSE_GOODREADS_DATA

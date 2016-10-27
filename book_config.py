@@ -44,7 +44,11 @@ class BookConfigWidget(QDialog):
             amazon_conn = HTTPSConnection('www.amazon.com')
 
         for book_id in ids:
-            self._book_settings.append(BookSettings(db, book_id, goodreads_conn, amazon_conn, expand_aliases))
+            book_settings = BookSettings(db, book_id, goodreads_conn, amazon_conn, expand_aliases)
+            if len(book_settings.aliases) == 0 and book_settings.goodreads_url != "":
+                book_settings.update_aliases(book_settings.goodreads_url)
+                book_settings.save()
+            self._book_settings.append(book_settings)
 
         self.v_layout = QVBoxLayout(self)
 

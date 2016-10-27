@@ -29,6 +29,13 @@ class GoodreadsParser(object):
         self._end_actions = None
         self._entity_id = 1
 
+        self._xray = None
+        self._characters = None
+        self._settings = None
+        self._author_profile = None
+        self._start_actions = None
+        self._end_actions = None
+
         book_id_search = self.BOOK_ID_PAT.search(url)
         self._goodreads_book_id = book_id_search.group(1) if book_id_search else None
 
@@ -94,13 +101,11 @@ class GoodreadsParser(object):
         if self._page_source is None:
             return
 
-        self._get_author_page()
-        if self._author_page is None:
+        self._get_author_info()
+        if len(self._author_info) == 0:
             return
 
-        self._get_author_name()
-        self._get_author_bio()
-        self._get_author_image()
+        self._read_primary_author_page()
         self._get_author_other_books()
         self._compile_author_profile()
 
@@ -109,17 +114,16 @@ class GoodreadsParser(object):
             return
 
         if not self._create_author_profile:
-            self._get_author_page()
+            self._get_author_info()
 
-        if self._author_page is None:
+        if len(self._author_info) == 0:
             return
 
         if not self._create_author_profile:
-            self._get_author_name()
-            self._get_author_bio()
-            self._get_author_image()
+            self._read_primary_author_page()
             self._get_author_other_books()
 
+        self._read_secondary_author_pages()
         self._get_num_pages_and_reading_time()
         self._get_book_image_url()
         self._compile_start_actions()
@@ -131,17 +135,16 @@ class GoodreadsParser(object):
         # these are usually run if we're creating an author profile
         # if it's not, we need to run it to get the author's other books
         if not self._create_author_profile and not self._create_start_actions:
-            self._get_author_page()
-        if self._author_page is None:
+            self._get_author_info()
+        if len(self._author_info) == 0:
             return
 
         if not self._create_author_profile and not self._create_start_actions:
-            self._get_author_name()
-            self._get_author_bio()
-            self._get_author_image()
+            self._read_primary_author_page()
             self._get_author_other_books()
 
         if not self._create_start_actions:
+            self._read_secondary_author_pages()
             self._get_book_image_url()
 
         self._get_customer_recommendations()
@@ -153,9 +156,9 @@ class GoodreadsParser(object):
     def _compile_author_profile(self):
         self._author_profile = {"u": [{"y": 277,
                             "l": [x["a"] for x in self._author_other_books],
-                            "n": self._author_name,
-                            "b": self._author_bio,
-                            "i": self._author_image}],
+                            "n": self._author_info[0]['name'],
+                            "b": self._author_info[0]['bio'],
+                            "i": self._author_info[0]['encoded_image']}],
                     "d": int((datetime.datetime.now() - datetime.datetime(1970,1,1)).total_seconds()),
                     "o": self._author_other_books,
                     "a": self._asin
@@ -169,8 +172,9 @@ class GoodreadsParser(object):
         self._start_actions['bookInfo']['timestamp'] = timestamp
         self._start_actions['bookInfo']['imageUrl'] = self._book_image_url
 
-        # putting fake ASIN because real one isn't needed -- idk why it's required at all
-        self._start_actions['data']['authorBios']['authors'].append({'class': 'authorBio', 'name': self._author_name, 'bio': self._author_bio, 'imageUrl': self._author_image_url, 'asin': 'XXXXXXXXXX'})
+        for author in self._author_info:
+            # putting fake ASIN because real one isn't needed -- idk why it's required at all
+            self._start_actions['data']['authorBios']['authors'].append({'class': 'authorBio', 'name': author['name'], 'bio': author['bio'], 'imageUrl': author['image_url'], 'asin': 'XXXXXXXXXX'})
 
         if self._author_recommendations is not None:
             self._start_actions['data']['authorRecs'] = {'class': 'featuredRecommendationList',
@@ -196,7 +200,8 @@ class GoodreadsParser(object):
         self._end_actions['bookInfo']['timestamp'] = timestamp
         self._end_actions['bookInfo']['imageUrl'] = self._book_image_url
 
-        self._end_actions['data']['authorBios']['authors'].append({'class': 'authorBio', 'name': self._author_name, 'bio': self._author_bio, 'imageUrl': self._author_image_url})
+        for author in self._author_info:
+            self._end_actions['data']['authorBios']['authors'].append({'class': 'authorBio', 'name': author['name'], 'bio': author['bio'], 'imageUrl': author['image_url']})
 
         if self._author_recommendations is not None:
             self._end_actions['data']['authorRecs'] = {'class': 'featuredRecommendationList',
@@ -244,6 +249,7 @@ class GoodreadsParser(object):
             return
 
         characters = self._page_source.xpath('//div[@class="clearFloats" and contains(., "Characters")]//div[@class="infoBoxRowItem"]//a')
+        self._characters = {}
         for entity_id, char in enumerate(characters, start=self._entity_id):
             if '/characters/' not in char.get('href'):
                 continue
@@ -265,11 +271,12 @@ class GoodreadsParser(object):
             return
             
         settings = self._page_source.xpath('//div[@id="bookDataBox"]/div[@class="infoBoxRowItem"]/a[contains(@href, "/places/")]')
+        self._settings = {}
         for entity_id, setting in enumerate(settings, start=self._entity_id):
             if '/places/' not in setting.get('href'):
                 continue
             label = setting.text
-            resp = self._open_url(self._open_url(setting.get('href')))
+            resp = self._open_url(setting.get('href'))
             if not resp:
                 continue
             setting_page = html.fromstring(resp)
@@ -285,6 +292,7 @@ class GoodreadsParser(object):
             return
             
         quotes_page = self._page_source.xpath('//a[@class="actionLink" and contains(., "More quotes")]')
+        self._quotes = []
         if len(quotes_page) > 0:
             resp = self._open_url(quotes_page[0].get('href'))
             if not resp:
@@ -298,44 +306,71 @@ class GoodreadsParser(object):
             for quote in self._page_source.xpath('//div[@class=" clearFloats bigBox" and contains(., "Quotes from")]//div[@class="bigBoxContent containerWithHeaderContent"]//span[@class="readable"]'):
                 self._quotes.append(quote.text.encode('ascii', 'ignore').strip())
 
-    def _get_author_page(self):
+    def _get_author_info(self):
+        self._author_info = []
         if self._page_source is None:
             return
 
-        author_url = self._page_source.xpath('//a[@class="actionLink moreLink"]')[0].get('href')
-        self._author_page = html.fromstring(self._open_url(author_url))
+        for author in self._page_source.xpath('//div[@id="bookAuthors"]/span[@itemprop="author"]//a'):
+            author_name = author.find('span[@itemprop="name"]').text.strip()
+            author_page = author.get('href')
+            if author_name and author_page:
+                self._author_info.append({'name': author_name, 'url': author_page})
 
-    def _get_author_name(self):
-        if self._author_page is None:
+    def _read_primary_author_page(self):
+        if len(self._author_info) == 0:
             return
 
-        self._author_name = self._author_page.xpath('//div/h1/span[@itemprop="name"]')[0].text
+        self._author_info[0]['page'] = html.fromstring(self._open_url(self._author_info[0]['url']))
+        self._author_info[0]['bio'] = self._get_author_bio(self._author_info[0]['page'])
+        self._author_info[0]['image_url'], self._author_info[0]['encoded_image'] = self._get_author_image(self._author_info[0]['page'], encode_image=True)
 
-    def _get_author_bio(self):
-        if self._author_page is None:
+    def _read_secondary_author_pages(self):
+        if len(self._author_info) < 2:
             return
 
-        author_bio = self._author_page.xpath('//div[@class="aboutAuthorInfo"]/span')
+        for author in self._author_info[1:]:
+            author['page'] = html.fromstring(self._open_url(author['url']))
+            author['bio'] = self._get_author_bio(author['page'])
+            author['image_url'] = self._get_author_image(author['page'])
+
+    def _get_author_bio(self, author_page):
+        if len(self._author_info) == 0:
+            return
+
+        author_bio = author_page.xpath('//div[@class="aboutAuthorInfo"]/span')
+        if not author_bio:
+            return None
+
         author_bio = author_bio[1] if len(author_bio) > 1 else author_bio[0]
 
-        self._author_bio = ' '.join(author_bio.text_content().split()).encode('latin-1')
+        return ' '.join(author_bio.text_content().split()).encode('latin-1')
 
-    def _get_author_image(self):
-        if self._author_page is None:
+    def _get_author_image(self, author_page, encode_image=False):
+        if len(self._author_info) == 0:
             return
 
-        self._author_image_url = self._author_page.xpath('//a[contains(@href, "/photo/author/")]/img')[0].get('src')
-        image = urlopen(self._author_image_url).read()
-        self._author_image = base64.b64encode(image)
+        image_url = author_page.xpath('//a[contains(@href, "/photo/author/")]/img')
+
+        if encode_image:
+            if not image_url:
+                return None, None
+            image = urlopen(image_url[0].get('src')).read()
+            encoded_image = base64.b64encode(image)
+            return image_url[0].get('src'), encoded_image
+        else:
+            if not image_url:
+                return None
+            return image_url[0].get('src')
 
     def _get_author_other_books(self):
-        if self._author_page is None:
+        if len(self._author_info) == 0:
             return
 
         book_info = []
         current_book_asin = self._open_url('/buttons/glide/' + self._goodreads_book_id)
 
-        for book in self._author_page.xpath('//tr[@itemtype="http://schema.org/Book"]'):
+        for book in self._author_info[0]['page'].xpath('//tr[@itemtype="http://schema.org/Book"]'):
             book_id = book.find('td//div[@class="u-anchorTarget"]').get('id')
 
             # don't want to add the current book to the other books list
