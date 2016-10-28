@@ -92,8 +92,6 @@ class DBWriter(object):
 
 
 
-
-
 	BASE_DB_TYPE = [('1','7','8','1', ''), ('2','9','10','2', '')]
 	BASE_DB_SOURCE = [('0','3','13',None,None), ('1','4','14','5','6'), ('2','2','15',None,None)]
 	BASE_DB_ENTITY = ('0',None,'1',None,None,'0')
