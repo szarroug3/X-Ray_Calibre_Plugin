@@ -18,7 +18,6 @@ from PyQt5.Qt import QLabel, QLineEdit, QPushButton, QScrollArea
 from calibre import get_proxies
 from calibre_plugins.xray_creator.lib.book_settings import BookSettings
 
-
 class BookConfigWidget(QDialog):
     # title case given words except for articles in the middle
     # i.e the lord ruler would become The Lord Ruler but john the great would become John the Great

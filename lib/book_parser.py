@@ -24,7 +24,7 @@ class BookParser(object):
         self._offset = 0
         if book_type.lower() == 'azw3':
             self._offset = -16
-            
+
         for char, char_data in goodreads_data['characters'].items():
             original = char_data['label']
             label = original.lower()

@@ -60,11 +60,11 @@ class GoodreadsParser(object):
     @property
     def author_profile(self):
         return self._author_profile
-    
+
     @property
     def start_actions(self):
         return self._start_actions
-    
+
     @property
     def end_actions(self):
         return self._end_actions
@@ -243,14 +243,14 @@ class GoodreadsParser(object):
             raise GoodreadsPageDoesNotExist('Goodreads page not found.')
 
         return response
-    
+
     def get_characters(self):
         if self._page_source is None:
             return
 
         characters = self._page_source.xpath('//div[@class="clearFloats" and contains(., "Characters")]//div[@class="infoBoxRowItem"]//a')
         self._characters = {}
-        for entity_id, char in enumerate(characters, start=self._entity_id):
+        for char in characters:
             if '/characters/' not in char.get('href'):
                 continue
             label = char.text
@@ -261,18 +261,18 @@ class GoodreadsParser(object):
             if char_page is None:
                 continue
             desc = char_page.xpath('//div[@class="workCharacterAboutClear"]/text()')
-            desc = desc[0].strip() if len(desc) > 0 and desc[0].strip() else 'No description found on Goodreads.'
+            desc = re.sub(r'\s+', ' ', desc[0]).strip() if len(desc) > 0 and re.sub(r'\s+', ' ', desc[0]).strip() else 'No description found on Goodreads.'
             aliases = [x.strip() for x in char_page.xpath('//div[@class="grey500BoxContent" and contains(.,"aliases")]/text()') if x.strip()]
-            self._characters[entity_id] = {'label': label, 'description': desc, 'aliases': aliases}
+            self._characters[self._entity_id] = {'label': label, 'description': desc, 'aliases': aliases}
             self._entity_id += 1
 
     def get_settings(self):
         if self._page_source is None:
             return
-            
+
         settings = self._page_source.xpath('//div[@id="bookDataBox"]/div[@class="infoBoxRowItem"]/a[contains(@href, "/places/")]')
         self._settings = {}
-        for entity_id, setting in enumerate(settings, start=self._entity_id):
+        for setting in settings:
             if '/places/' not in setting.get('href'):
                 continue
             label = setting.text
@@ -284,13 +284,13 @@ class GoodreadsParser(object):
                 continue
             desc = setting_page.xpath('//div[@class="mainContentContainer "]/div[@class="mainContent"]/div[@class="mainContentFloat"]/div[@class="leftContainer"]/span/text()')
             desc = desc[0] if len(desc) > 0 and desc[0].strip() else 'No description found on Goodreads.'
-            self._settings[entity_id] = {'label': label, 'description': desc, 'aliases': []}
+            self._settings[self._entity_id] = {'label': label, 'description': desc, 'aliases': []}
             self._entity_id += 1
 
     def _get_quotes(self):
         if self._page_source is None:
             return
-            
+
         quotes_page = self._page_source.xpath('//a[@class="actionLink" and contains(., "More quotes")]')
         self._quotes = []
         if len(quotes_page) > 0:
@@ -301,10 +301,10 @@ class GoodreadsParser(object):
             if quotes_page is None:
                 return
             for quote in quotes_page.xpath('//div[@class="quoteText"]'):
-                self._quotes.append(quote.text.encode('ascii', 'ignore').strip())
+                self._quotes.append(re.sub(r'\s+', ' ', quote.text).strip().decode('ascii', 'ignore'))
         else:
             for quote in self._page_source.xpath('//div[@class=" clearFloats bigBox" and contains(., "Quotes from")]//div[@class="bigBoxContent containerWithHeaderContent"]//span[@class="readable"]'):
-                self._quotes.append(quote.text.encode('ascii', 'ignore').strip())
+                self._quotes.append(re.sub(r'\s+', ' ', quote.text).strip().decode('ascii', 'ignore'))
 
     def _get_author_info(self):
         self._author_info = []
@@ -344,7 +344,7 @@ class GoodreadsParser(object):
 
         author_bio = author_bio[1] if len(author_bio) > 1 else author_bio[0]
 
-        return ' '.join(author_bio.text_content().split()).encode('latin-1')
+        return re.sub(r'\s+', ' ', author_bio.text_content()).strip().decode('utf-8').encode('latin-1')
 
     def _get_author_image(self, author_page, encode_image=False):
         if len(self._author_info) == 0:
@@ -404,17 +404,20 @@ class GoodreadsParser(object):
     def _get_book_info_from_tooltips(self, book_info):
         if type(book_info) == tuple:
             book_info = [book_info]
-        book_data = []
+        books_data = []
         link_pattern = 'resources[Book.{0}][type]=Book&resources[Book.{0}][id]={0}'
         tooltips_page_url = '/tooltips?' + "&".join([link_pattern.format(book_id) for book_id, image_url in book_info])
         tooltips_page_info = json.loads(self._open_url(tooltips_page_url))['tooltips']
 
         for index, (book_id, image_url) in enumerate(book_info):
-            book_info = html.fromstring(tooltips_page_info['Book.{0}'.format(book_id)])
+            book_data = tooltips_page_info['Book.{0}'.format(book_id)]
+            if not book_data:
+                continue
+            book_data = html.fromstring(book_data)
 
-            title = book_info.xpath('//a[contains(@class, "readable")]')[0].text
-            authors = [book_info.xpath('//a[contains(@class, "authorName")]')[0].text]
-            rating_string = book_info.xpath('//div[@class="bookRatingAndPublishing"]/span[@class="minirating"]')[0].text_content().strip().replace(',', '').split()
+            title = book_data.xpath('//a[contains(@class, "readable")]')[0].text
+            authors = [book_data.xpath('//a[contains(@class, "authorName")]')[0].text]
+            rating_string = book_data.xpath('//div[@class="bookRatingAndPublishing"]/span[@class="minirating"]')[0].text_content().strip().replace(',', '').split()
             rating = float(rating_string[rating_string.index('avg')-1])
             num_of_reviews = int(rating_string[-2])
 
@@ -424,12 +427,14 @@ class GoodreadsParser(object):
                 continue
             book_asin = book_asin.group(1)
 
-            if len(book_info.xpath('//div[@class="addBookTipDescription"]//span[not(contains(@id, "freeTextContainer"))]')) > 0:
-                desc = book_info.xpath('//div[@class="addBookTipDescription"]//span[not(contains(@id, "freeTextContainer"))]')[0].text.strip()
+            if len(book_data.xpath('//div[@class="addBookTipDescription"]//span[not(contains(@id, "freeTextContainer"))]')) > 0:
+                desc = re.sub(r'\s+', ' ', book_data.xpath('//div[@class="addBookTipDescription"]//span[not(contains(@id, "freeTextContainer"))]')[0].text).strip()
+            elif len(book_data.xpath('//div[@class="addBookTipDescription"]//span[contains(@id, "freeTextContainer")]')) > 0:
+                desc = re.sub(r'\s+', ' ', book_data.xpath('//div[@class="addBookTipDescription"]//span[contains(@id, "freeTextContainer")]')[0].text).strip()
             else:
-                desc = book_info.xpath('//div[@class="addBookTipDescription"]//span[contains(@id, "freeTextContainer")]')[0].text.strip()
+                continue
 
-            book_data.append({'class': "featuredRecommendation",
+            books_data.append({'class': "featuredRecommendation",
                                 'asin': book_asin,
                                 'title': title,
                                 'authors': authors,
@@ -439,7 +444,7 @@ class GoodreadsParser(object):
                                 'amazonRating': rating,
                                 'numberOfReviews': num_of_reviews})
 
-        return book_data
+        return books_data
 
     def _get_book_image_url(self):
         self._book_image_url = self._page_source.xpath('//div[@class="mainContent"]//div[@id="imagecol"]//img[@id="coverImage"]')[0].get('src')

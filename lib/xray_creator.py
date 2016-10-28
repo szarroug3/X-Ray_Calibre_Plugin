@@ -14,14 +14,15 @@ from calibre.devices.scanner import DeviceScanner
 from calibre_plugins.xray_creator.lib.book import Book
 
 class XRayCreator(object):
-    def __init__(self, db, book_ids, formats, send_to_device, create_files_when_sending, expand_aliases, create_send_xray,
-                    create_send_author_profile, create_send_start_actions, create_send_end_actions, file_preference):
+    def __init__(self, db, book_ids, formats, send_to_device, create_files_when_sending, expand_aliases, overwrite,
+                create_send_xray, create_send_author_profile, create_send_start_actions, create_send_end_actions, file_preference):
         self._db = db
         self._book_ids = book_ids
         self._formats = formats
         self._send_to_device = send_to_device
         self._create_files_when_sending = create_files_when_sending
         self._expand_aliases = expand_aliases
+        self._overwrite = overwrite
         self._create_send_xray = create_send_xray
         self._create_send_author_profile = create_send_author_profile
         self._create_send_start_actions = create_send_start_actions
@@ -32,7 +33,7 @@ class XRayCreator(object):
     @property
     def books(self):
         return self._books
-    
+
     def _initialize_books(self, log):
         https_proxy = get_proxies(debug=False).get('https', None)
         if https_proxy:
@@ -49,10 +50,10 @@ class XRayCreator(object):
         self._books = []
         for book_id in self._book_ids:
             self._books.append(Book(self._db, book_id, goodreads_conn, amazon_conn, self._formats,
-                self._send_to_device, self._create_files_when_sending, self._expand_aliases,
+                self._send_to_device, self._create_files_when_sending, self._expand_aliases, self._overwrite,
                 self._create_send_xray, self._create_send_author_profile, self._create_send_start_actions,
                 self._create_send_end_actions, self._file_preference))
-        
+
         self._total_not_failing = 0
         book_lookup = {}
         duplicate_uuids = []
@@ -146,25 +147,19 @@ class XRayCreator(object):
                     else:
                         fmts_completed.append('X-Ray ({0})'.format(book.xray_send_fmt))
                 if self._create_send_author_profile:
-                    if book.author_profile_status == book.FAIL:
-                        fmts_failed.append('Author Profile: {0}'.format(book.author_profile_status_message))
-                    else:
+                    if book.author_profile_status != book.FAIL:
                         if book.author_profile_send_status == book.FAIL:
                             fmts_failed.append('Author Profile: {0}'.format(book.author_profile_send_status_message))
                         else:
                             fmts_completed.append('Author Profile')
                 if self._create_send_start_actions:
-                    if book.start_actions_status == book.FAIL:
-                        fmts_failed.append('Start Actions: {0}'.format(book.start_actions_status_message))
-                    else:
+                    if book.start_actions_status != book.FAIL:
                         if book.start_actions_send_status == book.FAIL:
                             fmts_failed.append('Start Actions: {0}'.format(book.start_actions_send_status_message))
                         else:
                             fmts_completed.append('Start Actions')
                 if self._create_send_end_actions:
-                    if book.end_actions_status == book.FAIL:
-                        fmts_failed.append('End Actions: {0}'.format(book.end_actions_status_message))
-                    else:
+                    if book.end_actions_status != book.FAIL:
                         if book.end_actions_send_status == book.FAIL:
                             fmts_failed.append('End Actions: {0}'.format(book.end_actions_send_status_message))
                         else:
@@ -271,12 +266,13 @@ class XRayCreator(object):
                 log('        %s' % line)
 
         if self._send_to_device:
-            log('\nX-Ray Sending:')
             if self._device_books is None:
+                log('\nX-Ray Sending:')
                 log('    No device is connected.')
             else:
                 self.get_results_send()
                 if len(self._send_completed) > 0 or len(self._send_failed) > 0:
+                    log('\nX-Ray Sending:')
                     if len(self._send_completed) > 0:
                         log('    Books Completed:')
                         for line in self._send_completed:
@@ -285,7 +281,6 @@ class XRayCreator(object):
                         log('    Books Failed:')
                         for line in self._send_failed:
                             log('        %s' % line)
-
 
     def send_files_event(self, abort, log, notifications):
         if log: log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))

@@ -13,6 +13,9 @@ from calibre.ebooks.BeautifulSoup import BeautifulSoup
 
 class BookSettings(object):
     GOODREADS_URL_PAT = re.compile(r'href="(/book/show/.+?)"')
+    BOOK_ID_PAT = re.compile(r'\/show\/([\d]+)')
+    AMAZON_ASIN_PAT = re.compile(r'data\-asin=\"([a-zA-z0-9]+)\"')
+    GOODREADS_ASIN_PAT = re.compile(r'"asin":"(.+?)"')
 
     HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/html", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0"}
     LIBRARY = current_library_path()
@@ -32,8 +35,6 @@ class BookSettings(object):
 
     COMMON_WORDS = 'the of de'.split()
 
-    AMAZON_ASIN_PAT = re.compile(r'data\-asin=\"([a-zA-z0-9]+)\"')
-
     def __init__(self, db, book_id, goodreads_conn, amazon_conn, expand_aliases):
         self._db = db
         self._book_id = book_id
@@ -51,7 +52,7 @@ class BookSettings(object):
 
         self._title = self._db.field_for('title', book_id)
         self._author = ' & '.join(self._db.field_for('authors', self._book_id))
-        
+
         self.asin = self.prefs['asin'] if self.prefs['asin'] != '' else None
         if not self.asin:
             identifiers = self._db.field_for('identifiers', self._book_id)
@@ -79,6 +80,15 @@ class BookSettings(object):
             if url:
                 self.goodreads_url = url
                 self.prefs['goodreads_url'] = self.goodreads_url
+                if not self.asin:
+                    self.asin = self.search_for_asin_on_goodreads(self.goodreads_url)
+                    if self.asin:
+                        mi = self._db.get_metadata(self._book_id)
+                        identifiers = mi.get_identifiers()
+                        identifiers['mobi-asin'] = self.asin
+                        mi.set_identifiers(identifiers)
+                        self._db.set_metadata(self._book_id, mi)
+                        self.prefs['asin'] = self.asin
 
         self._aliases = self.prefs['aliases']
 
@@ -95,11 +105,11 @@ class BookSettings(object):
     @asin.setter
     def asin(self, val):
         self._asin = val
-    
+
     @property
     def title(self):
         return self._title
-    
+
     @property
     def author(self):
         return self._author
@@ -111,7 +121,7 @@ class BookSettings(object):
     @property
     def goodreads_url(self):
         return self._goodreads_url
-    
+
     @goodreads_url.setter
     def goodreads_url(self, val):
         self._goodreads_url = val
@@ -122,7 +132,7 @@ class BookSettings(object):
 
     @aliases.setter
     def aliases(self, val):
-        # 'aliases' is a string containing a comma separated list of aliases.  
+        # 'aliases' is a string containing a comma separated list of aliases.
         #
         # Split it, remove whitespace from each element, drop empty strings (strangely, split only does this if you don't specify a separator)
         #
@@ -156,7 +166,7 @@ class BookSettings(object):
 
         soup = BeautifulSoup(response)
         results = soup.findAll('div', {'id': 'resultsCol'})
-       
+
         if not results or len(results) == 0:
             return None
 
@@ -181,7 +191,7 @@ class BookSettings(object):
                 response = self._goodreads_conn.getresponse().read()
             except:
                 return None
-        
+
         # check to make sure there are results
         if 'No results' in response:
             return None
@@ -193,6 +203,31 @@ class BookSettings(object):
         # return the full URL with the query parameters removed
         url = 'https://www.goodreads.com' + urlsearch.group(1)
         return urlparse.urlparse(url)._replace(query=None).geturl()
+
+    def search_for_asin_on_goodreads(self, url):
+        book_id_search = self.BOOK_ID_PAT.search(url)
+        if book_id_search:
+            return None
+
+        book_id = book_id_search.group(1)
+
+        try:
+            self._goodreads_conn.request('GET', '/buttons/glide/' + book_id)
+            response = self._goodreads_conn.getresponse().read()
+        except:
+            try:
+                self._goodreads_conn.close()
+                self._goodreads_conn.connect()
+                self._goodreads_conn.request('GET', '/buttons/glide/' + book_id)
+                response = self._goodreads_conn.getresponse().read()
+            except:
+                return None
+
+        book_asin_search = self.GOODREADS_ASIN_PAT.search(response)
+        if not book_asin_search:
+            return None
+
+        return book_asin_search.group(1)
 
     def update_aliases(self, url, raise_error_on_page_not_found=False):
         try:
@@ -250,12 +285,12 @@ class BookSettings(object):
     def fullname_to_possible_aliases(self, fullname):
         """
         Given a full name ("{Title} ChristianName {Middle Names} {Surname}"), return a list of possible aliases
-        
+
         ie. Title Surname, ChristianName Surname, Title ChristianName, {the full name}
-        
+
         The returned aliases are in the order they should match
         """
-        aliases = []        
+        aliases = []
         parts = fullname.split()
 
         if parts[0].lower() in self.HONORIFICS:
@@ -265,7 +300,7 @@ class BookSettings(object):
             title = ' '.join(title)
         else:
             title = None
-            
+
         if len(parts) >= 2:
             # Assume: {Title} Firstname {Middlenames} Lastname
             # Already added the full form, also add Title Lastname, and for some Title Firstname

@@ -26,7 +26,6 @@ class XRayCreatorPlugin(InterfaceActionBase):
         from calibre_plugins.xray_creator.config import ConfigWidget
         return ConfigWidget()
 
-
     def save_settings(self, config_widget):
         config_widget.save_settings()
 
