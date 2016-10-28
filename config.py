@@ -50,7 +50,7 @@ class ConfigWidget(QWidget):
         self.expand_aliases.setToolTip(expand_alias_explanation)
         self.l.addWidget(self.expand_aliases)
 
-        self.overwrite_when_creating = QCheckBox('Overwrite that already exist when creating files')
+        self.overwrite_when_creating = QCheckBox('Overwrite files that already exist when creating files')
         self.overwrite_when_creating.setChecked(prefs['overwrite_when_creating'])
         self.l.addWidget(self.overwrite_when_creating)
 

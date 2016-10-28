@@ -1,6 +1,8 @@
 # X-Ray Calibre Plugin
 Downloads:
 ----------------------------------------------------------------------------------------------------------------------------------
+[3.0.0](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_3_0_0.zip?raw=true)
+
 [2.2.1](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_2_2_1.zip?raw=true)
 
 [2.2.0](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_2_2_0.zip?raw=true)
@@ -60,8 +62,19 @@ Preferences:
 			"Valette" and "Renoux" as aliases. You may not want this in cases such as "Timothy Cratchit" who has a
 			Goodreads alias of "Tiny Tim". Having this feature on would add "Tiny", and "Tim" as
 			aliases which is not valid.
-	3. Book types to create x-ray files for
+	4. Overwrite files that already exist when creating files
+		- When using the Create/Update Files function, this will decide whether or not to delete local files that already exist
+	5. Files to create/send
+		- This will let you choose what type of files to create and/or send
+		- You must choose at least one.
+	6. Book types to create x-ray files for
 		- Selection of formats to consider when creating and sending x-ray files.
+		- You must choose at least one.
+	7. If device has both (mobi and azw3) formats, prefer
+		- This will choose which format to send x-ray files for if your device has both file formats
+		- This matters because there are offsets in the x-ray file that determine whether something that is highlighted is
+			part of the x-ray
+		- If you are sure you only have one format of the book type on the device, this does not matter.
 
 Testing:
 ----------------------------------------------------------------------------------------------------------------------------------
