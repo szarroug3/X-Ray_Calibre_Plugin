@@ -246,7 +246,7 @@ class XRayCreator(object):
 
     def create_files_event(self, abort, log, notifications):
         if log: log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        if notifications: notifications.put((0, 'Initializing...'))
+        if notifications: notifications.put((0.01, 'Initializing...'))
         self._initialize_books(log)
         for book_num, book in enumerate(self.books_not_failing()):
             if abort.isSet():
@@ -284,7 +284,7 @@ class XRayCreator(object):
 
     def send_files_event(self, abort, log, notifications):
         if log: log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        if notifications: notifications.put((0, 'Initializing...'))
+        if notifications: notifications.put((0.01, 'Initializing...'))
         self._initialize_books(log)
 
         # something went wrong; we've already printed a message
@@ -301,7 +301,7 @@ class XRayCreator(object):
             if abort.isSet():
                 return
             if log: log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
-            book.send_files_event(self._device_books, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
+            book.send_files_event(self._device_books, log=log, notifications=notifications, abort=abort, book_num=float(book_num), total=self._total_not_failing)
 
         self.get_results_send()
         if len(self._send_completed) > 0:

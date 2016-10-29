@@ -295,7 +295,7 @@ class Book(object):
             if abort and abort.isSet():
                 return
             if not self._overwrite:
-                if notifications: notifications.put((perc/(total * actions), 'Checking for already existing files'.format(self.title_and_author)))
+                if notifications: notifications.put((self._calculate_percentage(perc, total * actions), 'Checking for already existing files'.format(self.title_and_author)))
                 if log: log('{0}    Checking for already existing files...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
                 self._check_for_existing_files()
                 perc += 1
@@ -307,7 +307,7 @@ class Book(object):
             create_start_actions = self._create_send_start_actions and self._start_actions_status != self.FAIL
             create_end_actions = self._create_send_end_actions and self._end_actions_status != self.FAIL
             if create_xray or create_author_profile or create_start_actions or create_end_actions:
-                if notifications: notifications.put((perc/(total * actions), 'Parsing {0} Goodreads data'.format(self.title_and_author)))
+                if notifications: notifications.put((self._calculate_percentage(perc, total * actions), 'Parsing {0} Goodreads data'.format(self.title_and_author)))
                 if log: log('{0}    Parsing Goodreads data...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
                 self._parse_goodreads_data(create_xray=create_xray, create_author_profile=create_author_profile,
                                 create_start_actions=create_start_actions, create_end_actions=create_end_actions)
@@ -320,7 +320,7 @@ class Book(object):
                     return
                 if self._create_send_xray:
                     if self.xray_formats_not_failing_exist() and self._xray_status != self.FAIL:
-                        if notifications: notifications.put((perc/(total * actions), 'Parsing {0} book data'.format(self.title_and_author)))
+                        if notifications: notifications.put((self._calculate_percentage(perc, total * actions), 'Parsing {0} book data'.format(self.title_and_author)))
                         if log: log('{0}    Creating x-ray...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
                         if log: log('{0}        Parsing book data...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
                         for fmt, info in self.xray_formats_not_failing():
@@ -328,7 +328,7 @@ class Book(object):
                     perc += 1
 
                     if self.xray_formats_not_failing_exist():
-                        if notifications: notifications.put((perc/(total * actions), 'Writing {0} x-ray'.format(self.title_and_author)))
+                        if notifications: notifications.put((self._calculate_percentage(perc, total * actions), 'Writing {0} x-ray'.format(self.title_and_author)))
                         if log: log('{0}        Writing x-ray...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
                         for fmt, info in self.xray_formats_not_failing():
                             self._write_xray(info)
@@ -339,7 +339,7 @@ class Book(object):
                     return
                 if self._create_send_author_profile:
                     if self._author_profile_status != self.FAIL:
-                        if notifications: notifications.put((perc/(total * actions), 'Writing {0} author profile'.format(self.title_and_author)))
+                        if notifications: notifications.put((self._calculate_percentage(perc, total * actions), 'Writing {0} author profile'.format(self.title_and_author)))
                         if log: log('{0}    Writing author profile...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
                         self._write_author_profile()
                     perc += 1
@@ -348,7 +348,7 @@ class Book(object):
                     return
                 if self._create_send_start_actions:
                     if self._start_actions_status != self.FAIL:
-                        if notifications: notifications.put((perc/(total * actions), 'Writing {0} start actions'.format(self.title_and_author)))
+                        if notifications: notifications.put((self._calculate_percentage(perc, total * actions), 'Writing {0} start actions'.format(self.title_and_author)))
                         if log: log('{0}    Writing start actions...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
                         self._write_start_actions()
                     perc += 1
@@ -357,7 +357,7 @@ class Book(object):
                     return
                 if self._create_send_end_actions:
                     if self._end_actions_status != self.FAIL:
-                        if notifications: notifications.put((perc/(total * actions), 'Writing {0} end actions'.format(self.title_and_author)))
+                        if notifications: notifications.put((self._calculate_percentage(perc, total * actions), 'Writing {0} end actions'.format(self.title_and_author)))
                         if log: log('{0}    Writing end actions...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
                         self._write_end_actions()
                     perc += 1
@@ -373,7 +373,7 @@ class Book(object):
                     if self._create_send_end_actions and self._end_actions_status != self.FAIL: file_to_send_count += 1
 
                     if file_to_send_count > 0:
-                        if notifications: notifications.put((perc/(total * actions), 'Sending {0} files to device'.format(self.title_and_author)))
+                        if notifications: notifications.put((self._calculate_percentage(perc, total * actions), 'Sending {0} files to device'.format(self.title_and_author)))
                         if log: log('{0}    Sending files to device...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
                         self._check_fmts_for_create_event(device_books)
                         self._send_files(device_books)
@@ -386,6 +386,7 @@ class Book(object):
             if abort and abort.isSet():
                 return
 
+            if notifications: notifications.put((self._calculate_percentage(book_num, total), self.title_and_author))
             create_xray_format_info, create_author_profile, create_start_actions, create_end_actions = self._check_fmts_for_send_event(device_books)
             if create_xray_format_info or create_author_profile or create_start_actions or create_end_actions:
                 if log: log('{0}    Parsing Goodreads...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S'), self.title_and_author))
@@ -419,6 +420,10 @@ class Book(object):
                 self._send_files(device_books)
         except:
             return
+
+    def _calculate_percentage(self, amt_completed, total):
+        return amt_completed/total if amt_completed/total >= .01 else .01
+
 
     def _parse_goodreads_data(self, create_xray=None, create_author_profile=None, create_start_actions=None, create_end_actions=None):
         if create_xray == None:
