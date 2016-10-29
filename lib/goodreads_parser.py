@@ -2,6 +2,7 @@
 
 import re
 import json
+import copy
 import base64
 import datetime
 from lxml import html
@@ -166,7 +167,7 @@ class GoodreadsParser(object):
 
     def _compile_start_actions(self):
         timestamp = int((datetime.datetime.now() - datetime.datetime(1970,1,1)).total_seconds())
-        self._start_actions = self.BASE_START_ACTIONS
+        self._start_actions = copy.deepcopy(self.BASE_START_ACTIONS)
 
         self._start_actions['bookInfo']['asin'] = self._asin
         self._start_actions['bookInfo']['timestamp'] = timestamp
@@ -194,7 +195,7 @@ class GoodreadsParser(object):
 
     def _compile_end_actions(self):
         timestamp = int((datetime.datetime.now() - datetime.datetime(1970,1,1)).total_seconds())
-        self._end_actions = self.BASE_END_ACTIONS
+        self._end_actions = copy.deepcopy(self.BASE_END_ACTIONS)
 
         self._end_actions['bookInfo']['asin'] = self._asin
         self._end_actions['bookInfo']['timestamp'] = timestamp

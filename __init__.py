@@ -15,7 +15,7 @@ class XRayCreatorPlugin(InterfaceActionBase):
     description         = 'A plugin to create X-Ray files for Kindle books'
     supported_platforms = ['windows', 'osx', 'linux']
     author              = 'Samreen Zarroug, Anthony Toole, & Alex Mayer'
-    version             = (3, 0, 0)
+    version             = (3, 0, 1)
     minimum_calibre_version = (2, 0, 0)
     actual_plugin       = 'calibre_plugins.xray_creator.ui:XRayCreatorInterfacePlugin'
 
