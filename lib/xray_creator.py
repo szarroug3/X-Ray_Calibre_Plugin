@@ -224,8 +224,6 @@ class XRayCreator(object):
             log('%s Device found but cannot be accessed. It may have been ejected but not unplugged.' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
             return None
         except Exception as e:
-            import traceback
-            traceback.print_exc()
             self._num_of_formats_found_on_device = -1
             log('%s Something unexpectedly went wrong: %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), e))
 

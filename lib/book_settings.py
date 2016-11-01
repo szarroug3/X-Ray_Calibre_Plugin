@@ -175,6 +175,9 @@ class BookSettings(object):
             if 'Buy now with 1-Click' in str(r):
                 asinSearch = self.AMAZON_ASIN_PAT.search(str(r))
                 if asinSearch:
+                    print '*'*100
+                    print asinSearch.group(1)
+                    print '*'*100
                     return asinSearch.group(1)
 
         return None
