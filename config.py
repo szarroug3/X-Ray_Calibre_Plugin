@@ -64,7 +64,7 @@ class ConfigWidget(QWidget):
 
         self.overwrite_when_sending = QCheckBox('Overwrite files on device that already exist when sending files')
         self.overwrite_when_sending.setChecked(__prefs__['overwrite_when_sending'])
-        self.l.addWidget(self.overwrite_when_sending)
+        self.layout.addWidget(self.overwrite_when_sending)
 
         self.separator_a = QFrame()
         self.separator_a.setFrameStyle(QFrame.HLine)
