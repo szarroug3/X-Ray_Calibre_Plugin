@@ -14,8 +14,8 @@ from calibre.devices.scanner import DeviceScanner
 from calibre_plugins.xray_creator.lib.book import Book
 
 class XRayCreator(object):
-    def __init__(self, db, book_ids, formats, send_to_device, create_files_when_sending,
-                 expand_aliases, overwrite, create_send_xray, create_send_author_profile,
+    def __init__(self, db, book_ids, formats, send_to_device, create_files_when_sending, expand_aliases,
+                 overwrite_local, overwrite_device, create_send_xray, create_send_author_profile,
                  create_send_start_actions, create_send_end_actions, file_preference):
         self._db = db
         self._book_ids = book_ids
@@ -23,7 +23,8 @@ class XRayCreator(object):
         self._send_to_device = send_to_device
         self._create_files_when_sending = create_files_when_sending
         self._expand_aliases = expand_aliases
-        self._overwrite = overwrite
+        self._overwrite_local = overwrite_local
+        self._overwrite_device = overwrite_device
         self._create_send_xray = create_send_xray
         self._create_send_author_profile = create_send_author_profile
         self._create_send_start_actions = create_send_start_actions
@@ -52,9 +53,10 @@ class XRayCreator(object):
         for book_id in self._book_ids:
             self._books.append(Book(self._db, book_id, goodreads_conn, amazon_conn, self._formats,
                                     self._send_to_device, self._create_files_when_sending,
-                                    self._expand_aliases, self._overwrite, self._create_send_xray,
-                                    self._create_send_author_profile, self._create_send_start_actions,
-                                    self._create_send_end_actions, self._file_preference))
+                                    self._expand_aliases, self._overwrite_local, self._overwrite_device,
+                                    self._create_send_xray, self._create_send_author_profile,
+                                    self._create_send_start_actions, self._create_send_end_actions,
+                                    self._file_preference))
 
         self._total_not_failing = 0
         book_lookup = {}

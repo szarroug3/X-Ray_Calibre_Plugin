@@ -20,6 +20,7 @@ __prefs__.defaults['send_to_device'] = True
 __prefs__.defaults['create_files_when_sending'] = True
 __prefs__.defaults['expand_aliases'] = True
 __prefs__.defaults['overwrite_when_creating'] = False
+__prefs__.defaults['overwrite_when_sending'] = False
 __prefs__.defaults['create_send_xray'] = True
 __prefs__.defaults['create_send_author_profile'] = False
 __prefs__.defaults['create_send_start_actions'] = False
@@ -57,9 +58,13 @@ class ConfigWidget(QWidget):
         self.expand_aliases.setToolTip(expand_alias_explanation)
         self.layout.addWidget(self.expand_aliases)
 
-        self.overwrite_when_creating = QCheckBox('Overwrite files that already exist when creating files')
+        self.overwrite_when_creating = QCheckBox('Overwrite local files that already exist when creating files')
         self.overwrite_when_creating.setChecked(__prefs__['overwrite_when_creating'])
         self.layout.addWidget(self.overwrite_when_creating)
+
+        self.overwrite_when_sending = QCheckBox('Overwrite files on device that already exist when sending files')
+        self.overwrite_when_sending.setChecked(prefs['overwrite_when_sending'])
+        self.l.addWidget(self.overwrite_when_sending)
 
         self.separator_a = QFrame()
         self.separator_a.setFrameStyle(QFrame.HLine)
@@ -137,6 +142,7 @@ class ConfigWidget(QWidget):
         __prefs__['create_files_when_sending'] = self.create_files_when_sending.isChecked()
         __prefs__['expand_aliases'] = self.expand_aliases.isChecked()
         __prefs__['overwrite_when_creating'] = self.overwrite_when_creating.isChecked()
+        __prefs__['overwrite_when_sending'] = self.overwrite_when_sending.isChecked()
         __prefs__['create_send_xray'] = self.create_send_xray.isChecked()
         __prefs__['create_send_author_profile'] = self.create_send_author_profile.isChecked()
         __prefs__['create_send_start_actions'] = self.create_send_start_actions.isChecked()

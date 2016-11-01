@@ -5,6 +5,7 @@ import json
 import copy
 import base64
 import datetime
+import urlparse
 from urllib2 import urlopen
 from lxml import html
 
@@ -28,8 +29,6 @@ class GoodreadsParser(object):
         self._characters = {}
         self._settings = {}
         self._quotes = []
-        self._author_profile = None
-        self._end_actions = None
         self._entity_id = 1
 
         self._xray = None
@@ -47,6 +46,9 @@ class GoodreadsParser(object):
         if not response:
             return
         self._page_source = html.fromstring(response)
+
+        self._author_recommendations = None
+        self._author_other_books = []
 
     @property
     def xray(self):
@@ -423,11 +425,20 @@ class GoodreadsParser(object):
             rating = float(rating_string[rating_string.index('avg')-1])
             num_of_reviews = int(rating_string[-2])
 
-            asin_data_page = self._open_url('/buttons/glide/' + book_id)
-            book_asin = self.ASIN_PAT.search(asin_data_page)
+            try:
+                asin_elements = book_data.xpath('//a[contains(@class, "kindlePreviewButtonIcon")]/@href')
+                book_asin = urlparse.parse_qs(urlparse.urlsplit(asin_elements[0]).query)["asin"][0]
+            except:
+                book_asin = None
+
+            # We should get the ASIN from the tooltips file, but just in case we'll 
+            # keep this as a fallback (though this only works in some regions - just USA?)
             if not book_asin:
-                continue
-            book_asin = book_asin.group(1)
+                asin_data_page = self._open_url('/buttons/glide/' + book_id)
+                book_asin = self.ASIN_PAT.search(asin_data_page)
+                if not book_asin:
+                    continue
+                book_asin = book_asin.group(1)
 
             if len(book_data.xpath('//div[@class="addBookTipDescription"]//span[not(contains(@id, "freeTextContainer"))]')) > 0:
                 desc = re.sub(r'\s+', ' ', book_data.xpath('//div[@class="addBookTipDescription"]//span[not(contains(@id, "freeTextContainer"))]')[0].text).strip()
