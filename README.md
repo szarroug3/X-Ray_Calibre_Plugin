@@ -64,15 +64,17 @@ Preferences:
 			"Valette" and "Renoux" as aliases. You may not want this in cases such as "Timothy Cratchit" who has a
 			Goodreads alias of "Tiny Tim". Having this feature on would add "Tiny", and "Tim" as
 			aliases which is not valid.
-	4. Overwrite files that already exist when creating files
+	4. Overwrite local files that already exist when creating files
 		- When using the Create/Update Files function, this will decide whether or not to delete local files that already exist
-	5. Files to create/send
+	5. Overwrite files on device that already exist when sending files
+		- When using the Send Files function, this will decide whether or not to delete files on the device that already exist
+	6. Files to create/send
 		- This will let you choose what type of files to create and/or send
 		- You must choose at least one.
-	6. Book types to create x-ray files for
+	7. Book types to create x-ray files for
 		- Selection of formats to consider when creating and sending x-ray files.
 		- You must choose at least one.
-	7. If device has both (mobi and azw3) formats, prefer
+	8. If device has both (mobi and azw3) formats, prefer
 		- This will choose which format to send x-ray files for if your device has both file formats
 		- This matters because there are offsets in the x-ray file that determine whether something that is highlighted is
 			part of the x-ray
