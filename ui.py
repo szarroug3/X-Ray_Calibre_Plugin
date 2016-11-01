@@ -58,7 +58,8 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         self._send_to_device = prefs['send_to_device']
         self._create_files_when_sending = prefs['create_files_when_sending']
         self._expand_aliases = prefs['expand_aliases']
-        self._overwrite = prefs['overwrite_when_creating']
+        self._overwrite_local = prefs['overwrite_when_creating']
+        self._overwrite_device = prefs['overwrite_when_sending']
         self._create_send_xray = prefs['create_send_xray']
         self._create_send_author_profile = prefs['create_send_author_profile']
         self._create_send_start_actions = prefs['create_send_start_actions']
@@ -117,7 +118,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         if self._azw3:
             formats.append('azw3')
 
-        xray_creator = XRayCreator(db, ids, formats, self._send_to_device, self._create_files_when_sending, self._expand_aliases, self._overwrite,
+        xray_creator = XRayCreator(db, ids, formats, self._send_to_device, self._create_files_when_sending, self._expand_aliases, self._overwrite_local, self._overwrite_device,
                             self._create_send_xray, self._create_send_author_profile, self._create_send_start_actions, self._create_send_end_actions, self._file_preference)
         return xray_creator
 

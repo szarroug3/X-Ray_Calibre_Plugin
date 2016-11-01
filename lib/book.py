@@ -36,29 +36,29 @@ class Book(object):
     FAILED_COULD_NOT_PARSE_GOODREADS_DATA = 'Could not parse Goodreads data.'
     FAILED_UNABLE_TO_PARSE_BOOK = 'Unable to parse book.'
     FAILED_REMOVE_LOCAL_XRAY = 'Unable to remove local x-ray.'
-    FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_XRAY = 'Local x-ray found. Your preferences are set to not ovewrite if one already exists.'
+    FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_LOCAL_XRAY = 'Local x-ray found. Your preferences are set to not ovewrite if one already exists.'
     FAILED_UNABLE_TO_CREATE_XRAY = 'Unable to create x-ray.'
     FAILED_UNABLE_TO_WRITE_XRAY = 'Unable to write x-ray.'
     FAILED_UNABLE_TO_SEND_XRAY = 'Unable to send x-ray.'
-    FAILED_BOOK_ALREADY_HAS_XRAY = 'Device already has x-ray for this book.'
+    FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_DEVICE_XRAY = 'Device already has x-ray for this book. Your preferences are set to not ovewrite if one already exists.'
     FAILED_REMOVE_LOCAL_AUTHOR_PROFILE = 'Unable to remove local author profile.'
-    FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_AUTHOR_PROFILE = 'Local author profile found. Your preferences are set to not ovewrite if one already exists.'
+    FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_LOCAL_AUTHOR_PROFILE = 'Local author profile found. Your preferences are set to not ovewrite if one already exists.'
     FAILED_UNABLE_TO_CREATE_AUTHOR_PROFILE = 'Unable to create author profile.'
     FAILED_UNABLE_TO_WRITE_AUTHOR_PROFILE = 'Unable to write author profile.'
     FAILED_UNABLE_TO_SEND_AUTHOR_PROFILE = 'Unable to send author profile.'
-    FAILED_BOOK_ALREADY_HAS_AUTHOR_PROFILE = 'Device already has author profile for this book.'
+    FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_DEVICE_AUTHOR_PROFILE = 'Device already has author profile for this book. Your preferences are set to not ovewrite if one already exists.'
     FAILED_REMOVE_LOCAL_START_ACTIONS = 'Unable to remove local start actions.'
-    FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_START_ACTIONS = 'Local start actions found. Your preferences are set to not ovewrite if one already exists.'
+    FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_LOCAL_START_ACTIONS = 'Local start actions found. Your preferences are set to not ovewrite if one already exists.'
     FAILED_UNABLE_TO_CREATE_START_ACTIONS = 'Unable to create start actions.'
     FAILED_UNABLE_TO_WRITE_START_ACTIONS = 'Unable to write start actions.'
     FAILED_UNABLE_TO_SEND_START_ACTIONS = 'Unable to send start actions.'
-    FAILED_BOOK_ALREADY_HAS_START_ACTIONS = 'Device already has start actions for this book.'
+    FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_DEVICE_START_ACTIONS = 'Device already has start actions for this book. Your preferences are set to not ovewrite if one already exists.'
     FAILED_REMOVE_LOCAL_END_ACTIONS = 'Unable to remove local end actions.'
-    FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_END_ACTIONS = 'Local end actions found. Your preferences are set to not ovewrite if one already exists.'
+    FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_LOCAL_END_ACTIONS = 'Local end actions found. Your preferences are set to not ovewrite if one already exists.'
     FAILED_UNABLE_TO_CREATE_END_ACTIONS = 'Unable to create end actions.'
     FAILED_UNABLE_TO_WRITE_END_ACTIONS = 'Unable to write end actions.'
     FAILED_UNABLE_TO_SEND_END_ACTIONS = 'Unable to send end actions.'
-    FAILED_BOOK_ALREADY_HAS_END_ACTIONS = 'Device already has end actions for this book.'
+    FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_DEVICE_END_ACTIONS = 'Device already has end actions for this book. Your preferences are set to not ovewrite if one already exists.'
     FAILED_BOOK_NOT_ON_DEVICE = 'None of the passing formats are on the device.'
     FAILED_PREFERENCES_SET_TO_NOT_CREATE_XRAY = 'No local x-ray found. Your preferences are set to not create one if one is not already found when sending to device.'
     FAILED_UNABLE_TO_UPDATE_ASIN = 'Unable to update ASIN in book on device.'
@@ -66,8 +66,8 @@ class Book(object):
     # not used yet
     FAILED_FAILED_TO_SEND_XRAY = 'Could not send x-ray to device.'
 
-    def __init__(self, db, book_id, goodreads_conn, amazon_conn, formats, send_to_device, create_files_when_sending, expand_aliases, overwrite,
-                    create_send_xray, create_send_author_profile, create_send_start_actions, create_send_end_actions, file_preference):
+    def __init__(self, db, book_id, goodreads_conn, amazon_conn, formats, send_to_device, create_files_when_sending, expand_aliases, overwrite_local,
+                    overwrite_device, create_send_xray, create_send_author_profile, create_send_start_actions, create_send_end_actions, file_preference):
         self._db = db
         self._book_id = book_id
         self._goodreads_conn = goodreads_conn
@@ -75,7 +75,8 @@ class Book(object):
         self._send_to_device = send_to_device
         self._create_files_when_sending = create_files_when_sending
         self._expand_aliases = expand_aliases
-        self._overwrite = overwrite
+        self._overwrite_local = overwrite_local
+        self._overwrite_device = overwrite_device
         self._create_send_xray = create_send_xray
         self._create_send_author_profile = create_send_author_profile
         self._create_send_start_actions = create_send_start_actions
@@ -276,7 +277,7 @@ class Book(object):
 
     def create_files_event(self, device_books, log=None, notifications=None, abort=None, book_num=None, total=None):
         actions = 1.0
-        if not self._overwrite:
+        if not self._overwrite_local:
             actions += 1
         if self._create_send_xray:
             actions += 2
@@ -294,7 +295,7 @@ class Book(object):
             # Prep
             if abort and abort.isSet():
                 return
-            if not self._overwrite:
+            if not self._overwrite_local:
                 if notifications: notifications.put((self._calculate_percentage(perc, total * actions), 'Checking for already existing files'.format(self.title_and_author)))
                 if log: log('{0}    Checking for already existing files...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
                 self._check_for_existing_files()
@@ -488,19 +489,19 @@ class Book(object):
             for fmt, info in self.xray_formats_not_failing():
                 if os.path.exists(os.path.join(info['local_xray'],'XRAY.entities.{0}.asc'.format(self._asin))):
                     info['status'] = self.FAIL
-                    info['status_message'] = self.FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_XRAY
+                    info['status_message'] = self.FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_LOCAL_XRAY
         if self._create_send_author_profile:
             if os.path.exists(os.path.join(self._local_book_directory,'AuthorProfile.profile.{0}.asc'.format(self._asin))):
                 self._author_profile_status = self.FAIL
-                self._author_profile_status_message = self.FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_AUTHOR_PROFILE
+                self._author_profile_status_message = self.FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_LOCAL_AUTHOR_PROFILE
         if self._create_send_start_actions:
             if os.path.exists(os.path.join(self._local_book_directory,'StartActions.data.{0}.asc'.format(self._asin))):
                 self._start_actions_status = self.FAIL
-                self._start_actions_status_message = self.FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_START_ACTIONS
+                self._start_actions_status_message = self.FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_LOCAL_START_ACTIONS
         if self._create_send_end_actions:
             if os.path.exists(os.path.join(self._local_book_directory,'EndActions.data.{0}.asc'.format(self._asin))):
                 self._end_actions_status = self.FAIL
-                self._end_actions_status_message = self.FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_END_ACTIONS
+                self._end_actions_status_message = self.FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_LOCAL_END_ACTIONS
 
     def _write_xray(self, info):
         try:
@@ -691,9 +692,9 @@ class Book(object):
 
                 filename = 'XRAY.entities.{0}.asc'.format(self._asin)
                 local_file = os.path.join(self._xray_format_information[format_picked]['local_xray'], filename)
-                if os.path.exists(os.path.join(self._device_sdr, filename)):
+                if os.path.exists(os.path.join(self._device_sdr, filename)) and not self._overwrite_device:
                     self._xray_send_status = self.FAIL
-                    self._xray_send_status_message = self.FAILED_BOOK_ALREADY_HAS_XRAY
+                    self._xray_send_status_message = self.FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_DEVICE_XRAY
                 else:
                     if os.path.exists(local_file):
                         self._files_to_send['xray'] = {'local': local_file, 'filename': filename, 'format': format_picked}
@@ -706,9 +707,9 @@ class Book(object):
         if self._create_send_author_profile:
             filename = 'AuthorProfile.profile.{0}.asc'.format(self._asin)
             local_file = os.path.join(self._local_book_directory, filename)
-            if os.path.exists(os.path.join(self._device_sdr, filename)):
+            if os.path.exists(os.path.join(self._device_sdr, filename)) and not self._overwrite_device:
                 self._author_profile_send_status = self.FAIL
-                self._author_profile_send_status_message = self.FAILED_BOOK_ALREADY_HAS_AUTHOR_PROFILE
+                self._author_profile_send_status_message = self.FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_DEVICE_AUTHOR_PROFILE
             else:
                 if os.path.exists(local_file):
                     self._files_to_send['author_profile'] = {'local': local_file, 'filename': filename}
@@ -721,9 +722,9 @@ class Book(object):
         if self._create_send_start_actions:
             filename = 'StartActions.data.{0}.asc'.format(self._asin)
             local_file = os.path.join(self._local_book_directory, filename)
-            if os.path.exists(os.path.join(self._device_sdr, filename)):
+            if os.path.exists(os.path.join(self._device_sdr, filename)) and not self._overwrite_device:
                 self._start_actions_send_status = self.FAIL
-                self._start_actions_send_status_message = self.FAILED_BOOK_ALREADY_HAS_START_ACTIONS
+                self._start_actions_send_status_message = self.FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_DEVICE_START_ACTIONS
             else:
                 if os.path.exists(local_file):
                     self._files_to_send['start_actions'] = {'local': local_file, 'filename': filename}
@@ -736,9 +737,9 @@ class Book(object):
         if self._create_send_end_actions:
             filename = 'EndActions.data.{0}.asc'.format(self._asin)
             local_file = os.path.join(self._local_book_directory, filename)
-            if os.path.exists(os.path.join(self._device_sdr, filename)):
+            if os.path.exists(os.path.join(self._device_sdr, filename)) and not self._overwrite_device:
                 self._end_actions_send_status = self.FAIL
-                self._end_actions_send_status_message = self.FAILED_BOOK_ALREADY_HAS_END_ACTIONS
+                self._end_actions_send_status_message = self.FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_DEVICE_END_ACTIONS
             else:
                 if os.path.exists(local_file):
                     self._files_to_send['end_actions'] = {'local': local_file, 'filename': filename}
