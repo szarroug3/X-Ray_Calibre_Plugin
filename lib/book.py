@@ -1,19 +1,15 @@
 # Book.py
 
 import os
-import re
 import json
 import struct
-from glob import glob
-from urllib import urlencode
 from datetime import datetime
 from cStringIO import StringIO
-from shutil import copy, rmtree
+from shutil import copy
 
 from calibre.ebooks.mobi import MobiError
 from calibre.library import current_library_path
 from calibre.ebooks.metadata.mobi import MetadataUpdater
-from calibre.ebooks.metadata.meta import get_metadata, set_metadata
 
 from calibre_plugins.xray_creator.lib.book_parser import BookParser
 from calibre_plugins.xray_creator.lib.book_settings import BookSettings
@@ -67,7 +63,7 @@ class Book(object):
     FAILED_FAILED_TO_SEND_XRAY = 'Could not send x-ray to device.'
 
     def __init__(self, db, book_id, goodreads_conn, amazon_conn, formats, send_to_device, create_files_when_sending, expand_aliases, overwrite,
-                    create_send_xray, create_send_author_profile, create_send_start_actions, create_send_end_actions, file_preference):
+                 create_send_xray, create_send_author_profile, create_send_start_actions, create_send_end_actions, file_preference):
         self._db = db
         self._book_id = book_id
         self._goodreads_conn = goodreads_conn
@@ -295,8 +291,8 @@ class Book(object):
             if abort and abort.isSet():
                 return
             if not self._overwrite:
-                if notifications: notifications.put((self._calculate_percentage(perc, total * actions), 'Checking for already existing files'.format(self.title_and_author)))
-                if log: log('{0}    Checking for already existing files...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
+                if notifications: notifications.put((self._calculate_percentage(perc, total * actions), 'Checking for {0} existing files'.format(self.title_and_author)))
+                if log: log('{0}    Checking for existing files...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
                 self._check_for_existing_files()
                 perc += 1
 
@@ -310,7 +306,7 @@ class Book(object):
                 if notifications: notifications.put((self._calculate_percentage(perc, total * actions), 'Parsing {0} Goodreads data'.format(self.title_and_author)))
                 if log: log('{0}    Parsing Goodreads data...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
                 self._parse_goodreads_data(create_xray=create_xray, create_author_profile=create_author_profile,
-                                create_start_actions=create_start_actions, create_end_actions=create_end_actions)
+                                           create_start_actions=create_start_actions, create_end_actions=create_end_actions)
                 perc += 1
                 if self._status is self.FAIL:
                     return
@@ -389,10 +385,10 @@ class Book(object):
             if notifications: notifications.put((self._calculate_percentage(book_num, total), self.title_and_author))
             create_xray_format_info, create_author_profile, create_start_actions, create_end_actions = self._check_fmts_for_send_event(device_books)
             if create_xray_format_info or create_author_profile or create_start_actions or create_end_actions:
-                if log: log('{0}    Parsing Goodreads...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S'), self.title_and_author))
+                if log: log('{0}    Parsing {1} Goodreads data...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S'), self.title_and_author))
                 create_xray = True if create_xray_format_info != None else False
                 self._parse_goodreads_data(create_xray=create_xray, create_author_profile=create_author_profile,
-                                            create_start_actions=create_start_actions, create_end_actions=create_end_actions)
+                                           create_start_actions=create_start_actions, create_end_actions=create_end_actions)
                 if self._status is self.FAIL:
                     return
                 if create_xray_format_info and self._xray_status != self.FAIL:
@@ -431,13 +427,13 @@ class Book(object):
         if create_author_profile == None:
             create_author_profile = self._create_send_author_profile
         if create_start_actions == None:
-            create_start_actions=self._create_send_start_actions
+            create_start_actions = self._create_send_start_actions
         if create_end_actions == None:
-            create_end_actions=self._create_send_end_actions
+            create_end_actions = self._create_send_end_actions
         try:
             goodreads_data = GoodreadsParser(self._goodreads_url, self._goodreads_conn, self._asin,
-                create_xray=create_xray, create_author_profile=create_author_profile,
-                create_start_actions=create_start_actions, create_end_actions=create_end_actions)
+                                             create_xray=create_xray, create_author_profile=create_author_profile,
+                                             create_start_actions=create_start_actions, create_end_actions=create_end_actions)
             goodreads_data.parse()
 
             if create_xray:
@@ -486,19 +482,19 @@ class Book(object):
     def _check_for_existing_files(self):
         if self._create_send_xray:
             for fmt, info in self.xray_formats_not_failing():
-                if os.path.exists(os.path.join(info['local_xray'],'XRAY.entities.{0}.asc'.format(self._asin))):
+                if os.path.exists(os.path.join(info['local_xray'], 'XRAY.entities.{0}.asc'.format(self._asin))):
                     info['status'] = self.FAIL
                     info['status_message'] = self.FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_XRAY
         if self._create_send_author_profile:
-            if os.path.exists(os.path.join(self._local_book_directory,'AuthorProfile.profile.{0}.asc'.format(self._asin))):
+            if os.path.exists(os.path.join(self._local_book_directory, 'AuthorProfile.profile.{0}.asc'.format(self._asin))):
                 self._author_profile_status = self.FAIL
                 self._author_profile_status_message = self.FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_AUTHOR_PROFILE
         if self._create_send_start_actions:
-            if os.path.exists(os.path.join(self._local_book_directory,'StartActions.data.{0}.asc'.format(self._asin))):
+            if os.path.exists(os.path.join(self._local_book_directory, 'StartActions.data.{0}.asc'.format(self._asin))):
                 self._start_actions_status = self.FAIL
                 self._start_actions_status_message = self.FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_START_ACTIONS
         if self._create_send_end_actions:
-            if os.path.exists(os.path.join(self._local_book_directory,'EndActions.data.{0}.asc'.format(self._asin))):
+            if os.path.exists(os.path.join(self._local_book_directory, 'EndActions.data.{0}.asc'.format(self._asin))):
                 self._end_actions_status = self.FAIL
                 self._end_actions_status_message = self.FAILED_PREFERENCES_SET_TO_NOT_OVERWRITE_END_ACTIONS
 
@@ -842,7 +838,7 @@ class ASINUpdater(MetadataUpdater):
         # Include remaining original EXTH fields
         for id in sorted(self.original_exth_records):
             recs.append((id, self.original_exth_records[id]))
-        recs = sorted(recs, key=lambda x:(x[0],x[0]))
+        recs = sorted(recs, key=lambda x:(x[0], x[0]))
 
         exth = StringIO()
         for code, data in recs:

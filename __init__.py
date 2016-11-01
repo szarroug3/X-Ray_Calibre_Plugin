@@ -11,13 +11,13 @@ __docformat__ = 'restructuredtext en'
 from calibre.customize import InterfaceActionBase
 
 class XRayCreatorPlugin(InterfaceActionBase):
-    name                = 'X-Ray Creator'
-    description         = 'A plugin to create X-Ray files for Kindle books'
-    supported_platforms = ['windows', 'osx', 'linux']
-    author              = 'Samreen Zarroug, Anthony Toole, & Alex Mayer'
-    version             = (3, 0, 1)
+    name                    = 'X-Ray Creator'
+    description             = 'A plugin to create X-Ray files for Kindle books'
+    supported_platforms     = ['windows', 'osx', 'linux']
+    author                  = 'Samreen Zarroug, Anthony Toole, & Alex Mayer'
+    version                 = (3, 0, 1)
     minimum_calibre_version = (2, 0, 0)
-    actual_plugin       = 'calibre_plugins.xray_creator.ui:XRayCreatorInterfacePlugin'
+    actual_plugin           = 'calibre_plugins.xray_creator.ui:XRayCreatorInterfacePlugin'
 
     def is_customizable(self):
         return True
@@ -30,9 +30,9 @@ class XRayCreatorPlugin(InterfaceActionBase):
         config_widget.save_settings()
 
         # Apply the changes
-        ac = self.actual_plugin_
-        if ac is not None:
-            ac.apply_settings()
+        plugin = self.actual_plugin_
+        if plugin is not None:
+            plugin.apply_settings()
 
     def do_user_config(self, parent=None):
         '''
@@ -49,7 +49,7 @@ class XRayCreatorPlugin(InterfaceActionBase):
 
         config_dialog = QDialog(parent)
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        v = QVBoxLayout(config_dialog)
+        layout = QVBoxLayout(config_dialog)
 
         def size_dialog():
             if geom is None:
@@ -68,12 +68,12 @@ class XRayCreatorPlugin(InterfaceActionBase):
         if isinstance(config_widget, tuple):
             from calibre.gui2 import warning_dialog
             warning_dialog(parent, _('Cannot configure'), config_widget[0],
-                    det_msg=config_widget[1], show=True)
+                           det_msg=config_widget[1], show=True)
             return False
 
         if config_widget is not None:
-            v.addWidget(config_widget)
-            v.addWidget(button_box)
+            layout.addWidget(config_widget)
+            layout.addWidget(button_box)
             size_dialog()
             config_dialog.exec_()
         else:
@@ -84,20 +84,20 @@ class XRayCreatorPlugin(InterfaceActionBase):
             help_text.setWordWrap(True)
             help_text.setTextInteractionFlags(Qt.LinksAccessibleByMouse | Qt.LinksAccessibleByKeyboard)
             help_text.setOpenExternalLinks(True)
-            v.addWidget(help_text)
-            sc = plugin_customization(self)
-            if not sc:
-                sc = ''
-            sc = sc.strip()
-            sc = QLineEdit(sc, config_dialog)
-            v.addWidget(sc)
-            v.addWidget(button_box)
+            layout.addWidget(help_text)
+            plugin_cust = plugin_customization(self)
+            if not plugin_cust:
+                plugin_cust = ''
+            plugin_cust = plugin_cust.strip()
+            plugin_cust = QLineEdit(plugin_cust, config_dialog)
+            layout.addWidget(plugin_cust)
+            layout.addWidget(button_box)
             size_dialog()
             config_dialog.exec_()
 
             if config_dialog.result() == QDialog.Accepted:
-                sc = unicode(sc.text()).strip()
-                customize_plugin(self, sc)
+                plugin_cust = unicode(plugin_cust.text()).strip()
+                customize_plugin(self, plugin_cust)
 
         geom = bytearray(config_dialog.saveGeometry())
         gprefs[prefname] = geom

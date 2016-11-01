@@ -5,8 +5,8 @@ import json
 import copy
 import base64
 import datetime
-from lxml import html
 from urllib2 import urlopen
+from lxml import html
 
 class GoodreadsPageDoesNotExist(Exception):
     pass
@@ -15,7 +15,9 @@ class GoodreadsPageDoesNotExist(Exception):
 class GoodreadsParser(object):
     BOOK_ID_PAT = re.compile(r'\/show\/([\d]+)')
     ASIN_PAT = re.compile(r'"asin":"(.+?)"')
-    def __init__(self, url, connection, asin, raise_error_on_page_not_found=False, create_xray=False, create_author_profile=False, create_end_actions=False, create_start_actions=False):
+    def __init__(self, url, connection, asin, raise_error_on_page_not_found=False,
+                 create_xray=False, create_author_profile=False, create_end_actions=False,
+                 create_start_actions=False):
         self._url = url
         self._connection = connection
         self._asin = asin
@@ -156,17 +158,17 @@ class GoodreadsParser(object):
 
     def _compile_author_profile(self):
         self._author_profile = {"u": [{"y": 277,
-                            "l": [x["a"] for x in self._author_other_books],
-                            "n": self._author_info[0]['name'],
-                            "b": self._author_info[0]['bio'],
-                            "i": self._author_info[0]['encoded_image']}],
-                    "d": int((datetime.datetime.now() - datetime.datetime(1970,1,1)).total_seconds()),
-                    "o": self._author_other_books,
-                    "a": self._asin
-                }
+                                       "l": [x["a"] for x in self._author_other_books],
+                                       "n": self._author_info[0]['name'],
+                                       "b": self._author_info[0]['bio'],
+                                       "i": self._author_info[0]['encoded_image']}],
+                                "d": int((datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds()),
+                                "o": self._author_other_books,
+                                "a": self._asin
+                               }
 
     def _compile_start_actions(self):
-        timestamp = int((datetime.datetime.now() - datetime.datetime(1970,1,1)).total_seconds())
+        timestamp = int((datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds())
         self._start_actions = copy.deepcopy(self.BASE_START_ACTIONS)
 
         self._start_actions['bookInfo']['asin'] = self._asin
@@ -179,7 +181,7 @@ class GoodreadsParser(object):
 
         if self._author_recommendations is not None:
             self._start_actions['data']['authorRecs'] = {'class': 'featuredRecommendationList',
-                                                        'recommendations': self._author_recommendations}
+                                                         'recommendations': self._author_recommendations}
             # since we're using the same recommendations from the end actions, we need to replace the class to match what the kindle expects
             for rec in self._start_actions['data']['authorRecs']['recommendations']:
                 rec['class'] = 'recommendation'
@@ -194,7 +196,7 @@ class GoodreadsParser(object):
             self._start_actions['data']['readingTime']['formattedTime'][locale] = formatted_time.format(str(self._reading_time_hours), str(self._reading_time_minutes))
 
     def _compile_end_actions(self):
-        timestamp = int((datetime.datetime.now() - datetime.datetime(1970,1,1)).total_seconds())
+        timestamp = int((datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds())
         self._end_actions = copy.deepcopy(self.BASE_END_ACTIONS)
 
         self._end_actions['bookInfo']['asin'] = self._asin
@@ -206,10 +208,10 @@ class GoodreadsParser(object):
 
         if self._author_recommendations is not None:
             self._end_actions['data']['authorRecs'] = {'class': 'featuredRecommendationList',
-                                                        'recommendations': self._author_recommendations}
+                                                       'recommendations': self._author_recommendations}
         if self._cust_recommendations is not None:
             self._end_actions['data']['customersWhoBoughtRecs'] = {'class': 'featuredRecommendationList',
-                                                        'recommendations': self._cust_recommendations}
+                                                                   'recommendations': self._cust_recommendations}
 
     def _open_url(self, url, raise_error_on_page_not_found=False, return_redirect_url=False):
         if 'goodreads.com' in url:
@@ -369,7 +371,6 @@ class GoodreadsParser(object):
             return
 
         book_info = []
-        current_book_asin = self._open_url('/buttons/glide/' + self._goodreads_book_id)
 
         for book in self._author_info[0]['page'].xpath('//tr[@itemtype="http://schema.org/Book"]'):
             book_id = book.find('td//div[@class="u-anchorTarget"]').get('id')
@@ -410,7 +411,7 @@ class GoodreadsParser(object):
         tooltips_page_url = '/tooltips?' + "&".join([link_pattern.format(book_id) for book_id, image_url in book_info])
         tooltips_page_info = json.loads(self._open_url(tooltips_page_url))['tooltips']
 
-        for index, (book_id, image_url) in enumerate(book_info):
+        for book_id, image_url in book_info:
             book_data = tooltips_page_info['Book.{0}'.format(book_id)]
             if not book_data:
                 continue
@@ -436,14 +437,14 @@ class GoodreadsParser(object):
                 continue
 
             books_data.append({'class': "featuredRecommendation",
-                                'asin': book_asin,
-                                'title': title,
-                                'authors': authors,
-                                'imageUrl': image_url,
-                                'description': desc,
-                                'hasSample': False,
-                                'amazonRating': rating,
-                                'numberOfReviews': num_of_reviews})
+                               'asin': book_asin,
+                               'title': title,
+                               'authors': authors,
+                               'imageUrl': image_url,
+                               'description': desc,
+                               'hasSample': False,
+                               'amazonRating': rating,
+                               'numberOfReviews': num_of_reviews})
 
         return books_data
 

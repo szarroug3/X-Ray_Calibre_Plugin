@@ -14,8 +14,9 @@ from calibre.devices.scanner import DeviceScanner
 from calibre_plugins.xray_creator.lib.book import Book
 
 class XRayCreator(object):
-    def __init__(self, db, book_ids, formats, send_to_device, create_files_when_sending, expand_aliases, overwrite,
-                create_send_xray, create_send_author_profile, create_send_start_actions, create_send_end_actions, file_preference):
+    def __init__(self, db, book_ids, formats, send_to_device, create_files_when_sending,
+                 expand_aliases, overwrite, create_send_xray, create_send_author_profile,
+                 create_send_start_actions, create_send_end_actions, file_preference):
         self._db = db
         self._book_ids = book_ids
         self._formats = formats
@@ -50,9 +51,10 @@ class XRayCreator(object):
         self._books = []
         for book_id in self._book_ids:
             self._books.append(Book(self._db, book_id, goodreads_conn, amazon_conn, self._formats,
-                self._send_to_device, self._create_files_when_sending, self._expand_aliases, self._overwrite,
-                self._create_send_xray, self._create_send_author_profile, self._create_send_start_actions,
-                self._create_send_end_actions, self._file_preference))
+                                    self._send_to_device, self._create_files_when_sending,
+                                    self._expand_aliases, self._overwrite, self._create_send_xray,
+                                    self._create_send_author_profile, self._create_send_start_actions,
+                                    self._create_send_end_actions, self._file_preference))
 
         self._total_not_failing = 0
         book_lookup = {}
@@ -212,7 +214,7 @@ class XRayCreator(object):
                     if (fmt != 'mobi' and fmt != 'azw3') or (fmt == 'mobi' and 'mobi' not in self._formats) or (fmt == 'azw3' and 'azw3' not in self._formats):
                         continue
                     books[book_id][fmt] = {'device_book': book.path,
-                        'device_sdr': '.'.join(book.path.split('.')[:-1]) + '.sdr'}
+                                           'device_sdr': '.'.join(book.path.split('.')[:-1]) + '.sdr'}
                     self._num_of_formats_found_on_device += 1
             return books
         except (TypeError, AttributeError) as e:
@@ -220,6 +222,8 @@ class XRayCreator(object):
             log('%s Device found but cannot be accessed. It may have been ejected but not unplugged.' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
             return None
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             self._num_of_formats_found_on_device = -1
             log('%s Something unexpectedly went wrong: %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), e))
 

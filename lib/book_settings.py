@@ -12,7 +12,7 @@ from calibre.library import current_library_path
 from calibre.ebooks.BeautifulSoup import BeautifulSoup
 
 class BookSettings(object):
-    GOODREADS_URL_PAT = re.compile(r'href="(/book/show/.+?)"')
+    GOODREADS_URL_PAT = re.compile(r'href="(\/book\/show\/.+?)"')
     BOOK_ID_PAT = re.compile(r'\/show\/([\d]+)')
     AMAZON_ASIN_PAT = re.compile(r'data\-asin=\"([a-zA-z0-9]+)\"')
     GOODREADS_ASIN_PAT = re.compile(r'"asin":"(.+?)"')
@@ -54,13 +54,15 @@ class BookSettings(object):
         self._author = ' & '.join(self._db.field_for('authors', self._book_id))
 
         self.asin = self.prefs['asin'] if self.prefs['asin'] != '' else None
+        self.goodreads_url = self.prefs['goodreads_url']
+
         if not self.asin:
             identifiers = self._db.field_for('identifiers', self._book_id)
             self.asin = self._db.field_for('identifiers', self._book_id)['mobi-asin'].decode('ascii') if 'mobi-asin' in identifiers.keys() else None
             if self.asin:
                 self.prefs['asin'] = self.asin
             else:
-                self.asin = self.search_for_asin(self.title_and_author)
+                self.asin = self.search_for_asin_on_amazon(self.title_and_author)
                 if self.asin:
                     mi = self._db.get_metadata(self._book_id)
                     identifiers = mi.get_identifiers()
@@ -69,7 +71,6 @@ class BookSettings(object):
                     self._db.set_metadata(self._book_id, mi)
                     self.prefs['asin'] = self.asin
 
-        self.goodreads_url = self.prefs['goodreads_url']
         if self.goodreads_url == '':
             url = None
             if self.asin:
@@ -146,12 +147,12 @@ class BookSettings(object):
         self.prefs['goodreads_url'] = self.goodreads_url
         self.prefs['aliases'] = self.aliases
 
-    def search_for_asin(self, query):
+    def search_for_asin_on_amazon(self, query):
         query = urlencode({'keywords': query})
         try:
             self._amazon_conn.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, headers=self.HEADERS)
             response = self._amazon_conn.getresponse().read()
-        except Exception as e:
+        except:
             try:
                 self._amazon_conn.close()
                 self._amazon_conn.connect()
@@ -206,7 +207,7 @@ class BookSettings(object):
 
     def search_for_asin_on_goodreads(self, url):
         book_id_search = self.BOOK_ID_PAT.search(url)
-        if book_id_search:
+        if not book_id_search:
             return None
 
         book_id = book_id_search.group(1)
@@ -259,7 +260,7 @@ class BookSettings(object):
         for alias, fullname in aliases.items():
             self.aliases = (alias_lookup[fullname], alias + ',' + ','.join(self.aliases[alias_lookup[fullname]]))
 
-        for setting, setting_data in goodreads_parser.settings.items():
+        for setting_data in goodreads_parser.settings.values():
             self.aliases = (setting_data['label'], '')
 
     def auto_expand_aliases(self, characters):
@@ -306,7 +307,6 @@ class BookSettings(object):
             # Already added the full form, also add Title Lastname, and for some Title Firstname
             surname = parts.pop() # This will cover double barrel surnames, we split on whitespace only
             christian_name = parts.pop(0)
-            middlenames = parts
             if title:
                 # Religious Honorifics usually only use {Title} {ChristianName}
                 # ie. John Doe could be Father John but usually not Father Doe

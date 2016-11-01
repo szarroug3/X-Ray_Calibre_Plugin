@@ -1,0 +1,782 @@
+************* Module X-Ray_Calibre_Plugin
+C:  6, 0: Exactly one space required before assignment
+__license__   = 'GPL v3'
+              ^ (bad-whitespace)
+C: 14, 0: Exactly one space required before assignment
+    name                    = 'X-Ray Creator'
+                            ^ (bad-whitespace)
+C: 15, 0: Exactly one space required before assignment
+    description             = 'A plugin to create X-Ray files for Kindle books'
+                            ^ (bad-whitespace)
+C: 16, 0: Exactly one space required before assignment
+    supported_platforms     = ['windows', 'osx', 'linux']
+                            ^ (bad-whitespace)
+C: 17, 0: Exactly one space required before assignment
+    author                  = 'Samreen Zarroug, Anthony Toole, & Alex Mayer'
+                            ^ (bad-whitespace)
+C: 18, 0: Exactly one space required before assignment
+    version                 = (3, 0, 1)
+                            ^ (bad-whitespace)
+C: 20, 0: Exactly one space required before assignment
+    actual_plugin           = 'calibre_plugins.xray_creator.ui:XRayCreatorInterfacePlugin'
+                            ^ (bad-whitespace)
+C: 85, 0: Line too long (103/100) (line-too-long)
+C:  1, 0: Invalid module name "X-Ray_Calibre_Plugin" (invalid-name)
+C:  1, 0: Missing module docstring (missing-docstring)
+E: 11, 0: Unable to import 'calibre.customize' (import-error)
+C: 13, 0: Missing class docstring (missing-docstring)
+C: 22, 4: Missing method docstring (missing-docstring)
+R: 22, 4: Method could be a function (no-self-use)
+C: 25, 4: Missing method docstring (missing-docstring)
+E: 26, 8: Unable to import 'calibre_plugins.xray_creator.config' (import-error)
+R: 25, 4: Method could be a function (no-self-use)
+C: 29, 4: Missing method docstring (missing-docstring)
+R: 37, 4: Too many local variables (21/15) (too-many-locals)
+E: 43, 8: Unable to import 'PyQt5.Qt' (import-error)
+E: 45, 8: Unable to import 'calibre.gui2' (import-error)
+C: 54, 8: Missing function docstring (missing-docstring)
+E: 62,37: Undefined variable '_' (undefined-variable)
+E: 69,12: Unable to import 'calibre.gui2' (import-error)
+E: 70,35: Undefined variable '_' (undefined-variable)
+E: 80,12: Unable to import 'calibre.customize.ui' (import-error)
+E: 99,38: Instance of 'unicode' has no 'text' member (no-member)
+C:107, 4: Missing method docstring (missing-docstring)
+************* Module X-Ray_Calibre_Plugin.book_config
+C:  6, 0: Exactly one space required before assignment
+__license__   = 'GPL v3'
+              ^ (bad-whitespace)
+C:159, 0: Line too long (105/100) (line-too-long)
+C:199, 0: Line too long (103/100) (line-too-long)
+C:204, 0: Line too long (104/100) (line-too-long)
+C:  1, 0: Missing module docstring (missing-docstring)
+E: 14, 0: Unable to import 'PyQt5.QtCore' (import-error)
+E: 15, 0: Unable to import 'PyQt5.Qt' (import-error)
+E: 16, 0: Unable to import 'PyQt5.Qt' (import-error)
+E: 18, 0: Unable to import 'calibre' (import-error)
+E: 19, 0: Unable to import 'calibre_plugins.xray_creator.lib.book_settings' (import-error)
+C: 21, 0: Missing class docstring (missing-docstring)
+R: 21, 0: Too many instance attributes (25/7) (too-many-instance-attributes)
+C: 29, 4: Invalid argument name "db" (invalid-name)
+R: 29, 4: Too many statements (92/50) (too-many-statements)
+C:146, 4: Missing method docstring (missing-docstring)
+C:149, 4: Missing method docstring (missing-docstring)
+C:153, 4: Missing method docstring (missing-docstring)
+C:156, 4: Missing method docstring (missing-docstring)
+C:161, 4: Missing method docstring (missing-docstring)
+C:174, 4: Missing method docstring (missing-docstring)
+C:177, 4: Missing method docstring (missing-docstring)
+C:180, 4: Missing method docstring (missing-docstring)
+C:197, 4: Missing method docstring (missing-docstring)
+W:207, 8: No exception type(s) specified (bare-except)
+C:210, 4: Missing method docstring (missing-docstring)
+C:213, 4: Missing method docstring (missing-docstring)
+C:221, 4: Missing method docstring (missing-docstring)
+C:226, 4: Missing method docstring (missing-docstring)
+C:229, 4: Missing method docstring (missing-docstring)
+C:237, 4: Missing method docstring (missing-docstring)
+C:243, 4: Missing method docstring (missing-docstring)
+W:244, 8: Attribute 'aliases_widget' defined outside __init__ (attribute-defined-outside-init)
+W:245, 8: Attribute 'aliases_layout' defined outside __init__ (attribute-defined-outside-init)
+************* Module X-Ray_Calibre_Plugin.config
+C:  6, 0: Exactly one space required before assignment
+__license__   = 'GPL v3'
+              ^ (bad-whitespace)
+C: 60, 0: Line too long (106/100) (line-too-long)
+C:125, 0: Line too long (101/100) (line-too-long)
+C:126, 0: Line too long (117/100) (line-too-long)
+C:127, 0: Line too long (109/100) (line-too-long)
+C:131, 0: Line too long (121/100) (line-too-long)
+C:  1, 0: Missing module docstring (missing-docstring)
+E: 10, 0: Unable to import 'PyQt5.Qt' (import-error)
+E: 11, 0: Unable to import 'PyQt5.Qt' (import-error)
+E: 13, 0: Unable to import 'calibre.utils.config' (import-error)
+E: 14, 0: Unable to import 'calibre.gui2' (import-error)
+C: 31, 0: Missing class docstring (missing-docstring)
+R: 31, 0: Too many instance attributes (19/7) (too-many-instance-attributes)
+R: 32, 4: Too many statements (66/50) (too-many-statements)
+C:124, 4: Missing method docstring (missing-docstring)
+C:135, 4: Missing method docstring (missing-docstring)
+************* Module X-Ray_Calibre_Plugin.ui
+C:  7, 0: Exactly one space required before assignment
+__license__   = 'GPL v3'
+              ^ (bad-whitespace)
+C: 73, 0: Line too long (136/100) (line-too-long)
+C: 79, 0: Line too long (138/100) (line-too-long)
+C:118, 0: Line too long (107/100) (line-too-long)
+C:120, 0: Line too long (101/100) (line-too-long)
+C:  1, 0: Missing module docstring (missing-docstring)
+E: 11, 0: Unable to import 'PyQt5.Qt' (import-error)
+E: 13, 0: Unable to import 'calibre.gui2' (import-error)
+E: 14, 0: Unable to import 'calibre.gui2' (import-error)
+E: 15, 0: Unable to import 'calibre.gui2.actions' (import-error)
+E: 16, 0: Unable to import 'calibre.gui2.threaded_jobs' (import-error)
+E: 18, 0: Unable to import 'calibre_plugins.xray_creator.config' (import-error)
+E: 19, 0: Unable to import 'calibre_plugins.xray_creator.lib.xray_creator' (import-error)
+E: 20, 0: Unable to import 'calibre_plugins.xray_creator.book_config' (import-error)
+C: 22, 0: Missing class docstring (missing-docstring)
+R: 22, 0: Too many instance attributes (12/7) (too-many-instance-attributes)
+C: 32, 4: Missing method docstring (missing-docstring)
+E: 36,15: Undefined variable 'get_icons' (undefined-variable)
+C: 57, 4: Missing method docstring (missing-docstring)
+C: 70, 4: Missing method docstring (missing-docstring)
+C: 76, 4: Missing method docstring (missing-docstring)
+C: 82, 4: Missing method docstring (missing-docstring)
+C: 83, 8: Invalid variable name "db" (invalid-name)
+C: 91, 8: Invalid variable name "db" (invalid-name)
+C: 95, 4: Missing method docstring (missing-docstring)
+C: 98, 4: Missing method docstring (missing-docstring)
+C:102, 8: Invalid variable name "db" (invalid-name)
+C:110, 8: Invalid variable name "db" (invalid-name)
+C:124, 4: Missing method docstring (missing-docstring)
+W: 68, 8: Attribute '_azw3' defined outside __init__ (attribute-defined-outside-init)
+W: 65, 8: Attribute '_create_send_end_actions' defined outside __init__ (attribute-defined-outside-init)
+W: 63, 8: Attribute '_create_send_author_profile' defined outside __init__ (attribute-defined-outside-init)
+W: 38, 8: Attribute 'menu' defined outside __init__ (attribute-defined-outside-init)
+W: 58, 8: Attribute '_send_to_device' defined outside __init__ (attribute-defined-outside-init)
+W: 60, 8: Attribute '_expand_aliases' defined outside __init__ (attribute-defined-outside-init)
+W: 59, 8: Attribute '_create_files_when_sending' defined outside __init__ (attribute-defined-outside-init)
+W: 67, 8: Attribute '_mobi' defined outside __init__ (attribute-defined-outside-init)
+W: 66, 8: Attribute '_file_preference' defined outside __init__ (attribute-defined-outside-init)
+W: 61, 8: Attribute '_overwrite' defined outside __init__ (attribute-defined-outside-init)
+W: 62, 8: Attribute '_create_send_xray' defined outside __init__ (attribute-defined-outside-init)
+W: 64, 8: Attribute '_create_send_start_actions' defined outside __init__ (attribute-defined-outside-init)
+************* Module X-Ray_Calibre_Plugin.lib.book
+E: 13, 0: invalid syntax (syntax-error)
+************* Module X-Ray_Calibre_Plugin.lib.book_parser
+C: 32, 0: Line too long (170/100) (line-too-long)
+C: 38, 0: Line too long (173/100) (line-too-long)
+C: 63, 0: Line too long (140/100) (line-too-long)
+C: 90, 0: Line too long (143/100) (line-too-long)
+C: 91, 0: Line too long (134/100) (line-too-long)
+C: 95, 0: Line too long (104/100) (line-too-long)
+C: 97, 0: Line too long (134/100) (line-too-long)
+C:163, 0: Line too long (114/100) (line-too-long)
+C:167, 0: Line too long (129/100) (line-too-long)
+C:174, 0: Line too long (147/100) (line-too-long)
+C:175, 0: Line too long (135/100) (line-too-long)
+C:185, 0: Line too long (106/100) (line-too-long)
+C:  1, 0: Missing module docstring (missing-docstring)
+E:  8, 0: Unable to import 'calibre.ebooks.mobi.huffcdic' (import-error)
+E:  9, 0: Unable to import 'calibre.ebooks.mobi.reader.mobi6' (import-error)
+E: 10, 0: Unable to import 'calibre.ebooks.compression.palmdoc' (import-error)
+C: 49, 8: Invalid attribute name "WORD_PAT" (invalid-name)
+C: 12, 0: Missing class docstring (missing-docstring)
+R: 12, 0: Too many instance attributes (12/7) (too-many-instance-attributes)
+R: 16, 4: Too many local variables (18/15) (too-many-locals)
+C: 52, 4: Missing method docstring (missing-docstring)
+C: 55, 4: Missing method docstring (missing-docstring)
+R: 55, 4: Too many local variables (20/15) (too-many-locals)
+R: 55, 4: Too many branches (16/12) (too-many-branches)
+R:116, 4: Method could be a function (no-self-use)
+R:124, 4: Method could be a function (no-self-use)
+R:146, 4: Method could be a function (no-self-use)
+C:156, 4: Missing method docstring (missing-docstring)
+C:157,44: Invalid variable name "f" (invalid-name)
+W: 56, 8: Attribute '_book_html' defined outside __init__ (attribute-defined-outside-init)
+W:110, 8: Attribute '_parsed_data' defined outside __init__ (attribute-defined-outside-init)
+W:162, 8: Attribute '_erl' defined outside __init__ (attribute-defined-outside-init)
+W:163, 8: Attribute '_codec' defined outside __init__ (attribute-defined-outside-init)
+C:165, 0: Missing class docstring (missing-docstring)
+W:177,12: Redefining name 'unpack' from outer scope (line 5) (redefined-outer-name)
+C:166, 4: Missing method docstring (missing-docstring)
+E:185,18: Undefined variable 'MobiError' (undefined-variable)
+R:165, 0: Too few public methods (1/2) (too-few-public-methods)
+W:171, 8: Attribute 'mobi_html' defined outside __init__ (attribute-defined-outside-init)
+W:186, 8: Attribute 'mobi_html' defined outside __init__ (attribute-defined-outside-init)
+W:188,12: Attribute 'mobi_html' defined outside __init__ (attribute-defined-outside-init)
+W:191,12: Attribute 'mobi_html' defined outside __init__ (attribute-defined-outside-init)
+W:192, 8: Attribute 'mobi_html' defined outside __init__ (attribute-defined-outside-init)
+W:194,12: Attribute 'mobi_html' defined outside __init__ (attribute-defined-outside-init)
+W:195,12: Attribute 'mobi_html' defined outside __init__ (attribute-defined-outside-init)
+************* Module X-Ray_Calibre_Plugin.lib.book_settings
+C: 20, 0: Line too long (181/100) (line-too-long)
+C: 22, 0: Line too long (117/100) (line-too-long)
+C: 25, 0: Line too long (153/100) (line-too-long)
+C: 26, 0: Line too long (166/100) (line-too-long)
+C: 30, 0: Line too long (101/100) (line-too-long)
+C: 32, 0: Line too long (155/100) (line-too-long)
+C: 59, 0: Line too long (148/100) (line-too-long)
+C:137, 0: Line too long (142/100) (line-too-long)
+C:142, 0: Exactly one space required after assignment
+        self._aliases[label] =  aliases
+                             ^ (bad-whitespace)
+C:152, 0: Line too long (162/100) (line-too-long)
+C:158, 0: Line too long (166/100) (line-too-long)
+C:164, 0: Line too long (144/100) (line-too-long)
+C:234, 0: Line too long (164/100) (line-too-long)
+C:260, 0: Line too long (113/100) (line-too-long)
+C:280, 0: Line too long (123/100) (line-too-long)
+C:287, 0: Line too long (111/100) (line-too-long)
+C:307, 0: Line too long (103/100) (line-too-long)
+C:  1, 0: Missing module docstring (missing-docstring)
+E:  8, 0: Unable to import 'calibre_plugins.xray_creator.lib.goodreads_parser' (import-error)
+E: 10, 0: Unable to import 'calibre.utils.config' (import-error)
+E: 11, 0: Unable to import 'calibre.library' (import-error)
+E: 12, 0: Unable to import 'calibre.ebooks.BeautifulSoup' (import-error)
+C: 14, 0: Missing class docstring (missing-docstring)
+R: 14, 0: Too many instance attributes (14/7) (too-many-instance-attributes)
+R: 38, 4: Too many arguments (6/5) (too-many-arguments)
+C: 65,20: Invalid variable name "mi" (invalid-name)
+C: 86,24: Invalid variable name "mi" (invalid-name)
+C: 98, 4: Missing method docstring (missing-docstring)
+C:102, 4: Missing method docstring (missing-docstring)
+C:110, 4: Missing method docstring (missing-docstring)
+C:114, 4: Missing method docstring (missing-docstring)
+C:118, 4: Missing method docstring (missing-docstring)
+C:122, 4: Missing method docstring (missing-docstring)
+C:130, 4: Missing method docstring (missing-docstring)
+C:144, 4: Missing method docstring (missing-docstring)
+C:149, 4: Missing method docstring (missing-docstring)
+W:154, 8: No exception type(s) specified (bare-except)
+W:160,12: No exception type(s) specified (bare-except)
+C:173,12: Invalid variable name "r" (invalid-name)
+C:175,16: Invalid variable name "asinSearch" (invalid-name)
+C:181, 4: Missing method docstring (missing-docstring)
+W:186, 8: No exception type(s) specified (bare-except)
+W:192,12: No exception type(s) specified (bare-except)
+C:207, 4: Missing method docstring (missing-docstring)
+W:217, 8: No exception type(s) specified (bare-except)
+W:223,12: No exception type(s) specified (bare-except)
+C:232, 4: Missing method docstring (missing-docstring)
+W:238, 8: No exception type(s) specified (bare-except)
+E:248,41: Instance of 'tuple' has no 'keys' member (no-member)
+C:265, 4: Missing method docstring (missing-docstring)
+R:300,12: Redefinition of title type from list to str (redefined-variable-type)
+W:127, 8: Attribute '_goodreads_url' defined outside __init__ (attribute-defined-outside-init)
+W:107, 8: Attribute '_asin' defined outside __init__ (attribute-defined-outside-init)
+************* Module X-Ray_Calibre_Plugin.lib.db_writer
+W:112, 0: Cannot decode using encoding "ascii", unexpected byte at position 35 (invalid-encoded-data)
+W:115, 0: Cannot decode using encoding "ascii", unexpected byte at position 35 (invalid-encoded-data)
+W:116, 0: Cannot decode using encoding "ascii", unexpected byte at position 38 (invalid-encoded-data)
+W:123, 0: Cannot decode using encoding "ascii", unexpected byte at position 35 (invalid-encoded-data)
+W:126, 0: Cannot decode using encoding "ascii", unexpected byte at position 35 (invalid-encoded-data)
+W:127, 0: Cannot decode using encoding "ascii", unexpected byte at position 38 (invalid-encoded-data)
+W:145, 0: Cannot decode using encoding "ascii", unexpected byte at position 41 (invalid-encoded-data)
+W:148, 0: Cannot decode using encoding "ascii", unexpected byte at position 35 (invalid-encoded-data)
+W:149, 0: Cannot decode using encoding "ascii", unexpected byte at position 45 (invalid-encoded-data)
+W:154, 0: Cannot decode using encoding "ascii", unexpected byte at position 40 (invalid-encoded-data)
+W:158, 0: Cannot decode using encoding "ascii", unexpected byte at position 43 (invalid-encoded-data)
+W:159, 0: Cannot decode using encoding "ascii", unexpected byte at position 35 (invalid-encoded-data)
+W:160, 0: Cannot decode using encoding "ascii", unexpected byte at position 38 (invalid-encoded-data)
+W:169, 0: Cannot decode using encoding "ascii", unexpected byte at position 38 (invalid-encoded-data)
+W:171, 0: Cannot decode using encoding "ascii", unexpected byte at position 53 (invalid-encoded-data)
+W:172, 0: Cannot decode using encoding "ascii", unexpected byte at position 38 (invalid-encoded-data)
+W:173, 0: Cannot decode using encoding "ascii", unexpected byte at position 41 (invalid-encoded-data)
+W:180, 0: Cannot decode using encoding "ascii", unexpected byte at position 38 (invalid-encoded-data)
+W:182, 0: Cannot decode using encoding "ascii", unexpected byte at position 53 (invalid-encoded-data)
+W:183, 0: Cannot decode using encoding "ascii", unexpected byte at position 38 (invalid-encoded-data)
+W:184, 0: Cannot decode using encoding "ascii", unexpected byte at position 41 (invalid-encoded-data)
+W:191, 0: Cannot decode using encoding "ascii", unexpected byte at position 35 (invalid-encoded-data)
+W:194, 0: Cannot decode using encoding "ascii", unexpected byte at position 35 (invalid-encoded-data)
+W:195, 0: Cannot decode using encoding "ascii", unexpected byte at position 38 (invalid-encoded-data)
+W:202, 0: Cannot decode using encoding "ascii", unexpected byte at position 35 (invalid-encoded-data)
+W:205, 0: Cannot decode using encoding "ascii", unexpected byte at position 35 (invalid-encoded-data)
+W:206, 0: Cannot decode using encoding "ascii", unexpected byte at position 38 (invalid-encoded-data)
+W:210, 0: Cannot decode using encoding "ascii", unexpected byte at position 36 (invalid-encoded-data)
+W:213, 0: Cannot decode using encoding "ascii", unexpected byte at position 35 (invalid-encoded-data)
+W:216, 0: Cannot decode using encoding "ascii", unexpected byte at position 35 (invalid-encoded-data)
+W:217, 0: Cannot decode using encoding "ascii", unexpected byte at position 38 (invalid-encoded-data)
+W:221, 0: Cannot decode using encoding "ascii", unexpected byte at position 37 (invalid-encoded-data)
+W:224, 0: Cannot decode using encoding "ascii", unexpected byte at position 36 (invalid-encoded-data)
+W:227, 0: Cannot decode using encoding "ascii", unexpected byte at position 36 (invalid-encoded-data)
+W:228, 0: Cannot decode using encoding "ascii", unexpected byte at position 39 (invalid-encoded-data)
+W:233, 0: Cannot decode using encoding "ascii", unexpected byte at position 38 (invalid-encoded-data)
+W:235, 0: Cannot decode using encoding "ascii", unexpected byte at position 36 (invalid-encoded-data)
+W:238, 0: Cannot decode using encoding "ascii", unexpected byte at position 36 (invalid-encoded-data)
+W:239, 0: Cannot decode using encoding "ascii", unexpected byte at position 39 (invalid-encoded-data)
+W:244, 0: Cannot decode using encoding "ascii", unexpected byte at position 38 (invalid-encoded-data)
+W:246, 0: Cannot decode using encoding "ascii", unexpected byte at position 36 (invalid-encoded-data)
+W:249, 0: Cannot decode using encoding "ascii", unexpected byte at position 36 (invalid-encoded-data)
+W:250, 0: Cannot decode using encoding "ascii", unexpected byte at position 39 (invalid-encoded-data)
+C: 31, 0: Line too long (102/100) (line-too-long)
+C: 39, 0: Line too long (104/100) (line-too-long)
+C: 40, 0: Line too long (104/100) (line-too-long)
+C: 54, 0: Line too long (105/100) (line-too-long)
+C: 57, 0: Line too long (101/100) (line-too-long)
+C:104, 0: Line too long (109/100) (line-too-long)
+C:105, 0: Exactly one space required after comma
+    BASE_DB_ENTITY = ('0', None,'1', None, None,'0')
+                               ^ (bad-whitespace)
+C:105, 0: Exactly one space required after comma
+    BASE_DB_ENTITY = ('0', None,'1', None, None,'0')
+                                               ^ (bad-whitespace)
+C:  1, 0: Missing module docstring (missing-docstring)
+C:  6, 0: Missing class docstring (missing-docstring)
+E: 11,40: Undefined variable 'Binary' (undefined-variable)
+C: 15, 4: Missing method docstring (missing-docstring)
+C: 18, 4: Missing method docstring (missing-docstring)
+C: 96, 4: Missing method docstring (missing-docstring)
+************* Module X-Ray_Calibre_Plugin.lib.goodreads_parser
+C:157, 0: Line too long (105/100) (line-too-long)
+C:165, 0: Line too long (116/100) (line-too-long)
+C:180, 0: Line too long (196/100) (line-too-long)
+C:184, 0: Line too long (105/100) (line-too-long)
+C:185, 0: Line too long (140/100) (line-too-long)
+C:189, 0: Line too long (142/100) (line-too-long)
+C:195, 0: Line too long (106/100) (line-too-long)
+C:196, 0: Line too long (167/100) (line-too-long)
+C:207, 0: Line too long (172/100) (line-too-long)
+C:211, 0: Line too long (103/100) (line-too-long)
+C:213, 0: Line too long (105/100) (line-too-long)
+C:214, 0: Line too long (113/100) (line-too-long)
+C:254, 0: Line too long (138/100) (line-too-long)
+C:267, 0: Line too long (155/100) (line-too-long)
+C:268, 0: Line too long (141/100) (line-too-long)
+C:269, 0: Line too long (105/100) (line-too-long)
+C:276, 0: Line too long (130/100) (line-too-long)
+C:288, 0: Line too long (175/100) (line-too-long)
+C:289, 0: Line too long (105/100) (line-too-long)
+C:297, 0: Line too long (104/100) (line-too-long)
+C:307, 0: Line too long (102/100) (line-too-long)
+C:309, 0: Line too long (200/100) (line-too-long)
+C:310, 0: Line too long (102/100) (line-too-long)
+C:317, 0: Line too long (102/100) (line-too-long)
+C:329, 0: Line too long (154/100) (line-too-long)
+C:350, 0: Line too long (103/100) (line-too-long)
+C:383, 0: Line too long (106/100) (line-too-long)
+C:388, 0: Line too long (125/100) (line-too-long)
+C:395, 0: Line too long (110/100) (line-too-long)
+C:411, 0: Line too long (119/100) (line-too-long)
+C:422, 0: Line too long (163/100) (line-too-long)
+C:432, 0: Line too long (128/100) (line-too-long)
+C:433, 0: Line too long (163/100) (line-too-long)
+C:434, 0: Line too long (125/100) (line-too-long)
+C:435, 0: Line too long (158/100) (line-too-long)
+C:452, 0: Line too long (143/100) (line-too-long)
+C:458, 0: Line too long (110/100) (line-too-long)
+C:510, 0: Line too long (216/100) (line-too-long)
+C:533, 0: Line too long (216/100) (line-too-long)
+C:553, 0: Line too long (157/100) (line-too-long)
+C:556, 0: Line too long (272/100) (line-too-long)
+C:576, 0: Line too long (157/100) (line-too-long)
+C:579, 0: Line too long (272/100) (line-too-long)
+C:602, 0: Line too long (160/100) (line-too-long)
+C:625, 0: Line too long (160/100) (line-too-long)
+C:688, 0: Line too long (172/100) (line-too-long)
+C:720, 0: Line too long (204/100) (line-too-long)
+C:742, 0: Line too long (121/100) (line-too-long)
+C:752, 0: Line too long (103/100) (line-too-long)
+C:755, 0: Line too long (160/100) (line-too-long)
+C:765, 0: Line too long (128/100) (line-too-long)
+C:768, 0: Line too long (148/100) (line-too-long)
+C:808, 0: Line too long (147/100) (line-too-long)
+C:836, 0: Line too long (141/100) (line-too-long)
+C:864, 0: Line too long (216/100) (line-too-long)
+C:889, 0: Line too long (157/100) (line-too-long)
+C:892, 0: Line too long (272/100) (line-too-long)
+C:920, 0: Line too long (160/100) (line-too-long)
+C:947, 0: Line too long (114/100) (line-too-long)
+C:1016, 0: Line too long (154/100) (line-too-long)
+C:1019, 0: Line too long (238/100) (line-too-long)
+C:1020, 0: Line too long (110/100) (line-too-long)
+C:1032, 0: Line too long (180/100) (line-too-long)
+C:1055, 0: Line too long (196/100) (line-too-long)
+C:1058, 0: Line too long (295/100) (line-too-long)
+C:1059, 0: Line too long (126/100) (line-too-long)
+C:1087, 0: Line too long (104/100) (line-too-long)
+C:1091, 0: Line too long (106/100) (line-too-long)
+C:1092, 0: Line too long (118/100) (line-too-long)
+C:1093, 0: Line too long (156/100) (line-too-long)
+C:1096, 0: Line too long (181/100) (line-too-long)
+C:1097, 0: Line too long (146/100) (line-too-long)
+C:1120, 0: Line too long (158/100) (line-too-long)
+C:1173, 0: Line too long (180/100) (line-too-long)
+C:1197, 0: Line too long (186/100) (line-too-long)
+C:1275, 0: Line too long (163/100) (line-too-long)
+C:1288, 0: Line too long (163/100) (line-too-long)
+C:1306, 0: Line too long (101/100) (line-too-long)
+C:1309, 0: Line too long (118/100) (line-too-long)
+C:1311, 0: Line too long (126/100) (line-too-long)
+C:1312, 0: Line too long (210/100) (line-too-long)
+C:1375, 0: Line too long (180/100) (line-too-long)
+C:1401, 0: Line too long (186/100) (line-too-long)
+C:1438, 0: Line too long (180/100) (line-too-long)
+C:1464, 0: Line too long (186/100) (line-too-long)
+C:1510, 0: Line too long (102/100) (line-too-long)
+C:1546, 0: Line too long (118/100) (line-too-long)
+C:1549, 0: Line too long (144/100) (line-too-long)
+C:1562, 0: Line too long (163/100) (line-too-long)
+C:1575, 0: Line too long (126/100) (line-too-long)
+C:1585, 0: Line too long (125/100) (line-too-long)
+C:1588, 0: Line too long (238/100) (line-too-long)
+C:1711, 0: Line too long (102/100) (line-too-long)
+C:1737, 0: Line too long (150/100) (line-too-long)
+C:1760, 0: Line too long (118/100) (line-too-long)
+C:1763, 0: Line too long (144/100) (line-too-long)
+C:1776, 0: Line too long (163/100) (line-too-long)
+C:1789, 0: Line too long (126/100) (line-too-long)
+C:1799, 0: Line too long (125/100) (line-too-long)
+C:1802, 0: Line too long (238/100) (line-too-long)
+C:1914, 0: Line too long (227/100) (line-too-long)
+C:1915, 0: Line too long (167/100) (line-too-long)
+C:1916, 0: Line too long (170/100) (line-too-long)
+C:1917, 0: Line too long (204/100) (line-too-long)
+C:1918, 0: Line too long (221/100) (line-too-long)
+C:1919, 0: Line too long (169/100) (line-too-long)
+C:1920, 0: Line too long (462/100) (line-too-long)
+C:1921, 0: Line too long (191/100) (line-too-long)
+C:1922, 0: Line too long (219/100) (line-too-long)
+C:1923, 0: Line too long (891/100) (line-too-long)
+C:1924, 0: Line too long (272/100) (line-too-long)
+C:1927, 0: Line too long (169/100) (line-too-long)
+C:1928, 0: Line too long (109/100) (line-too-long)
+C:1929, 0: Line too long (112/100) (line-too-long)
+C:1930, 0: Line too long (151/100) (line-too-long)
+C:1931, 0: Line too long (146/100) (line-too-long)
+C:1932, 0: Line too long (129/100) (line-too-long)
+C:1933, 0: Line too long (246/100) (line-too-long)
+C:1934, 0: Line too long (136/100) (line-too-long)
+C:1935, 0: Line too long (169/100) (line-too-long)
+C:1936, 0: Line too long (369/100) (line-too-long)
+C:1937, 0: Line too long (200/100) (line-too-long)
+C:  1, 0: Too many lines in module (1970/1000) (too-many-lines)
+C:  1, 0: Missing module docstring (missing-docstring)
+C: 11, 0: Missing class docstring (missing-docstring)
+C: 15, 0: Missing class docstring (missing-docstring)
+R: 15, 0: Too many instance attributes (25/7) (too-many-instance-attributes)
+R: 18, 4: Too many arguments (9/5) (too-many-arguments)
+W: 18,46: Unused argument 'raise_error_on_page_not_found' (unused-argument)
+C: 52, 4: Missing method docstring (missing-docstring)
+C: 56, 4: Missing method docstring (missing-docstring)
+C: 60, 4: Missing method docstring (missing-docstring)
+C: 64, 4: Missing method docstring (missing-docstring)
+C: 68, 4: Missing method docstring (missing-docstring)
+C: 72, 4: Missing method docstring (missing-docstring)
+C: 75, 4: Missing method docstring (missing-docstring)
+W: 88,12: No exception type(s) specified (bare-except)
+W: 94,12: No exception type(s) specified (bare-except)
+W:100,12: No exception type(s) specified (bare-except)
+W:233, 8: No exception type(s) specified (bare-except)
+C:228,44: Invalid variable name "e" (invalid-name)
+C:250, 4: Missing method docstring (missing-docstring)
+C:272, 4: Missing method docstring (missing-docstring)
+R:406, 4: Too many local variables (17/15) (too-many-locals)
+C:407,11: Using type() instead of isinstance() for a typecheck. (unidiomatic-typecheck)
+W:313, 8: Attribute '_author_info' defined outside __init__ (attribute-defined-outside-init)
+W:460, 8: Attribute '_reading_time_hours' defined outside __init__ (attribute-defined-outside-init)
+W:387, 8: Attribute '_author_recommendations' defined outside __init__ (attribute-defined-outside-init)
+W:452, 8: Attribute '_book_image_url' defined outside __init__ (attribute-defined-outside-init)
+W:458, 8: Attribute '_num_pages' defined outside __init__ (attribute-defined-outside-init)
+W:404, 8: Attribute '_cust_recommendations' defined outside __init__ (attribute-defined-outside-init)
+W:388, 8: Attribute '_author_other_books' defined outside __init__ (attribute-defined-outside-init)
+W:461, 8: Attribute '_reading_time_minutes' defined outside __init__ (attribute-defined-outside-init)
+************* Module X-Ray_Calibre_Plugin.lib.xray_creator
+C: 56, 0: Line too long (102/100) (line-too-long)
+C:108, 0: Line too long (103/100) (line-too-long)
+C:109, 0: Line too long (102/100) (line-too-long)
+C:112, 0: Line too long (104/100) (line-too-long)
+C:117, 0: Line too long (102/100) (line-too-long)
+C:127, 0: Line too long (114/100) (line-too-long)
+C:139, 0: Line too long (107/100) (line-too-long)
+C:146, 0: Line too long (124/100) (line-too-long)
+C:154, 0: Line too long (117/100) (line-too-long)
+C:160, 0: Line too long (115/100) (line-too-long)
+C:166, 0: Line too long (111/100) (line-too-long)
+C:171, 0: Line too long (116/100) (line-too-long)
+C:214, 0: Line too long (159/100) (line-too-long)
+C:217, 0: Line too long (102/100) (line-too-long)
+C:222, 0: Line too long (149/100) (line-too-long)
+C:226, 0: Line too long (111/100) (line-too-long)
+C:239, 0: Line too long (122/100) (line-too-long)
+C:256, 0: Line too long (104/100) (line-too-long)
+C:257, 0: Line too long (156/100) (line-too-long)
+C:295, 0: Line too long (107/100) (line-too-long)
+C:299, 0: Line too long (162/100) (line-too-long)
+C:305, 0: Line too long (104/100) (line-too-long)
+C:306, 0: Line too long (161/100) (line-too-long)
+C:  1, 0: Missing module docstring (missing-docstring)
+E: 11, 0: Unable to import 'calibre' (import-error)
+E: 12, 0: Unable to import 'calibre.customize.ui' (import-error)
+E: 13, 0: Unable to import 'calibre.devices.scanner' (import-error)
+E: 14, 0: Unable to import 'calibre_plugins.xray_creator.lib.book' (import-error)
+C: 16, 0: Missing class docstring (missing-docstring)
+R: 16, 0: Too many instance attributes (20/7) (too-many-instance-attributes)
+R: 17, 4: Too many arguments (13/5) (too-many-arguments)
+C: 35, 4: Missing method docstring (missing-docstring)
+W: 66,16: Access to a protected member _status of a client class (protected-access)
+W: 67,16: Access to a protected member _status_message of a client class (protected-access)
+W: 73,12: Access to a protected member _status of a client class (protected-access)
+W: 73,40: Using possibly undefined loop variable 'book' (undefined-loop-variable)
+W: 74,12: Access to a protected member _status_message of a client class (protected-access)
+W: 74,48: Using possibly undefined loop variable 'book' (undefined-loop-variable)
+C: 78, 4: Missing method docstring (missing-docstring)
+C: 83, 4: Missing method docstring (missing-docstring)
+R: 83, 4: Too many branches (23/12) (too-many-branches)
+C:133, 4: Missing method docstring (missing-docstring)
+W:176, 8: No exception type(s) specified (bare-except)
+R:133, 4: Too many branches (23/12) (too-many-branches)
+C:187,12: Invalid variable name "d" (invalid-name)
+C:190,16: Invalid variable name "ok" (invalid-name)
+C:198,17: Invalid variable name "d" (invalid-name)
+W:201,12: No exception type(s) specified (bare-except)
+W:224,15: Catching too general exception Exception (broad-except)
+W:211,39: Access to a protected member _data of a client class (protected-access)
+W:212,42: Access to a protected member _data of a client class (protected-access)
+R:214,23: Too many boolean expressions in if statement (6/5) (too-many-boolean-expressions)
+C:220,46: Invalid variable name "e" (invalid-name)
+C:224,28: Invalid variable name "e" (invalid-name)
+R:228, 4: Method could be a function (no-self-use)
+C:249, 4: Missing method docstring (missing-docstring)
+C:250,16: More than one statement on a single line (multiple-statements)
+C:251,26: More than one statement on a single line (multiple-statements)
+C:256,20: More than one statement on a single line (multiple-statements)
+R:249, 4: Too many branches (17/12) (too-many-branches)
+C:287, 4: Missing method docstring (missing-docstring)
+C:288,16: More than one statement on a single line (multiple-statements)
+C:289,26: More than one statement on a single line (multiple-statements)
+C:294,30: More than one statement on a single line (multiple-statements)
+C:295,20: More than one statement on a single line (multiple-statements)
+C:298,30: More than one statement on a single line (multiple-statements)
+C:299,20: More than one statement on a single line (multiple-statements)
+C:305,20: More than one statement on a single line (multiple-statements)
+R:287, 4: Too many branches (15/12) (too-many-branches)
+W: 84, 8: Attribute '_create_completed' defined outside __init__ (attribute-defined-outside-init)
+W: 85, 8: Attribute '_create_failed' defined outside __init__ (attribute-defined-outside-init)
+W:136,12: Attribute '_send_failed' defined outside __init__ (attribute-defined-outside-init)
+W: 51, 8: Attribute '_books' defined outside __init__ (attribute-defined-outside-init)
+W:135,12: Attribute '_send_completed' defined outside __init__ (attribute-defined-outside-init)
+W: 59, 8: Attribute '_total_not_failing' defined outside __init__ (attribute-defined-outside-init)
+W: 76, 8: Attribute '_device_books' defined outside __init__ (attribute-defined-outside-init)
+************* Module X-Ray_Calibre_Plugin.lib.xray_db_writer
+W: 34, 0: Unnecessary semicolon (unnecessary-semicolon)
+C: 35, 0: Line too long (101/100) (line-too-long)
+C: 36, 0: Line too long (129/100) (line-too-long)
+C: 37, 0: Line too long (128/100) (line-too-long)
+C: 38, 0: Line too long (148/100) (line-too-long)
+C: 47, 0: Line too long (124/100) (line-too-long)
+C: 48, 0: Line too long (120/100) (line-too-long)
+C: 58, 0: Line too long (105/100) (line-too-long)
+C: 66, 0: Line too long (104/100) (line-too-long)
+C: 71, 0: Line too long (117/100) (line-too-long)
+C: 77, 0: Line too long (112/100) (line-too-long)
+C: 81, 0: Line too long (149/100) (line-too-long)
+C: 82, 0: Line too long (120/100) (line-too-long)
+C: 90, 0: Line too long (133/100) (line-too-long)
+C: 97, 0: Line too long (198/100) (line-too-long)
+C:104, 0: Line too long (197/100) (line-too-long)
+C:  1, 0: Missing module docstring (missing-docstring)
+E:  5, 0: Unable to import 'calibre_plugins.xray_creator.lib.db_writer' (import-error)
+C:  7, 0: Missing class docstring (missing-docstring)
+R:  7, 0: Too many instance attributes (8/7) (too-many-instance-attributes)
+C: 20, 4: Missing method docstring (missing-docstring)
+C: 33, 4: Missing method docstring (missing-docstring)
+C: 40, 4: Missing method docstring (missing-docstring)
+C: 51, 4: Missing method docstring (missing-docstring)
+C: 61, 4: Missing method docstring (missing-docstring)
+C: 74, 4: Missing method docstring (missing-docstring)
+C: 85, 4: Missing method docstring (missing-docstring)
+C: 93, 4: Missing method docstring (missing-docstring)
+C: 96, 4: Missing method docstring (missing-docstring)
+************* Module X-Ray_Calibre_Plugin.lib.__init__
+R:  1, 0: Similar lines in 2 files
+==X-Ray_Calibre_Plugin.book_config:35
+==X-Ray_Calibre_Plugin.lib.xray_creator:38
+        https_proxy = get_proxies(debug=False).get('https', None)
+        if https_proxy:
+            https_address = ':'.join(https_proxy.split(':')[:-1])
+            https_port = int(https_proxy.split(':')[-1])
+            goodreads_conn = HTTPSConnection(https_address, https_port)
+            goodreads_conn.set_tunnel('www.goodreads.com', 443)
+            amazon_conn = HTTPSConnection(https_address, https_port)
+            amazon_conn.set_tunnel('www.amazon.com', 443)
+        else:
+            goodreads_conn = HTTPSConnection('www.goodreads.com')
+            amazon_conn = HTTPSConnection('www.amazon.com')
+ (duplicate-code)
+R:  1, 0: Similar lines in 4 files
+==X-Ray_Calibre_Plugin.book_config:2
+==X-Ray_Calibre_Plugin.config:2
+==X-Ray_Calibre_Plugin.ui:3
+==X-Ray_Calibre_Plugin:2
+from __future__ import (unicode_literals, division, absolute_import,
+                        print_function)
+
+__license__   = 'GPL v3'
+__copyright__ = '2016, Samreen Zarroug, Anthony Toole, & Alex Mayer'
+__docformat__ = 'restructuredtext en'
+ (duplicate-code)
+
+
+Report
+======
+1608 statements analysed.
+
+Statistics by type
+------------------
+
++---------+-------+-----------+-----------+------------+---------+
+|type     |number |old number |difference |%documented |%badname |
++=========+=======+===========+===========+============+=========+
+|module   |11     |11         |=          |9.09        |9.09     |
++---------+-------+-----------+-----------+------------+---------+
+|class    |12     |12         |=          |0.00        |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+|method   |123    |123        |=          |39.84       |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+|function |1      |1          |=          |0.00        |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+
+
+
+External dependencies
+---------------------
+::
+
+    lxml 
+      \-html (X-Ray_Calibre_Plugin.lib.goodreads_parser)
+
+
+
+Raw metrics
+-----------
+
++----------+-------+------+---------+-----------+
+|type      |number |%     |previous |difference |
++==========+=======+======+=========+===========+
+|code      |2212   |57.72 |2209     |+3.00      |
++----------+-------+------+---------+-----------+
+|docstring |1199   |31.29 |1199     |=          |
++----------+-------+------+---------+-----------+
+|comment   |65     |1.70  |65       |=          |
++----------+-------+------+---------+-----------+
+|empty     |356    |9.29  |356      |=          |
++----------+-------+------+---------+-----------+
+
+
+
+Duplication
+-----------
+
++-------------------------+------+---------+-----------+
+|                         |now   |previous |difference |
++=========================+======+=========+===========+
+|nb duplicated lines      |33    |33       |=          |
++-------------------------+------+---------+-----------+
+|percent duplicated lines |0.864 |0.864    |-0.00      |
++-------------------------+------+---------+-----------+
+
+
+
+Messages by category
+--------------------
+
++-----------+-------+---------+-----------+
+|type       |number |previous |difference |
++===========+=======+=========+===========+
+|convention |347    |347      |=          |
++-----------+-------+---------+-----------+
+|refactor   |33     |33       |=          |
++-----------+-------+---------+-----------+
+|warning    |111    |112      |-1.00      |
++-----------+-------+---------+-----------+
+|error      |43     |43       |=          |
++-----------+-------+---------+-----------+
+
+
+
+% errors / warnings by module
+-----------------------------
+
++------------------------------------------+------+--------+---------+-----------+
+|module                                    |error |warning |refactor |convention |
++==========================================+======+========+=========+===========+
+|X-Ray_Calibre_Plugin.ui                   |20.93 |10.81   |3.03     |5.48       |
++------------------------------------------+------+--------+---------+-----------+
+|X-Ray_Calibre_Plugin                      |20.93 |0.00    |9.09     |4.61       |
++------------------------------------------+------+--------+---------+-----------+
+|X-Ray_Calibre_Plugin.lib.book_settings    |11.63 |8.11    |9.09     |10.37      |
++------------------------------------------+------+--------+---------+-----------+
+|X-Ray_Calibre_Plugin.book_config          |11.63 |2.70    |6.06     |6.63       |
++------------------------------------------+------+--------+---------+-----------+
+|X-Ray_Calibre_Plugin.lib.xray_creator     |9.30  |16.22   |24.24    |13.26      |
++------------------------------------------+------+--------+---------+-----------+
+|X-Ray_Calibre_Plugin.lib.book_parser      |9.30  |10.81   |24.24    |6.05       |
++------------------------------------------+------+--------+---------+-----------+
+|X-Ray_Calibre_Plugin.config               |9.30  |0.00    |6.06     |2.88       |
++------------------------------------------+------+--------+---------+-----------+
+|X-Ray_Calibre_Plugin.lib.db_writer        |2.33  |38.74   |0.00     |3.75       |
++------------------------------------------+------+--------+---------+-----------+
+|X-Ray_Calibre_Plugin.lib.xray_db_writer   |2.33  |0.90    |3.03     |7.49       |
++------------------------------------------+------+--------+---------+-----------+
+|X-Ray_Calibre_Plugin.lib.book             |2.33  |0.00    |0.00     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|X-Ray_Calibre_Plugin.lib.goodreads_parser |0.00  |11.71   |9.09     |39.48      |
++------------------------------------------+------+--------+---------+-----------+
+|X-Ray_Calibre_Plugin.lib.__init__         |0.00  |0.00    |6.06     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+
+
+
+Messages
+--------
+
++-------------------------------+------------+
+|message id                     |occurrences |
++===============================+============+
+|line-too-long                  |207         |
++-------------------------------+------------+
+|missing-docstring              |97          |
++-------------------------------+------------+
+|invalid-encoded-data           |43          |
++-------------------------------+------------+
+|attribute-defined-outside-init |42          |
++-------------------------------+------------+
+|import-error                   |35          |
++-------------------------------+------------+
+|invalid-name                   |18          |
++-------------------------------+------------+
+|bare-except                    |14          |
++-------------------------------+------------+
+|bad-whitespace                 |13          |
++-------------------------------+------------+
+|multiple-statements            |10          |
++-------------------------------+------------+
+|too-many-instance-attributes   |8           |
++-------------------------------+------------+
+|protected-access               |6           |
++-------------------------------+------------+
+|no-self-use                    |6           |
++-------------------------------+------------+
+|undefined-variable             |5           |
++-------------------------------+------------+
+|too-many-branches              |5           |
++-------------------------------+------------+
+|too-many-locals                |4           |
++-------------------------------+------------+
+|too-many-arguments             |3           |
++-------------------------------+------------+
+|undefined-loop-variable        |2           |
++-------------------------------+------------+
+|too-many-statements            |2           |
++-------------------------------+------------+
+|no-member                      |2           |
++-------------------------------+------------+
+|duplicate-code                 |2           |
++-------------------------------+------------+
+|unused-argument                |1           |
++-------------------------------+------------+
+|unnecessary-semicolon          |1           |
++-------------------------------+------------+
+|unidiomatic-typecheck          |1           |
++-------------------------------+------------+
+|too-many-lines                 |1           |
++-------------------------------+------------+
+|too-many-boolean-expressions   |1           |
++-------------------------------+------------+
+|too-few-public-methods         |1           |
++-------------------------------+------------+
+|syntax-error                   |1           |
++-------------------------------+------------+
+|redefined-variable-type        |1           |
++-------------------------------+------------+
+|redefined-outer-name           |1           |
++-------------------------------+------------+
+|broad-except                   |1           |
++-------------------------------+------------+
+
+
+
+Global evaluation
+-----------------
+Your code has been rated at 5.61/10 (previous run: 5.60/10, +0.01)
+

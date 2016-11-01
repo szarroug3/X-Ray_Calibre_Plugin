@@ -15,8 +15,8 @@ from calibre.gui2 import Dispatcher
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2.threaded_jobs import ThreadedJob
 
-from calibre_plugins.xray_creator.config import prefs
-from calibre_plugins.xray_creator.lib.xray_creator import *
+from calibre_plugins.xray_creator.config import __prefs__
+from calibre_plugins.xray_creator.lib.xray_creator import XRayCreator
 from calibre_plugins.xray_creator.book_config import BookConfigWidget
 
 class XRayCreatorInterfacePlugin(InterfaceAction):
@@ -25,7 +25,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
     # Set main action and keyboard shortcut
     action_spec = ('X-Ray Creator', None,
-            'Run X-Ray Creator', 'Ctrl+Shift+Alt+X')
+                   'Run X-Ray Creator', 'Ctrl+Shift+Alt+X')
     popup_type = QToolButton.InstantPopup
     action_type = 'current'
 
@@ -37,35 +37,35 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
         self.menu = QMenu(self.gui)
         self.create_menu_action(self.menu, 'Book Specific Preferences',
-                'Book Specific Preferences', None, 'CTRL+SHIFT+ALT+Z',
-                'Set preferences specific to the book', self.book_config)
+                                'Book Specific Preferences', None, 'CTRL+SHIFT+ALT+Z',
+                                'Set preferences specific to the book', self.book_config)
         self.create_menu_action(self.menu, 'X-Ray Creator Create/Update Button',
-                'Create/Update Files', None, 'CTRL+SHIFT+ALT+X',
-                'Create/Update files for chosen books', self.create_files)
+                                'Create/Update Files', None, 'CTRL+SHIFT+ALT+X',
+                                'Create/Update files for chosen books', self.create_files)
         self.create_menu_action(self.menu, 'Send Local Files to Device',
-                'Sends Files to Device', None, 'CTRL+SHIFT+ALT+C',
-                'Sends files to device', self.send_files)
+                                'Sends Files to Device', None, 'CTRL+SHIFT+ALT+C',
+                                'Sends files to device', self.send_files)
 
         self.menu.addSeparator()
 
         self.create_menu_action(self.menu, 'X-Ray Creator Preferences Button',
-                'Preferences', None, None,
-                'Create X-Rays for Chosen Books', self.config)
+                                'Preferences', None, None,
+                                'Create X-Rays for Chosen Books', self.config)
         self.qaction.setIcon(icon)
         self.qaction.setMenu(self.menu)
 
     def apply_settings(self):
-        self._send_to_device = prefs['send_to_device']
-        self._create_files_when_sending = prefs['create_files_when_sending']
-        self._expand_aliases = prefs['expand_aliases']
-        self._overwrite = prefs['overwrite_when_creating']
-        self._create_send_xray = prefs['create_send_xray']
-        self._create_send_author_profile = prefs['create_send_author_profile']
-        self._create_send_start_actions = prefs['create_send_start_actions']
-        self._create_send_end_actions = prefs['create_send_end_actions']
-        self._file_preference = prefs['file_preference']
-        self._mobi = prefs['mobi']
-        self._azw3 = prefs['azw3']
+        self._send_to_device = __prefs__['send_to_device']
+        self._create_files_when_sending = __prefs__['create_files_when_sending']
+        self._expand_aliases = __prefs__['expand_aliases']
+        self._overwrite = __prefs__['overwrite_when_creating']
+        self._create_send_xray = __prefs__['create_send_xray']
+        self._create_send_author_profile = __prefs__['create_send_author_profile']
+        self._create_send_start_actions = __prefs__['create_send_start_actions']
+        self._create_send_end_actions = __prefs__['create_send_end_actions']
+        self._file_preference = __prefs__['file_preference']
+        self._mobi = __prefs__['mobi']
+        self._azw3 = __prefs__['azw3']
 
     def create_files(self):
         xray_creator = self._get_books('Cannot create Files')
@@ -90,7 +90,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         ids = list(map(self.gui.library_view.model().id, rows))
         db = db.new_api
 
-        book_configs = BookConfigWidget(db, ids, self._expand_aliases, self.gui)
+        BookConfigWidget(db, ids, self._expand_aliases, self.gui)
 
     def created_files(self, job):
         pass
@@ -99,8 +99,6 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         pass
 
     def _get_books(self, error_msg):
-        from calibre.ebooks.metadata.meta import get_metadata, set_metadata
-
         db = self.gui.current_db
         rows = self.gui.library_view.selectionModel().selectedRows()
         if not rows or len(rows) == 0:
@@ -117,8 +115,10 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         if self._azw3:
             formats.append('azw3')
 
-        xray_creator = XRayCreator(db, ids, formats, self._send_to_device, self._create_files_when_sending, self._expand_aliases, self._overwrite,
-                            self._create_send_xray, self._create_send_author_profile, self._create_send_start_actions, self._create_send_end_actions, self._file_preference)
+        xray_creator = XRayCreator(db, ids, formats, self._send_to_device, self._create_files_when_sending,
+                                   self._expand_aliases, self._overwrite, self._create_send_xray,
+                                   self._create_send_author_profile, self._create_send_start_actions,
+                                   self._create_send_end_actions, self._file_preference)
         return xray_creator
 
     def config(self):

@@ -52,13 +52,12 @@ class BookParser(object):
     def parsed_data(self):
         return self._parsed_data
 
-    def parse(self, log=None):
+    def parse(self):
         self._book_html = MobiExtractor(self._book_path, open(os.devnull, 'w')).extract_text()
         self.find_erl_and_encoding()
         paragraph_data = []
 
         # find all paragraphs (sections enclosed in html p tags) and their starting offset
-        if log: log('%s\t\t\tGetting paragraphs...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         for node in re.finditer(self.PARAGRAPH_PAT, self._book_html):
             # get plain text from paragraph and locations of letters from beginning of file
             results = [(word.group(0)[1:-1].decode(self._codec), word.start(0)) for word in re.finditer(self.PLAIN_TEXT_PAT, node.group(0))]
@@ -75,8 +74,6 @@ class BookParser(object):
 
         # get db data
         excerpt_id = 0
-        if log: log('%s\t\t\tGetting paragraph data...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        if log: log('%s\t\t\t\tNumber of paragraphs: %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), len(paragraph_data)))
         for word_loc, para_start in paragraph_data:
             rel_ent = []
             if len(self._entity_data.keys()) > 0:
@@ -91,7 +88,7 @@ class BookParser(object):
                     self._entity_data[term]['mentions'] += 1
                     self._entity_data[term]['excerpt_ids'].append(excerpt_id)
                     self._entity_data[term]['occurrence'].append({'loc': word_loc['locs'][self._find_start(match.start(0), word_loc['words'])],
-                                'len': self._find_len_word(match.start(0), match.end(0), word_loc)})
+                                                                  'len': self._find_len_word(match.start(0), match.end(0), word_loc)})
                     if entity_id not in rel_ent:
                         rel_ent.append(entity_id)
             for quote in self._quotes:
@@ -105,17 +102,16 @@ class BookParser(object):
             num_of_notable_clips = 20
         else:
             num_of_notable_clips = len(self._notable_clips) + excerpt_id
-        if self._notable_clips < num_of_notable_clips and log: log('%s\t\t\tGetting extra notable clips...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         while len(self._notable_clips) < num_of_notable_clips:
             rand_excerpt = randrange(0, excerpt_id - 1)
             if rand_excerpt not in self._notable_clips:
                 self._notable_clips.append(rand_excerpt)
 
         self._parsed_data = {'erl': self._erl,
-                                'excerpt_data': self._excerpt_data,
-                                'notable_clips': self._notable_clips,
-                                'entity_data': self._entity_data,
-                                'codec': self._codec}
+                             'excerpt_data': self._excerpt_data,
+                             'notable_clips': self._notable_clips,
+                             'entity_data': self._entity_data,
+                             'codec': self._codec}
 
     def _find_start(self, start, string):
         previous_space = string[:start].rfind(' ')
@@ -152,7 +148,7 @@ class BookParser(object):
         char_sizes = word_loc['char_sizes']
 
         total_len = 0
-        for char in range(0, len(string) ):
+        for char in range(0, len(string)):
             total_len += char_sizes[char]
 
         return total_len
@@ -170,7 +166,7 @@ class MobiExtractor(MobiReader):
     def extract_text(self, offset=1):
         text_sections = [self.text_section(i) for i in range(offset, min(self.book_header.records + offset, len(self.sections)))]
         processed_records = list(range(offset-1, self.book_header.records +
-            offset))
+                                       offset))
 
         self.mobi_html = b''
 

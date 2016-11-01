@@ -11,7 +11,7 @@ import functools
 import webbrowser
 from httplib import HTTPSConnection
 
-from PyQt5.QtCore import *
+from PyQt5.QtCore import Qt
 from PyQt5.Qt import QDialog, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout
 from PyQt5.Qt import QLabel, QLineEdit, QPushButton, QScrollArea
 
@@ -22,10 +22,13 @@ class BookConfigWidget(QDialog):
     # title case given words except for articles in the middle
     # i.e the lord ruler would become The Lord Ruler but john the great would become John the Great
     ARTICLES = ['The', 'For', 'De', 'And', 'Or', 'Of', 'La']
-    TITLE_CASE = lambda self, words: ' '.join([word.lower() if word in self.ARTICLES and index != 0 else word for index, word in enumerate(words.title().split())])
+    TITLE_CASE = lambda self, words: ' '.join([word.lower()
+                                               if word in self.ARTICLES and index != 0
+                                               else word
+                                               for index, word in enumerate(words.title().split())])
     def __init__(self, db, ids, expand_aliases, parent):
         QDialog.__init__(self, parent)
-        self.resize(500,500)
+        self.resize(500, 500)
         self._index = 0
 
         self._book_settings = []
@@ -81,10 +84,10 @@ class BookConfigWidget(QDialog):
         self.v_layout.addLayout(self.goodreads_layout)
 
         self.update_buttons_layout = QHBoxLayout(None)
-        self.update_ASIN_button = QPushButton('Search for ASIN')
-        self.update_ASIN_button.setFixedWidth(175)
-        self.update_ASIN_button.clicked.connect(self.search_for_ASIN)
-        self.update_buttons_layout.addWidget(self.update_ASIN_button)
+        self.update_asin_button = QPushButton('Search for ASIN')
+        self.update_asin_button.setFixedWidth(175)
+        self.update_asin_button.clicked.connect(self.search_for_asin_clicked)
+        self.update_buttons_layout.addWidget(self.update_asin_button)
         self.update_goodreads_url_button = QPushButton('Search for Goodreads URL')
         self.update_goodreads_url_button.setFixedWidth(175)
         self.update_goodreads_url_button.clicked.connect(self.search_for_goodreads_url)
@@ -114,23 +117,23 @@ class BookConfigWidget(QDialog):
             self.previous_button = QPushButton("Previous")
             self.previous_button.setEnabled(False)
             self.previous_button.setFixedWidth(100)
-            self.previous_button.clicked.connect(self.previous)
+            self.previous_button.clicked.connect(self.previous_clicked)
             self.buttons_layout.addWidget(self.previous_button)
 
-        self.OK_button = QPushButton("OK")
-        self.OK_button.setFixedWidth(100)
-        self.OK_button.clicked.connect(self.ok)
-        self.buttons_layout.addWidget(self.OK_button)
+        self.ok_button = QPushButton("OK")
+        self.ok_button.setFixedWidth(100)
+        self.ok_button.clicked.connect(self.ok_clicked)
+        self.buttons_layout.addWidget(self.ok_button)
 
         self.cancel_button = QPushButton("Cancel")
         self.cancel_button.setFixedWidth(100)
-        self.cancel_button.clicked.connect(self.cancel)
+        self.cancel_button.clicked.connect(self.cancel_clicked)
         self.buttons_layout.addWidget(self.cancel_button)
 
         if len(ids) > 1:
             self.next_button = QPushButton("Next")
             self.next_button.setFixedWidth(100)
-            self.next_button.clicked.connect(self.next)
+            self.next_button.clicked.connect(self.next_clicked)
             self.buttons_layout.addWidget(self.next_button)
 
         self.v_layout.addLayout(self.buttons_layout)
@@ -155,17 +158,16 @@ class BookConfigWidget(QDialog):
         if 'goodreads.com' not in val:
             self.status.setText('Warning: Invalid Goodreads URL. URL must have goodreads as the domain.')
 
-    def search_for_ASIN(self):
+    def search_for_asin_clicked(self):
         asin = None
         self.set_status_and_repaint('Searching for ASIN...')
         if self.book.title != 'Unknown' and self.book.author != 'Unknown':
-            asin = self.book.search_for_asin(self.book.title_and_author)
+            asin = self.book.search_for_asin_on_amazon(self.book.title_and_author)
         if asin:
             self.status.setText('ASIN found.')
             self.book.asin = asin
             self.asin_edit.setText(asin)
         else:
-            self.asin_edit.setText(original_text)
             self.status.setText('ASIN not found.')
             self.asin_edit.setText('')
 
@@ -208,7 +210,7 @@ class BookConfigWidget(QDialog):
     def edit_aliases(self, term, val):
         self.book.aliases = (term, val)
 
-    def previous(self):
+    def previous_clicked(self):
         self.status.setText('')
         self._index -= 1
         self.next_button.setEnabled(True)
@@ -216,15 +218,15 @@ class BookConfigWidget(QDialog):
             self.previous_button.setEnabled(False)
         self.show_book_prefs()
 
-    def ok(self):
+    def ok_clicked(self):
         for book in self._book_settings:
             book.save()
         self.close()
 
-    def cancel(self):
+    def cancel_clicked(self):
         self.close()
 
-    def next(self):
+    def next_clicked(self):
         self.status.setText('')
         self._index += 1
         self.previous_button.setEnabled(True)
