@@ -20,7 +20,7 @@ from calibre_plugins.xray_creator.lib.xray_creator import XRayCreator
 from calibre_plugins.xray_creator.book_config import BookConfigWidget
 
 class XRayCreatorInterfacePlugin(InterfaceAction):
-
+    '''Initializes plugin's interface'''
     name = 'X-Ray Creator'
 
     # Set main action and keyboard shortcut
@@ -30,7 +30,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
     action_type = 'current'
 
     def genesis(self):
-        # initial setup here
+        '''Initial setup'''
         self.apply_settings()
 
         icon = get_icons('images/icon.png')
@@ -55,6 +55,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         self.qaction.setMenu(self.menu)
 
     def apply_settings(self):
+        '''Gets user's settings'''
         self._send_to_device = __prefs__['send_to_device']
         self._create_files_when_sending = __prefs__['create_files_when_sending']
         self._expand_aliases = __prefs__['expand_aliases']
@@ -69,18 +70,23 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         self._azw3 = __prefs__['azw3']
 
     def create_files(self):
+        '''Creates files depending on user's settings'''
         xray_creator = self._get_books('Cannot create Files')
         if xray_creator:
-            job = ThreadedJob('create_files', 'Creating Files', xray_creator.create_files_event, (), {}, Dispatcher(self.created_files))
+            job = ThreadedJob('create_files', 'Creating Files', xray_creator.create_files_event,
+                              (), {}, Dispatcher(self.created_files))
             self.gui.job_manager.run_threaded_job(job)
 
     def send_files(self):
+        '''Sends files depending on user's settings'''
         xray_creator = self._get_books('Cannot send Files')
         if xray_creator:
-            job = ThreadedJob('send_files', 'Sending Files to Device', xray_creator.send_files_event, (), {}, Dispatcher(self.sent_files))
+            job = ThreadedJob('send_files', 'Sending Files to Device', xray_creator.send_files_event,
+                              (), {}, Dispatcher(self.sent_files))
             self.gui.job_manager.run_threaded_job(job)
 
     def book_config(self):
+        '''Opens up a dialog that allows user to set book specific preferences'''
         db = self.gui.current_db
         rows = self.gui.library_view.selectionModel().selectedRows()
         if not rows or len(rows) == 0:
@@ -94,12 +100,15 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         BookConfigWidget(db, ids, self._expand_aliases, self.gui)
 
     def created_files(self, job):
+        '''Dispatcher for create_files'''
         pass
 
     def sent_files(self, job):
+        '''Dispatcher for send_files'''
         pass
 
     def _get_books(self, error_msg):
+        '''Gets selected books'''
         db = self.gui.current_db
         rows = self.gui.library_view.selectionModel().selectedRows()
         if not rows or len(rows) == 0:
@@ -123,4 +132,5 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         return xray_creator
 
     def config(self):
+        '''Opens up a dialog that allows user to set general preferences'''
         self.interface_action_base_plugin.do_user_config(parent=self.gui)

@@ -19,6 +19,8 @@ from calibre import get_proxies
 from calibre_plugins.xray_creator.lib.book_settings import BookSettings
 
 class BookConfigWidget(QDialog):
+    '''Creates book specific preferences dialog'''
+
     # title case given words except for articles in the middle
     # i.e the lord ruler would become The Lord Ruler but john the great would become John the Great
     ARTICLES = ['The', 'For', 'De', 'And', 'Or', 'Of', 'La']
@@ -144,21 +146,26 @@ class BookConfigWidget(QDialog):
 
     @property
     def book(self):
+        '''returns book setting's book object.'''
         return self._book_settings[self._index]
 
     def set_status_and_repaint(self, message):
+        '''Sets the status text and redraws the status text box'''
         self.status.setText(message)
         self.status.repaint()
 
     def edit_asin(self, val):
+        '''Sets book's asin to val'''
         self.book.asin = val
 
     def edit_goodreads_url(self, val):
+        '''Sets book's goodreads_url to val and warns if the url is invalid'''
         self.book.goodreads_url = val
         if 'goodreads.com' not in val:
             self.status.setText('Warning: Invalid Goodreads URL. URL must have goodreads as the domain.')
 
     def search_for_asin_clicked(self):
+        '''Searches for current book's ASIN on amazon'''
         asin = None
         self.set_status_and_repaint('Searching for ASIN...')
         if self.book.title != 'Unknown' and self.book.author != 'Unknown':
@@ -172,18 +179,21 @@ class BookConfigWidget(QDialog):
             self.asin_edit.setText('')
 
     def browse_amazon_url(self):
+        '''Opens amazon url for current book's ASIN'''
         webbrowser.open("https://www.amazon.co.uk/gp/product/%s/" % (self.asin_edit.text()))
 
     def browse_goodreads_url(self):
+        '''Opens url for current book's goodreads url'''
         webbrowser.open(self.goodreads_url_edit.text())
 
     def search_for_goodreads_url(self):
+        '''Searches for goodreads url using asin first then title and author if asin doesn't exist'''
         url = None
         self.set_status_and_repaint('Searching for Goodreads url...')
         if self.book.asin:
-            url = self.book.search_for_goodreads(self.book.asin)
+            url = self.book.search_for_goodreads_url(self.book.asin)
         if not url and self.book.title != 'Unknown' and self.book.author != 'Unknown':
-            url = self.book.search_for_goodreads(self.book.title_and_author)
+            url = self.book.search_for_goodreads_url(self.book.title_and_author)
         if url:
             self.status.setText('Goodreads url found.')
             self.update_aliases_button.setEnabled(True)
@@ -195,6 +205,7 @@ class BookConfigWidget(QDialog):
             self.goodreads_url_edit.setText('')
 
     def update_aliases(self):
+        '''Updates aliases on the preferences dialog using the information on the current goodreads url'''
         if 'goodreads.com' not in self.goodreads_url_edit.text():
             self.status.setText('Error: Invalid Goodreads URL. URL must have goodreads as the domain.')
             return
@@ -208,9 +219,11 @@ class BookConfigWidget(QDialog):
             self.status.setText('Invalid Goodreads url.')
 
     def edit_aliases(self, term, val):
+        '''Sets book's aliases to tuple (term, val)'''
         self.book.aliases = (term, val)
 
     def previous_clicked(self):
+        '''Goes to previous book'''
         self.status.setText('')
         self._index -= 1
         self.next_button.setEnabled(True)
@@ -219,14 +232,17 @@ class BookConfigWidget(QDialog):
         self.show_book_prefs()
 
     def ok_clicked(self):
+        '''Saves book's settings using current settings'''
         for book in self._book_settings:
             book.save()
         self.close()
 
     def cancel_clicked(self):
+        '''Closes dialog without saving settings'''
         self.close()
 
     def next_clicked(self):
+        '''Goes to next book'''
         self.status.setText('')
         self._index += 1
         self.previous_button.setEnabled(True)
@@ -235,12 +251,14 @@ class BookConfigWidget(QDialog):
         self.show_book_prefs()
 
     def show_book_prefs(self):
+        '''Shows current book's preferences'''
         self.setWindowTitle(self.book.title_and_author)
         self.asin_edit.setText(self.book.asin)
         self.goodreads_url_edit.setText(self.book.goodreads_url)
         self.update_aliases_on_gui()
 
     def update_aliases_on_gui(self):
+        '''Updates aliases on the dialog using the info in the book's aliases dict'''
         self.aliases_widget = QWidget()
         self.aliases_layout = QGridLayout(self.aliases_widget)
         self.aliases_layout.setAlignment(Qt.AlignTop)

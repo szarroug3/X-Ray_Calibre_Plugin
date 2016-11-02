@@ -11,6 +11,7 @@ __docformat__ = 'restructuredtext en'
 from calibre.customize import InterfaceActionBase
 
 class XRayCreatorPlugin(InterfaceActionBase):
+    '''Initializes X-Ray Creator Plugin'''
     name                    = 'X-Ray Creator'
     description             = 'A plugin to create X-Ray files for Kindle books'
     supported_platforms     = ['windows', 'osx', 'linux']
@@ -20,13 +21,16 @@ class XRayCreatorPlugin(InterfaceActionBase):
     actual_plugin           = 'calibre_plugins.xray_creator.ui:XRayCreatorInterfacePlugin'
 
     def is_customizable(self):
+        '''Tells Calibre that this widget is customizable'''
         return True
 
     def config_widget(self):
+        '''Creates preferences dialog'''
         from calibre_plugins.xray_creator.config import ConfigWidget
         return ConfigWidget()
 
     def save_settings(self, config_widget):
+        '''Saves preferences into book setting's json file'''
         config_widget.save_settings()
 
         # Apply the changes
@@ -52,6 +56,7 @@ class XRayCreatorPlugin(InterfaceActionBase):
         layout = QVBoxLayout(config_dialog)
 
         def size_dialog():
+            '''Sets size of dialog'''
             if geom is None:
                 config_dialog.resize(config_dialog.sizeHint())
             else:
@@ -105,6 +110,7 @@ class XRayCreatorPlugin(InterfaceActionBase):
         return config_dialog.result()
 
     def validate(self, config_dialog, config_widget):
+        '''Validates config widget info'''
         if config_widget.validate():
             config_dialog.accept()
             self.save_settings(config_widget)

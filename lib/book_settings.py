@@ -12,6 +12,7 @@ from calibre.library import current_library_path
 from calibre.ebooks.BeautifulSoup import BeautifulSoup
 
 class BookSettings(object):
+    '''Holds book specific settings'''
     GOODREADS_URL_PAT = re.compile(r'href="(\/book\/show\/.+?)"')
     BOOK_ID_PAT = re.compile(r'\/show\/([\d]+)')
     AMAZON_ASIN_PAT = re.compile(r'data\-asin=\"([a-zA-z0-9]+)\"')
@@ -74,9 +75,9 @@ class BookSettings(object):
         if self.goodreads_url == '':
             url = None
             if self.asin:
-                url = self.search_for_goodreads(self.asin)
+                url = self.search_for_goodreads_url(self.asin)
             if not url and self.title != 'Unknown' and self.author != 'Unknown':
-                url = self.search_for_goodreads(self.title_and_author)
+                url = self.search_for_goodreads_url(self.title_and_author)
 
             if url:
                 self.goodreads_url = url
@@ -97,57 +98,70 @@ class BookSettings(object):
 
     @property
     def prefs(self):
+        '''Returns _prefs object.'''
         return self._prefs
 
     @property
     def asin(self):
+        '''Returns _asin object.'''
         return self._asin
 
     @asin.setter
     def asin(self, val):
+        '''Sets _asin to val'''
         self._asin = val
 
     @property
     def title(self):
+        '''Returns _title object.'''
         return self._title
 
     @property
     def author(self):
+        '''Returns _author object.'''
         return self._author
 
     @property
     def title_and_author(self):
-        return '%s - %s' % (self.title, self.author)
+        '''Returns title and author in the format title - author'''
+        return '{0} - {1}'.format(self.title, self.author)
 
     @property
     def goodreads_url(self):
+        '''Returns _goodreads_url object.'''
         return self._goodreads_url
 
     @goodreads_url.setter
     def goodreads_url(self, val):
+        '''Sets _goodreads_url to val'''
         self._goodreads_url = val
 
     @property
     def aliases(self):
+        '''Returns _aliases object.'''
         return self._aliases
 
     @aliases.setter
     def aliases(self, val):
-        # 'aliases' is a string containing a comma separated list of aliases.
-        #
-        # Split it, remove whitespace from each element, drop empty strings (strangely, split only does this if you don't specify a separator)
-        #
-        # so "" -> []  "foo,bar" and " foo   , bar " -> ["foo", "bar"]
+        '''
+        'aliases' is a string containing a comma separated list of aliases.
+        
+        Split it, remove whitespace from each element, drop empty strings (strangely, split only does this if you don't specify a separator)
+        
+        so "" -> []  "foo,bar" and " foo   , bar " -> ["foo", "bar"]
+        '''
         label, aliases = val
         aliases = [x.strip() for x in aliases.split(",") if x.strip()]
-        self._aliases[label] =  aliases
+        self._aliases[label] = aliases
 
     def save(self):
+        '''Saves current settings in book's settings file'''
         self.prefs['asin'] = self.asin
         self.prefs['goodreads_url'] = self.goodreads_url
         self.prefs['aliases'] = self.aliases
 
     def search_for_asin_on_amazon(self, query):
+        '''Search for book's asin on amazon using given query'''
         query = urlencode({'keywords': query})
         try:
             self._amazon_conn.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, headers=self.HEADERS)
@@ -182,7 +196,8 @@ class BookSettings(object):
 
         return None
 
-    def search_for_goodreads(self, keywords):
+    def search_for_goodreads_url(self, keywords):
+        '''Searches for book's goodreads url using given keywords'''
         query = urlencode({'q': keywords})
         try:
             self._goodreads_conn.request('GET', '/search?' + query)
@@ -209,6 +224,7 @@ class BookSettings(object):
         return urlparse.urlparse(url)._replace(query=None).geturl()
 
     def search_for_asin_on_goodreads(self, url):
+        '''Searches for ASIN of book at given url'''
         book_id_search = self.BOOK_ID_PAT.search(url)
         if not book_id_search:
             return None
@@ -234,6 +250,7 @@ class BookSettings(object):
         return book_asin_search.group(1)
 
     def update_aliases(self, url, raise_error_on_page_not_found=False):
+        '''Gets aliases from Goodreads and expands them if users settings say to do so'''
         try:
             goodreads_parser = GoodreadsParser(url, self._goodreads_conn, self._asin, create_xray=True, raise_error_on_page_not_found=raise_error_on_page_not_found)
             goodreads_parser.get_characters()
@@ -267,6 +284,7 @@ class BookSettings(object):
             self.aliases = (setting_data['label'], '')
 
     def auto_expand_aliases(self, characters):
+        '''Goes through each character and expands them using fullname_to_possible_aliases without adding duplicates'''
         actual_aliases = {}
         duplicates = [x.lower() for x in characters]
         for fullname in characters:
@@ -287,21 +305,21 @@ class BookSettings(object):
         return actual_aliases
 
     def fullname_to_possible_aliases(self, fullname):
-        """
+        '''
         Given a full name ("{Title} ChristianName {Middle Names} {Surname}"), return a list of possible aliases
 
         ie. Title Surname, ChristianName Surname, Title ChristianName, {the full name}
 
         The returned aliases are in the order they should match
-        """
+        '''
         aliases = []
         parts = fullname.split()
 
         if parts[0].lower() in self.HONORIFICS:
-            title = []
+            title_list = []
             while len(parts) > 0 and parts[0].lower() in self.HONORIFICS:
-                title.append(parts.pop(0))
-            title = ' '.join(title)
+                title_list.append(parts.pop(0))
+            title = ' '.join(title_list)
         else:
             title = None
 

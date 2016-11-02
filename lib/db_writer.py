@@ -4,6 +4,7 @@ import os
 from sqlite3 import connect, Binary
 
 class DBWriter(object):
+    '''Writes x-ray data into file using given information'''
     def __init__(self, filename):
         if os.path.exists(filename):
             os.remove(filename)
@@ -13,12 +14,15 @@ class DBWriter(object):
         self._import_base_db()
 
     def save(self):
+        '''Saves changes into file'''
         self._connection.commit()
 
     def close(self):
+        '''Closes file'''
         self._connection.close()
 
     def _import_base_db(self):
+        '''Imports base data into file'''
         self._cursor.execute('PRAGMA user_version = 1')
         self._cursor.execute('PRAGMA encoding = utf8')
 
@@ -47,6 +51,7 @@ class DBWriter(object):
         self._insert_into_table('string', self.BASE_DB_STRING)
 
     def _insert_into_table(self, table_name, data):
+        '''Import given data into table named table_name'''
         if len(data) == 0:
             return
         if isinstance(data, list):
@@ -94,6 +99,7 @@ class DBWriter(object):
         self._cursor.execute('UPDATE type SET top_mentioned_entities=? WHERE id=?', (data, type_id))
 
     def create_indices(self):
+        '''Creates default indices used by kindle'''
         self._cursor.execute('CREATE INDEX idx_entity_excerpt ON entity_excerpt(entity ASC)')
         self._cursor.execute('CREATE INDEX idx_entity_type ON entity(type ASC)')
         self._cursor.execute('CREATE INDEX idx_occurrence_start ON occurrence(start ASC)')
@@ -102,7 +108,7 @@ class DBWriter(object):
 
     BASE_DB_TYPE = [('1', '7', '8', '1', ''), ('2', '9', '10', '2', '')]
     BASE_DB_SOURCE = [('0', '3', '13', None, None), ('1', '4', '14', '5', '6'), ('2', '2', '15', None, None)]
-    BASE_DB_ENTITY = ('0', None,'1', None, None,'0')
+    BASE_DB_ENTITY = ('0', None, '1', None, None, '0')
     BASE_DB_STRING = [('0', 'de', 'Alle'),
                       ('0', 'en', 'All'),
                       ('0', 'en-US', 'All'),

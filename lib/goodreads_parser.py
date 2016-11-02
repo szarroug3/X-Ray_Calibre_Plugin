@@ -10,10 +10,11 @@ from urllib2 import urlopen
 from lxml import html
 
 class GoodreadsPageDoesNotExist(Exception):
+    '''Exception for when goodreads page does not exist'''
     pass
 
-# Parses Goodreads page for characters, terms, and quotes
 class GoodreadsParser(object):
+    '''Parses Goodreads page for x-ray, author profile, start actions, and end actions as needed'''
     BOOK_ID_PAT = re.compile(r'\/show\/([\d]+)')
     ASIN_PAT = re.compile(r'"asin":"(.+?)"')
     def __init__(self, url, connection, asin, raise_error_on_page_not_found=False,
@@ -52,37 +53,44 @@ class GoodreadsParser(object):
 
     @property
     def xray(self):
+        '''Returns _xray object.'''
         return self._xray
 
     @property
     def characters(self):
+        '''Returns _characters object.'''
         return self._characters
 
     @property
     def settings(self):
+        '''Returns _settings object.'''
         return self._settings
 
     @property
     def author_profile(self):
+        '''Returns _author_profile object.'''
         return self._author_profile
 
     @property
     def start_actions(self):
+        '''Returns _start_actions object.'''
         return self._start_actions
 
     @property
     def end_actions(self):
+        '''Returns _end_actions object.'''
         return self._end_actions
 
     def parse(self):
+        '''Parses goodreads for x-ray, author profile, start actions, and end actions depending on user settings'''
         if self._page_source is None:
             return
 
         if self._create_xray:
-            self.get_characters()
-            self.get_settings()
-            self._get_quotes()
-            self._compile_xray()
+            try:
+                self._get_xray()
+            except:
+                pass
 
         if self._create_author_profile:
             try:
@@ -102,7 +110,15 @@ class GoodreadsParser(object):
             except:
                 return
 
+    def _get_xray(self):
+        '''Gets x-ray data from goodreads and creates x-ray dict'''
+        self.get_characters()
+        self.get_settings()
+        self._get_quotes()
+        self._compile_xray()
+
     def _get_author_profile(self):
+        '''Gets author profile data from goodreads and creates author profile dict'''
         if self._page_source is None:
             return
 
@@ -115,6 +131,7 @@ class GoodreadsParser(object):
         self._compile_author_profile()
 
     def _get_start_actions(self):
+        '''Gets start actions data from goodreads and creates start actions dict'''
         if self._page_source is None:
             return
 
@@ -134,6 +151,7 @@ class GoodreadsParser(object):
         self._compile_start_actions()
 
     def _get_end_actions(self):
+        '''Gets end actions data from goodreads and creates end actions dict'''
         if self._page_source is None:
             return
 
@@ -156,9 +174,11 @@ class GoodreadsParser(object):
         self._compile_end_actions()
 
     def _compile_xray(self):
+        '''Compiles x-ray data into dict'''
         self._xray = {'characters': self._characters, 'settings': self._settings, 'quotes': self._quotes}
 
     def _compile_author_profile(self):
+        '''Compiles author profile data into dict'''
         self._author_profile = {"u": [{"y": 277,
                                        "l": [x["a"] for x in self._author_other_books],
                                        "n": self._author_info[0]['name'],
@@ -170,6 +190,7 @@ class GoodreadsParser(object):
                                }
 
     def _compile_start_actions(self):
+        '''Compiles start actions data into dict'''
         timestamp = int((datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds())
         self._start_actions = copy.deepcopy(self.BASE_START_ACTIONS)
 
@@ -198,6 +219,7 @@ class GoodreadsParser(object):
             self._start_actions['data']['readingTime']['formattedTime'][locale] = formatted_time.format(str(self._reading_time_hours), str(self._reading_time_minutes))
 
     def _compile_end_actions(self):
+        '''Compiles end actions data into dict'''
         timestamp = int((datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds())
         self._end_actions = copy.deepcopy(self.BASE_END_ACTIONS)
 
@@ -216,6 +238,7 @@ class GoodreadsParser(object):
                                                                    'recommendations': self._cust_recommendations}
 
     def _open_url(self, url, raise_error_on_page_not_found=False, return_redirect_url=False):
+        '''Tries to open url and return page's html'''
         if 'goodreads.com' in url:
             url = url[url.find('goodreads.com') + len('goodreads.com'):]
         try:
@@ -250,6 +273,7 @@ class GoodreadsParser(object):
         return response
 
     def get_characters(self):
+        '''Gets book's character data'''
         if self._page_source is None:
             return
 
@@ -272,6 +296,7 @@ class GoodreadsParser(object):
             self._entity_id += 1
 
     def get_settings(self):
+        '''Gets book's setting data'''
         if self._page_source is None:
             return
 
@@ -293,6 +318,7 @@ class GoodreadsParser(object):
             self._entity_id += 1
 
     def _get_quotes(self):
+        '''Gets book's quote data'''
         if self._page_source is None:
             return
 
@@ -312,6 +338,7 @@ class GoodreadsParser(object):
                 self._quotes.append(re.sub(r'\s+', ' ', quote.text).strip().decode('ascii', 'ignore'))
 
     def _get_author_info(self):
+        '''Gets book's author's data'''
         self._author_info = []
         if self._page_source is None:
             return
@@ -323,6 +350,7 @@ class GoodreadsParser(object):
                 self._author_info.append({'name': author_name, 'url': author_page})
 
     def _read_primary_author_page(self):
+        '''Rreads primary author's page and gets his/her bio, image url, and image encoded into base64'''
         if len(self._author_info) == 0:
             return
 
@@ -331,6 +359,7 @@ class GoodreadsParser(object):
         self._author_info[0]['image_url'], self._author_info[0]['encoded_image'] = self._get_author_image(self._author_info[0]['page'], encode_image=True)
 
     def _read_secondary_author_pages(self):
+        '''Reads secondary authors' page and gets their bios, image urls, and images encoded into base64'''
         if len(self._author_info) < 2:
             return
 
@@ -340,6 +369,7 @@ class GoodreadsParser(object):
             author['image_url'] = self._get_author_image(author['page'])
 
     def _get_author_bio(self, author_page):
+        '''Gets author's bio from given page'''
         if len(self._author_info) == 0:
             return
 
@@ -352,6 +382,7 @@ class GoodreadsParser(object):
         return re.sub(r'\s+', ' ', author_bio.text_content()).strip().decode('utf-8').encode('latin-1')
 
     def _get_author_image(self, author_page, encode_image=False):
+        '''Gets author's image url and image encoded into base64 from given page'''
         if len(self._author_info) == 0:
             return
 
@@ -369,6 +400,7 @@ class GoodreadsParser(object):
             return image_url[0].get('src')
 
     def _get_author_other_books(self):
+        '''Gets author's other books from given page'''
         if len(self._author_info) == 0:
             return
 
@@ -390,6 +422,7 @@ class GoodreadsParser(object):
         self._author_other_books = [{'e': 1, 't': info['title'], 'a': info['asin']} for info in self._author_recommendations]
 
     def _get_customer_recommendations(self):
+        '''Gets customer recommendations from current book'''
         if self._page_source is None:
             return
 
@@ -406,7 +439,8 @@ class GoodreadsParser(object):
         self._cust_recommendations = self._get_book_info_from_tooltips(book_info)
 
     def _get_book_info_from_tooltips(self, book_info):
-        if type(book_info) == tuple:
+        '''Gets books ASIN, title, authors, image url, description, and rating information'''
+        if isinstance(book_info, tuple):
             book_info = [book_info]
         books_data = []
         link_pattern = 'resources[Book.{0}][type]=Book&resources[Book.{0}][id]={0}'
@@ -460,9 +494,11 @@ class GoodreadsParser(object):
         return books_data
 
     def _get_book_image_url(self):
+        '''Gets book's image url'''
         self._book_image_url = self._page_source.xpath('//div[@class="mainContent"]//div[@id="imagecol"]//img[@id="coverImage"]')[0].get('src')
 
     def _get_num_pages_and_reading_time(self):
+        '''Gets book's number of pages and time to read'''
         if self._page_source is None:
             return
 

@@ -10,6 +10,7 @@ from calibre.ebooks.mobi.reader.mobi6 import MobiReader
 from calibre.ebooks.compression.palmdoc import decompress_doc
 
 class BookParser(object):
+    '''Class to parse book using information from user and goodreads'''
     PARAGRAPH_PAT = re.compile(r'<p.*?>.+?(?:<\/p>)', re.I)
     PLAIN_TEXT_PAT = re.compile(r'>([^<]+?)<', re.I)
 
@@ -50,9 +51,11 @@ class BookParser(object):
 
     @property
     def parsed_data(self):
+        '''Returns _parsed_data object.'''
         return self._parsed_data
 
     def parse(self):
+        '''Parses book'''
         self._book_html = MobiExtractor(self._book_path, open(os.devnull, 'w')).extract_text()
         self.find_erl_and_encoding()
         paragraph_data = []
@@ -114,14 +117,16 @@ class BookParser(object):
                              'codec': self._codec}
 
     def _find_start(self, start, string):
+        '''Finds beggining index of word'''
         previous_space = string[:start].rfind(' ')
         if previous_space == -1:
-            previous_space = 0
+            start_index = 0
         else:
-            previous_space += 1
-        return previous_space
+            start_index = previous_space + 1
+        return start_index
 
     def _find_len_word(self, start, end, word_loc):
+        '''Finds length between starting index of word and the next space'''
         string = word_loc['words']
         char_sizes = word_loc['char_sizes']
 
@@ -144,6 +149,7 @@ class BookParser(object):
         return total_len
 
     def _find_len_excerpt(self, word_loc):
+        '''Finds length of excerpt'''
         string = word_loc['words']
         char_sizes = word_loc['char_sizes']
 
@@ -154,6 +160,7 @@ class BookParser(object):
         return total_len
 
     def find_erl_and_encoding(self):
+        '''Finds book's erl and codec'''
         with open(self._book_path, 'rb') as f:
             book_data = f.read()
 
@@ -163,7 +170,9 @@ class BookParser(object):
         self._codec = 'latin-1' if unpack('>L', book_data[recs_start + 28:recs_start + 32])[0] == 1252 else 'utf8'
 
 class MobiExtractor(MobiReader):
+    '''Reads MOBI file'''
     def extract_text(self, offset=1):
+        '''Gets text from file'''
         text_sections = [self.text_section(i) for i in range(offset, min(self.book_header.records + offset, len(self.sections)))]
         processed_records = list(range(offset-1, self.book_header.records +
                                        offset))

@@ -30,6 +30,7 @@ __prefs__.defaults['mobi'] = True
 __prefs__.defaults['azw3'] = True
 
 class ConfigWidget(QWidget):
+    '''Creates general preferences dialog'''
     def __init__(self):
         QWidget.__init__(self)
 
@@ -127,6 +128,7 @@ class ConfigWidget(QWidget):
         self.layout.addWidget(self.file_preference_layout)
 
     def validate(self):
+        '''Validates current settings; Errors if there's a problem'''
         if (not self.create_send_xray.isChecked() and not self.create_send_author_profile.isChecked()
                 and not self.create_send_start_actions.isChecked() and not self.create_send_end_actions.isChecked()):
             error_dialog(self, 'Invalid preferences.', 'You have chosen no files to create/send.', show=True)
@@ -138,6 +140,7 @@ class ConfigWidget(QWidget):
         return True
 
     def save_settings(self):
+        '''Saves current settings into preferences json file'''
         __prefs__['send_to_device'] = self.send_to_device.isChecked()
         __prefs__['create_files_when_sending'] = self.create_files_when_sending.isChecked()
         __prefs__['expand_aliases'] = self.expand_aliases.isChecked()

@@ -14,6 +14,7 @@ from calibre.devices.scanner import DeviceScanner
 from calibre_plugins.xray_creator.lib.book import Book
 
 class XRayCreator(object):
+    '''Automates x-ray, author profile, start actions, and end actions creation and sending to device'''
     def __init__(self, db, book_ids, formats, send_to_device, create_files_when_sending, expand_aliases,
                  overwrite_local, overwrite_device, create_send_xray, create_send_author_profile,
                  create_send_start_actions, create_send_end_actions, file_preference):
@@ -34,9 +35,11 @@ class XRayCreator(object):
 
     @property
     def books(self):
+        '''Returns _books object.'''
         return self._books
 
     def _initialize_books(self, log):
+        '''Initializes each book's information'''
         https_proxy = get_proxies(debug=False).get('https', None)
         if https_proxy:
             https_address = ':'.join(https_proxy.split(':')[:-1])
@@ -78,11 +81,13 @@ class XRayCreator(object):
         self._device_books = self._find_device_books(book_lookup, log)
 
     def books_not_failing(self):
+        '''Gets books that didn't fail'''
         for book in self._books:
             if book.status is not book.FAIL:
                 yield book
 
     def get_results_create(self):
+        '''Gets create results'''
         self._create_completed = []
         self._create_failed = []
 
@@ -133,6 +138,7 @@ class XRayCreator(object):
                     self._create_failed.append('    {0}'.format(fmt_info))
 
     def get_results_send(self):
+        '''Gets send results'''
         try:
             self._send_completed = []
             self._send_failed = []
@@ -179,9 +185,7 @@ class XRayCreator(object):
             return
 
     def _find_device_books(self, book_lookup, log):
-        """
-        Look for the Kindle and return the list of books on it
-        """
+        '''Look for the Kindle and return the list of books on it'''
         dev = None
         scanner = DeviceScanner()
         scanner.scan()
@@ -213,7 +217,9 @@ class XRayCreator(object):
                 if book_lookup.has_key(book._data['uuid']):
                     book_id = book_lookup[book._data['uuid']].book_id
                     fmt = book.path.split('.')[-1].lower()
-                    if (fmt != 'mobi' and fmt != 'azw3') or (fmt == 'mobi' and 'mobi' not in self._formats) or (fmt == 'azw3' and 'azw3' not in self._formats):
+                    if ((fmt != 'mobi' and fmt != 'azw3') or
+                        (fmt == 'mobi' and 'mobi' not in self._formats) or
+                        (fmt == 'azw3' and 'azw3' not in self._formats)):
                         continue
                     books[book_id][fmt] = {'device_book': book.path,
                                            'device_sdr': '.'.join(book.path.split('.')[:-1]) + '.sdr'}
@@ -221,18 +227,19 @@ class XRayCreator(object):
             return books
         except (TypeError, AttributeError) as e:
             self._num_of_formats_found_on_device = -1
-            log('%s Device found but cannot be accessed. It may have been ejected but not unplugged.' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+            log(('{0} Device found but cannot be accessed. '
+                'It may have been ejected but not unplugged.').format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
             return None
         except Exception as e:
             self._num_of_formats_found_on_device = -1
             log('%s Something unexpectedly went wrong: %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), e))
 
     def _find_device_root(self, device_book):
-        """
+        '''
         Given the full path to a book on the device, return the path to the Kindle device
 
         eg. "C:\", "/Volumes/Kindle"
-        """
+        '''
         device_root = None
 
         if sys.platform == "win32":
@@ -249,14 +256,19 @@ class XRayCreator(object):
         raise EnvironmentError(errno.ENOENT, "Kindle device not found (%s)" % (device_root))
 
     def create_files_event(self, abort, log, notifications):
-        if log: log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        if notifications: notifications.put((0.01, 'Initializing...'))
+        '''Creates files depending on users settings'''
+        if log:
+            log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        if notifications:
+            notifications.put((0.01, 'Initializing...'))
         self._initialize_books(log)
         for book_num, book in enumerate(self.books_not_failing()):
             if abort.isSet():
                 return
-            if log: log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
-            book.create_files_event(self._device_books, log=log, notifications=notifications, abort=abort, book_num=book_num, total=self._total_not_failing)
+            if log:
+                log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
+            book.create_files_event(self._device_books, log=log, notifications=notifications, abort=abort, book_num=book_num,
+                                    total=self._total_not_failing)
 
         self.get_results_create()
         log('\nFile Creation:')
@@ -287,25 +299,35 @@ class XRayCreator(object):
                             log('        %s' % line)
 
     def send_files_event(self, abort, log, notifications):
-        if log: log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        if notifications: notifications.put((0.01, 'Initializing...'))
+        '''Sends files depending on users settings'''
+        if log:
+            log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        if notifications:
+            notifications.put((0.01, 'Initializing...'))
         self._initialize_books(log)
 
         # something went wrong; we've already printed a message
         if self._num_of_formats_found_on_device == -1:
-            if notifications: notifications.put((100, ' Unable to send files.'))
-            if log: log('{0} No device is connected.'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
+            if notifications:
+                notifications.put((100, ' Unable to send files.'))
+            if log:
+                log('{0} No device is connected.'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
             return
         if self._num_of_formats_found_on_device == 0:
-            if notifications: notifications.put((100, ' Unable to send files.'))
-            if log: log('{0} No matching books found on device. It may have been ejected but not unplugged.'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
+            if notifications:
+                notifications.put((100, ' Unable to send files.'))
+            if log:
+                log(('{0} No matching books found on device. '
+                     'It may have been ejected but not unplugged.').format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
             return
 
         for book_num, book in enumerate(self.books_not_failing()):
             if abort.isSet():
                 return
-            if log: log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
-            book.send_files_event(self._device_books, log=log, notifications=notifications, abort=abort, book_num=float(book_num), total=self._total_not_failing)
+            if log:
+                log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
+            book.send_files_event(self._device_books, log=log, notifications=notifications, abort=abort,
+                                  book_num=float(book_num), total=self._total_not_failing)
 
         self.get_results_send()
         if len(self._send_completed) > 0:
