@@ -1,4 +1,5 @@
 # goodreads_parser.py
+'''Parses goodreads data depending on user settings'''
 
 import re
 import json
@@ -198,25 +199,30 @@ class GoodreadsParser(object):
         self._start_actions['bookInfo']['timestamp'] = timestamp
         self._start_actions['bookInfo']['imageUrl'] = self._book_image_url
 
+        data = self._start_actions['data']
+
         for author in self._author_info:
             # putting fake ASIN because real one isn't needed -- idk why it's required at all
-            self._start_actions['data']['authorBios']['authors'].append({'class': 'authorBio', 'name': author['name'], 'bio': author['bio'], 'imageUrl': author['image_url'], 'asin': 'XXXXXXXXXX'})
+            data['authorBios']['authors'].append({'class': 'authorBio', 'name': author['name'], 'bio': author['bio'],
+                                                  'imageUrl': author['image_url'], 'asin': 'XXXXXXXXXX'})
 
         if self._author_recommendations is not None:
-            self._start_actions['data']['authorRecs'] = {'class': 'featuredRecommendationList',
-                                                         'recommendations': self._author_recommendations}
-            # since we're using the same recommendations from the end actions, we need to replace the class to match what the kindle expects
-            for rec in self._start_actions['data']['authorRecs']['recommendations']:
+            data['authorRecs'] = {'class': 'featuredRecommendationList', 'recommendations': self._author_recommendations}
+            # since we're using the same recommendations from the end actions,
+            # we need to replace the class to match what the kindle expects
+            for rec in data['authorRecs']['recommendations']:
                 rec['class'] = 'recommendation'
 
-        self._start_actions['data']['bookDescription'] = self._get_book_info_from_tooltips((self._goodreads_book_id, self._book_image_url))[0]
-        self._start_actions['data']['currentBook'] = self._start_actions['data']['bookDescription']
+        data['bookDescription'] = self._get_book_info_from_tooltips((self._goodreads_book_id,
+                                                                     self._book_image_url))[0]
+        data['currentBook'] = data['bookDescription']
 
-        self._start_actions['data']['grokShelfInfo']['asin'] = self._asin
+        data['grokShelfInfo']['asin'] = self._asin
 
-        self._start_actions['data']['readingPages']['pagesInBook'] = self._num_pages
-        for locale, formatted_time in self._start_actions['data']['readingTime']['formattedTime'].items():
-            self._start_actions['data']['readingTime']['formattedTime'][locale] = formatted_time.format(str(self._reading_time_hours), str(self._reading_time_minutes))
+        data['readingPages']['pagesInBook'] = self._num_pages
+        for locale, formatted_time in data['readingTime']['formattedTime'].items():
+            data['readingTime']['formattedTime'][locale] = formatted_time.format(str(self._reading_time_hours),
+                                                                                 str(self._reading_time_minutes))
 
     def _compile_end_actions(self):
         '''Compiles end actions data into dict'''
@@ -227,15 +233,16 @@ class GoodreadsParser(object):
         self._end_actions['bookInfo']['timestamp'] = timestamp
         self._end_actions['bookInfo']['imageUrl'] = self._book_image_url
 
+        data = self._end_actions['data']
         for author in self._author_info:
-            self._end_actions['data']['authorBios']['authors'].append({'class': 'authorBio', 'name': author['name'], 'bio': author['bio'], 'imageUrl': author['image_url']})
+            data['authorBios']['authors'].append({'class': 'authorBio', 'name': author['name'],
+                                                  'bio': author['bio'], 'imageUrl': author['image_url']})
 
         if self._author_recommendations is not None:
-            self._end_actions['data']['authorRecs'] = {'class': 'featuredRecommendationList',
-                                                       'recommendations': self._author_recommendations}
+            data['authorRecs'] = {'class': 'featuredRecommendationList', 'recommendations': self._author_recommendations}
         if self._cust_recommendations is not None:
-            self._end_actions['data']['customersWhoBoughtRecs'] = {'class': 'featuredRecommendationList',
-                                                                   'recommendations': self._cust_recommendations}
+            data['customersWhoBoughtRecs'] = {'class': 'featuredRecommendationList',
+                                              'recommendations': self._cust_recommendations}
 
     def _open_url(self, url, raise_error_on_page_not_found=False, return_redirect_url=False):
         '''Tries to open url and return page's html'''
@@ -284,14 +291,21 @@ class GoodreadsParser(object):
                 continue
             label = char.text
             resp = self._open_url(char.get('href'))
+
             if not resp:
                 continue
+
             char_page = html.fromstring(resp)
             if char_page is None:
                 continue
+
             desc = char_page.xpath('//div[@class="workCharacterAboutClear"]/text()')
-            desc = re.sub(r'\s+', ' ', desc[0]).strip() if len(desc) > 0 and re.sub(r'\s+', ' ', desc[0]).strip() else 'No description found on Goodreads.'
-            aliases = [x.strip() for x in char_page.xpath('//div[@class="grey500BoxContent" and contains(.,"aliases")]/text()') if x.strip()]
+            if len(desc) > 0 and re.sub(r'\s+', ' ', desc[0]).strip():
+                desc = re.sub(r'\s+', ' ', desc[0]).strip()
+            else:
+                desc = 'No description found on Goodreads.'
+
+            aliases = [re.sub(r'\s+', ' ', x).strip() for x in char_page.xpath('//div[@class="grey500BoxContent" and contains(.,"aliases")]/text()') if re.sub(r'\s+', ' ', x).strip()]
             self._characters[self._entity_id] = {'label': label, 'description': desc, 'aliases': aliases}
             self._entity_id += 1
 
@@ -354,9 +368,10 @@ class GoodreadsParser(object):
         if len(self._author_info) == 0:
             return
 
-        self._author_info[0]['page'] = html.fromstring(self._open_url(self._author_info[0]['url']))
-        self._author_info[0]['bio'] = self._get_author_bio(self._author_info[0]['page'])
-        self._author_info[0]['image_url'], self._author_info[0]['encoded_image'] = self._get_author_image(self._author_info[0]['page'], encode_image=True)
+        author = self._author_info[0]
+        author['page'] = html.fromstring(self._open_url(author['url']))
+        author['bio'] = self._get_author_bio(author['page'])
+        author['image_url'], author['encoded_image'] = self._get_author_image(author['page'], encode_image=True)
 
     def _read_secondary_author_pages(self):
         '''Reads secondary authors' page and gets their bios, image urls, and images encoded into base64'''
@@ -455,9 +470,14 @@ class GoodreadsParser(object):
 
             title = book_data.xpath('//a[contains(@class, "readable")]')[0].text
             authors = [book_data.xpath('//a[contains(@class, "authorName")]')[0].text]
-            rating_string = book_data.xpath('//div[@class="bookRatingAndPublishing"]/span[@class="minirating"]')[0].text_content().strip().replace(',', '').split()
-            rating = float(rating_string[rating_string.index('avg')-1])
-            num_of_reviews = int(rating_string[-2])
+            rating_info = book_data.xpath('//div[@class="bookRatingAndPublishing"]/span[@class="minirating"]')
+            if len(rating_info) > 0:
+                rating_string = rating_info[0].text_content().strip().replace(',', '').split()
+                rating = float(rating_string[rating_string.index('avg')-1])
+                num_of_reviews = int(rating_string[-2])
+            else:
+                rating = None
+                num_of_reviews = None
 
             try:
                 asin_elements = book_data.xpath('//a[contains(@class, "kindlePreviewButtonIcon")]/@href')
@@ -465,7 +485,7 @@ class GoodreadsParser(object):
             except:
                 book_asin = None
 
-            # We should get the ASIN from the tooltips file, but just in case we'll 
+            # We should get the ASIN from the tooltips file, but just in case we'll
             # keep this as a fallback (though this only works in some regions - just USA?)
             if not book_asin:
                 asin_data_page = self._open_url('/buttons/glide/' + book_id)

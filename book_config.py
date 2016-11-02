@@ -1,5 +1,7 @@
 #!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
+'''Creates dialog to allow finer control of book specific settings'''
+
 from __future__ import (unicode_literals, division, absolute_import,
                         print_function)
 
@@ -17,7 +19,7 @@ from PyQt5.Qt import QLabel, QLineEdit, QPushButton, QScrollArea
 
 from calibre import get_proxies
 from calibre_plugins.xray_creator.lib.book_settings import BookSettings
-from calibre_plugins.xray_creator.config import prefs
+from calibre_plugins.xray_creator.config import __prefs__ as prefs
 
 class BookConfigWidget(QDialog):
     '''Creates book specific preferences dialog'''
@@ -50,7 +52,7 @@ class BookConfigWidget(QDialog):
 
         for book_id in ids:
             book_settings = BookSettings(db, book_id, goodreads_conn, amazon_conn, expand_aliases)
-            if len(book_settings.aliases) == 0 and book_settings.goodreads_url != "":
+            if len(book_settings.aliases) == 0 and book_settings.goodreads_url != '':
                 book_settings.update_aliases(book_settings.goodreads_url)
                 book_settings.save()
             self._book_settings.append(book_settings)
@@ -65,9 +67,9 @@ class BookConfigWidget(QDialog):
         self.asin.setFixedWidth(100)
         self.asin_edit = QLineEdit('')
         self.asin_edit.textEdited.connect(self.edit_asin)
-        self.asin_browser_button = QPushButton("Open..")
+        self.asin_browser_button = QPushButton('Open..')
         self.asin_browser_button.clicked.connect(self.browse_amazon_url)
-        self.asin_browser_button.setToolTip("Open Amazon page for the specified ASIN")
+        self.asin_browser_button.setToolTip('Open Amazon page for the specified ASIN')
         self.asin_layout.addWidget(self.asin)
         self.asin_layout.addWidget(self.asin_edit)
         self.asin_layout.addWidget(self.asin_browser_button)
@@ -78,9 +80,9 @@ class BookConfigWidget(QDialog):
         self.goodreads_url.setFixedWidth(100)
         self.goodreads_url_edit = QLineEdit('')
         self.goodreads_url_edit.textEdited.connect(self.edit_goodreads_url)
-        self.goodreads_browser_button = QPushButton("Open..")
+        self.goodreads_browser_button = QPushButton('Open..')
         self.goodreads_browser_button.clicked.connect(self.browse_goodreads_url)
-        self.goodreads_browser_button.setToolTip("Open Goodreads page at the specified URL")
+        self.goodreads_browser_button.setToolTip('Open Goodreads page at the specified URL')
         self.goodreads_layout.addWidget(self.goodreads_url)
         self.goodreads_layout.addWidget(self.goodreads_url_edit)
         self.goodreads_layout.addWidget(self.goodreads_browser_button)
@@ -117,24 +119,24 @@ class BookConfigWidget(QDialog):
         self.buttons_layout.setAlignment(Qt.AlignRight)
 
         if len(ids) > 1:
-            self.previous_button = QPushButton("Previous")
+            self.previous_button = QPushButton('Previous')
             self.previous_button.setEnabled(False)
             self.previous_button.setFixedWidth(100)
             self.previous_button.clicked.connect(self.previous_clicked)
             self.buttons_layout.addWidget(self.previous_button)
 
-        self.ok_button = QPushButton("OK")
+        self.ok_button = QPushButton('OK')
         self.ok_button.setFixedWidth(100)
         self.ok_button.clicked.connect(self.ok_clicked)
         self.buttons_layout.addWidget(self.ok_button)
 
-        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button = QPushButton('Cancel')
         self.cancel_button.setFixedWidth(100)
         self.cancel_button.clicked.connect(self.cancel_clicked)
         self.buttons_layout.addWidget(self.cancel_button)
 
         if len(ids) > 1:
-            self.next_button = QPushButton("Next")
+            self.next_button = QPushButton('Next')
             self.next_button.setFixedWidth(100)
             self.next_button.clicked.connect(self.next_clicked)
             self.buttons_layout.addWidget(self.next_button)
@@ -180,7 +182,8 @@ class BookConfigWidget(QDialog):
             self.asin_edit.setText('')
 
     def browse_amazon_url(self):
-        # Try to use the nearest Amazon store to the user.  
+        '''Opens Amazon page for current book's ASIN using user's local store'''
+        # Try to use the nearest Amazon store to the user.
         # If this fails we'll default to .com, the user will have to manually
         # edit the preferences file to fix it (it is a simple text file).
         if not prefs['tld']:
@@ -188,12 +191,14 @@ class BookConfigWidget(QDialog):
             import json
             import urllib2
             try:
-                country = json.loads(urllib2.urlopen("http://ipinfo.io/json").read())["country"]
+                country = json.loads(urllib2.urlopen('http://ipinfo.io/json').read())['country']
             except:
-                country = "unknown"
-            country_tld=defaultdict(lambda:"com", {"AU":"com.au", "BR":"com.br", "CA":"ca", "CN":"cn", "FR":"fr", "DE":"de", "IN":"in", "IT":"it", "JP":"co.jp", "MX":"com.mx", "NL":"nl", "ES":"es", "GB":"co.uk", "US":"com"})
+                country = 'unknown'
+            country_tld=defaultdict(lambda:'com', {'AU': 'com.au', 'BR': 'com.br', 'CA': 'ca', 'CN': 'cn', 'FR': 'fr',
+                                                   'DE': 'de', 'IN': 'in', 'IT': 'it', 'JP': 'co.jp', 'MX': 'com.mx',
+                                                   'NL': 'nl', 'ES': 'es', 'GB': 'co.uk', 'US': 'com'})
             prefs['tld'] = country_tld[country]
-        webbrowser.open("https://www.amazon.{0}/gp/product/{1}/".format(prefs['tld'], self.asin_edit.text()))
+        webbrowser.open('https://www.amazon.{0}/gp/product/{1}/'.format(prefs['tld'], self.asin_edit.text()))
 
     def browse_goodreads_url(self):
         '''Opens url for current book's goodreads url'''

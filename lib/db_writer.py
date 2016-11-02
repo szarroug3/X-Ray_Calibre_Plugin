@@ -1,4 +1,5 @@
 # db_writer.py
+'''Writes x-ray data into file using given information'''
 
 import os
 from sqlite3 import connect, Binary

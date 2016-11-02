@@ -1,4 +1,5 @@
 # book_settings.py
+'''Holds book specific settings and runs functions to get book specific data'''
 
 import os
 import re
@@ -18,19 +19,22 @@ class BookSettings(object):
     AMAZON_ASIN_PAT = re.compile(r'data\-asin=\"([a-zA-z0-9]+)\"')
     GOODREADS_ASIN_PAT = re.compile(r'"asin":"(.+?)"')
 
-    HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/html", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0"}
+    HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/html",
+               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0"}
     LIBRARY = current_library_path()
     HONORIFICS = 'mr mrs ms esq prof dr fr rev pr atty adv hon pres gov sen ofc pvt cpl sgt maj capt cmdr lt col gen'
     HONORIFICS = HONORIFICS.split()
     HONORIFICS.extend([x + '.' for x in HONORIFICS])
-    HONORIFICS += 'miss master sir madam lord dame lady esquire professor doctor father mother brother sister reverend pastor elder rabbi sheikh'.split()
-    HONORIFICS += 'attorney advocate honorable president governor senator officer private corporal sargent major captain commander lieutenant colonel general'.split()
+    HONORIFICS += 'miss master sir madam lord dame lady esquire professor doctor father mother brother sister'.split()
+    HONORIFICS += 'reverend pastor elder rabbi sheikh attorney advocate honorable president governor senator'.split()
+    HONORIFICS += 'officer private corporal sargent major captain commander lieutenant colonel general'.split()
     RELIGIOUS_HONORIFICS = 'fr br sr rev pr'
     RELIGIOUS_HONORIFICS = RELIGIOUS_HONORIFICS.split()
     RELIGIOUS_HONORIFICS.extend([x + '.' for x in RELIGIOUS_HONORIFICS])
     RELIGIOUS_HONORIFICS += 'father mother brother sister reverend pastor elder rabbi sheikh'.split()
     DOUBLE_HONORIFICS = 'lord'
-    # We want all the honorifics to be in the general honorifics list so when we're checking if a word is an honorifics, we only need to search in one list
+    # We want all the honorifics to be in the general honorifics list so when we're
+    # checking if a word is an honorifics, we only need to search in one list
     HONORIFICS += RELIGIOUS_HONORIFICS
     HONORIFICS += DOUBLE_HONORIFICS
 
@@ -59,8 +63,8 @@ class BookSettings(object):
 
         if not self.asin:
             identifiers = self._db.field_for('identifiers', self._book_id)
-            self.asin = self._db.field_for('identifiers', self._book_id)['mobi-asin'].decode('ascii') if 'mobi-asin' in identifiers.keys() else None
-            if self.asin:
+            if 'mobi-asin' in identifiers.keys():
+                self.asin = self._db.field_for('identifiers', self._book_id)['mobi-asin'].decode('ascii')
                 self.prefs['asin'] = self.asin
             else:
                 self.asin = self.search_for_asin_on_amazon(self.title_and_author)
@@ -145,9 +149,10 @@ class BookSettings(object):
     def aliases(self, val):
         '''
         'aliases' is a string containing a comma separated list of aliases.
-        
-        Split it, remove whitespace from each element, drop empty strings (strangely, split only does this if you don't specify a separator)
-        
+
+        Split it, remove whitespace from each element, drop empty strings (strangely,
+        split only does this if you don't specify a separator)
+
         so "" -> []  "foo,bar" and " foo   , bar " -> ["foo", "bar"]
         '''
         label, aliases = val
@@ -164,19 +169,22 @@ class BookSettings(object):
         '''Search for book's asin on amazon using given query'''
         query = urlencode({'keywords': query})
         try:
-            self._amazon_conn.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, headers=self.HEADERS)
+            self._amazon_conn.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' +
+                                      query[9:] + '&' + query, headers=self.HEADERS)
             response = self._amazon_conn.getresponse().read()
         except:
             try:
                 self._amazon_conn.close()
                 self._amazon_conn.connect()
-                self._amazon_conn.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query, headers=self.HEADERS)
+                self._amazon_conn.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' +
+                                          query[9:] + '&' + query, headers=self.HEADERS)
                 response = self._amazon_conn.getresponse().read()
             except:
                 return None
 
         # check to make sure there are results
-        if 'did not match any products' in response and not 'Did you mean:' in response and not 'so we searched in All Departments' in response:
+        if ('did not match any products' in response and not 'Did you mean:' in response and
+               not 'so we searched in All Departments' in response):
             return None
 
         soup = BeautifulSoup(response)
@@ -189,9 +197,6 @@ class BookSettings(object):
             if 'Buy now with 1-Click' in str(r):
                 asinSearch = self.AMAZON_ASIN_PAT.search(str(r))
                 if asinSearch:
-                    print '*'*100
-                    print asinSearch.group(1)
-                    print '*'*100
                     return asinSearch.group(1)
 
         return None
@@ -252,7 +257,8 @@ class BookSettings(object):
     def update_aliases(self, url, raise_error_on_page_not_found=False):
         '''Gets aliases from Goodreads and expands them if users settings say to do so'''
         try:
-            goodreads_parser = GoodreadsParser(url, self._goodreads_conn, self._asin, create_xray=True, raise_error_on_page_not_found=raise_error_on_page_not_found)
+            goodreads_parser = GoodreadsParser(url, self._goodreads_conn, self._asin, create_xray=True,
+                                               raise_error_on_page_not_found=raise_error_on_page_not_found)
             goodreads_parser.get_characters()
             goodreads_parser.get_settings()
             goodreads_chars = goodreads_parser.characters

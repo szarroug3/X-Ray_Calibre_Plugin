@@ -1,5 +1,7 @@
 #!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
+'''Creates plugin for Calibre to allow users to create x-ray, author profile, start actions, and end actions for devices'''
+
 from __future__ import (unicode_literals, division, absolute_import,
                         print_function)
 

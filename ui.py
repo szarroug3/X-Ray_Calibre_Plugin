@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
+'''Creates and interacts with plugin's functions'''
 
 from __future__ import (unicode_literals, division, absolute_import,
                         print_function)

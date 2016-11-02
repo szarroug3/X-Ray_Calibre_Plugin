@@ -1,4 +1,5 @@
 # xray_db_writer.py
+'''Injects x-ray data into DBWriter'''
 
 import os
 
