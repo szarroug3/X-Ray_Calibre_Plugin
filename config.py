@@ -28,6 +28,7 @@ prefs.defaults['create_send_end_actions'] = False
 prefs.defaults['file_preference'] = 'mobi'
 prefs.defaults['mobi'] = True
 prefs.defaults['azw3'] = True
+prefs.defaults['tld'] = None
 
 class ConfigWidget(QWidget):
     def __init__(self):
