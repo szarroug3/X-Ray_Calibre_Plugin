@@ -17,6 +17,7 @@ from PyQt5.Qt import QLabel, QLineEdit, QPushButton, QScrollArea
 
 from calibre import get_proxies
 from calibre_plugins.xray_creator.lib.book_settings import BookSettings
+from calibre_plugins.xray_creator.config import prefs
 
 class BookConfigWidget(QDialog):
     # title case given words except for articles in the middle
@@ -170,7 +171,20 @@ class BookConfigWidget(QDialog):
             self.asin_edit.setText('')
 
     def browse_amazon_url(self):
-        webbrowser.open("https://www.amazon.co.uk/gp/product/%s/" % (self.asin_edit.text()))
+        # Try to use the nearest Amazon store to the user.  
+        # If this fails we'll default to .com, the user will have to manually
+        # edit the preferences file to fix it (it is a simple text file).
+        if not prefs['tld']:
+            from collections import defaultdict
+            import json
+            import urllib2
+            try:
+                country = json.loads(urllib2.urlopen("http://ipinfo.io/json").read())["country"]
+            except:
+                country = "unknown"
+            country_tld=defaultdict(lambda:"com", {"AU":"com.au", "BR":"com.br", "CA":"ca", "CN":"cn", "FR":"fr", "DE":"de", "IN":"in", "IT":"it", "JP":"co.jp", "MX":"com.mx", "NL":"nl", "ES":"es", "GB":"co.uk", "US":"com"})
+            prefs['tld'] = country_tld[country]
+        webbrowser.open("https://www.amazon.%s/gp/product/%s/" % (prefs['tld'], self.asin_edit.text()))
 
     def browse_goodreads_url(self):
         webbrowser.open(self.goodreads_url_edit.text())
