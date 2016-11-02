@@ -28,6 +28,7 @@ __prefs__.defaults['create_send_end_actions'] = False
 __prefs__.defaults['file_preference'] = 'mobi'
 __prefs__.defaults['mobi'] = True
 __prefs__.defaults['azw3'] = True
+__prefs__.defaults['tld'] = None
 
 class ConfigWidget(QWidget):
     '''Creates general preferences dialog'''
