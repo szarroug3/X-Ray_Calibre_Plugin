@@ -276,19 +276,19 @@ class BookConfigWidget(QDialog):
 
     def update_aliases_on_gui(self):
         '''Updates aliases on the dialog using the info in the book's aliases dict'''
-        self.aliases_widget = QWidget()
-        self.aliases_layout = QGridLayout(self.aliases_widget)
-        self.aliases_layout.setAlignment(Qt.AlignTop)
+        aliases_widget = QWidget()
+        aliases_layout = QGridLayout(aliases_widget)
+        aliases_layout.setAlignment(Qt.AlignTop)
 
         # add aliases for current book
         for index, (character, aliases) in enumerate(sorted(self.book.aliases.items())):
             label = QLabel(character + ':')
             label.setFixedWidth(150)
-            self.aliases_layout.addWidget(label, index, 0)
+            aliases_layout.addWidget(label, index, 0)
 
             line_edit = QLineEdit(', '.join([self.TITLE_CASE(alias) for alias in aliases]))
             line_edit.setFixedWidth(350)
             line_edit.textEdited.connect(functools.partial(self.edit_aliases, character))
-            self.aliases_layout.addWidget(line_edit, index, 1)
+            aliases_layout.addWidget(line_edit, index, 1)
 
-        self.scroll_area.setWidget(self.aliases_widget)
+        self.scroll_area.setWidget(aliases_widget)

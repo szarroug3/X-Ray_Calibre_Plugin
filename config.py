@@ -35,6 +35,7 @@ __prefs__.defaults['tld'] = None
 class ConfigWidget(QWidget):
     '''Creates general preferences dialog'''
     def __init__(self):
+        print ('TESTTTTTTYYYYTESTTTT')
         QWidget.__init__(self)
 
         self.layout = QVBoxLayout()

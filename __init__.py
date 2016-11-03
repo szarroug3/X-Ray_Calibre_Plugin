@@ -5,7 +5,7 @@
 from __future__ import (unicode_literals, division, absolute_import,
                         print_function)
 
-__license__   = 'GPL v3'
+__license__ = 'GPL v3'
 __copyright__ = '2016, Samreen Zarroug, Anthony Toole, & Alex Mayer'
 __docformat__ = 'restructuredtext en'
 
@@ -14,19 +14,21 @@ from calibre.customize import InterfaceActionBase
 
 class XRayCreatorPlugin(InterfaceActionBase):
     '''Initializes X-Ray Creator Plugin'''
-    name                    = 'X-Ray Creator'
-    description             = 'A plugin to create X-Ray files for Kindle books'
-    supported_platforms     = ['windows', 'osx', 'linux']
-    author                  = 'Samreen Zarroug, Anthony Toole, & Alex Mayer'
-    version                 = (3, 0, 1)
+    name = 'X-Ray Creator'
+    description = 'A plugin to create X-Ray files for Kindle books'
+    supported_platforms = ['windows', 'osx', 'linux']
+    author = 'Samreen Zarroug, Anthony Toole, & Alex Mayer'
+    version = (3, 0, 1)
     minimum_calibre_version = (2, 0, 0)
-    actual_plugin           = 'calibre_plugins.xray_creator.ui:XRayCreatorInterfacePlugin'
+    actual_plugin = 'calibre_plugins.xray_creator.ui:XRayCreatorInterfacePlugin'
 
-    def is_customizable(self):
+    @staticmethod
+    def is_customizable():
         '''Tells Calibre that this widget is customizable'''
         return True
 
-    def config_widget(self):
+    @staticmethod
+    def config_widget():
         '''Creates preferences dialog'''
         from calibre_plugins.xray_creator.config import ConfigWidget
         return ConfigWidget()
@@ -46,11 +48,10 @@ class XRayCreatorPlugin(InterfaceActionBase):
         True if the user clicks OK, False otherwise. The changes are
         automatically applied.
         '''
-        from PyQt5.Qt import QDialog, QDialogButtonBox, QVBoxLayout, \
-                QLabel, Qt, QLineEdit
+        from PyQt5.Qt import QDialog, QDialogButtonBox, QVBoxLayout, QLabel, Qt, QLineEdit
         from calibre.gui2 import gprefs
 
-        prefname = 'plugin config dialog:'+self.type + ':' + self.name
+        prefname = 'plugin config dialog:' + self.type + ':' + self.name
         geom = gprefs.get(prefname, None)
 
         config_dialog = QDialog(parent)
@@ -66,17 +67,12 @@ class XRayCreatorPlugin(InterfaceActionBase):
 
         button_box.accepted.connect(lambda: self.validate(config_dialog, config_widget))
         button_box.rejected.connect(config_dialog.reject)
-        config_dialog.setWindowTitle(_('Customize') + ' ' + self.name)
+        config_dialog.setWindowTitle('Customize ' + self.name)
+
         try:
             config_widget = self.config_widget()
         except NotImplementedError:
             config_widget = None
-
-        if isinstance(config_widget, tuple):
-            from calibre.gui2 import warning_dialog
-            warning_dialog(parent, _('Cannot configure'), config_widget[0],
-                           det_msg=config_widget[1], show=True)
-            return False
 
         if config_widget is not None:
             layout.addWidget(config_widget)
@@ -84,8 +80,7 @@ class XRayCreatorPlugin(InterfaceActionBase):
             size_dialog()
             config_dialog.exec_()
         else:
-            from calibre.customize.ui import plugin_customization, \
-                customize_plugin
+            from calibre.customize.ui import plugin_customization, customize_plugin
             help_text = self.customization_help(gui=True)
             help_text = QLabel(help_text, config_dialog)
             help_text.setWordWrap(True)

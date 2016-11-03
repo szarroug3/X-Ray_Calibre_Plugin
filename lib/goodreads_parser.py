@@ -33,6 +33,13 @@ class GoodreadsParser(object):
         self._quotes = []
         self._entity_id = 1
 
+        self._author_info = None
+        self._reading_time_hours = None
+        self._reading_time_minutes = None
+        self._book_image_url = None
+        self._num_pages = None
+        self._cust_recommendations = None
+
         self._xray = None
         self._characters = None
         self._settings = None

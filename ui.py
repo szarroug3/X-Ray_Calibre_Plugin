@@ -5,7 +5,7 @@
 from __future__ import (unicode_literals, division, absolute_import,
                         print_function)
 
-__license__   = 'GPL v3'
+__license__ = 'GPL v3'
 __copyright__ = '2016, Samreen Zarroug, Anthony Toole, & Alex Mayer'
 __docformat__ = 'restructuredtext en'
 
@@ -30,13 +30,15 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
     popup_type = QToolButton.InstantPopup
     action_type = 'current'
 
+    def __init__(self, parent, site_customization):
+        InterfaceAction.__init__(self, parent, site_customization)
+        self.apply_settings()
+        self.menu = QMenu(self.gui)
+
     def genesis(self):
         '''Initial setup'''
-        self.apply_settings()
-
         icon = get_icons('images/icon.png')
 
-        self.menu = QMenu(self.gui)
         self.create_menu_action(self.menu, 'Book Specific Preferences',
                                 'Book Specific Preferences', None, 'CTRL+SHIFT+ALT+Z',
                                 'Set preferences specific to the book', self.book_config)
@@ -56,7 +58,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         self.qaction.setMenu(self.menu)
 
     def apply_settings(self):
-        '''Gets user's settings'''
+        '''Gets settings from config file'''
         self._send_to_device = __prefs__['send_to_device']
         self._create_files_when_sending = __prefs__['create_files_when_sending']
         self._expand_aliases = __prefs__['expand_aliases']
@@ -69,6 +71,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         self._file_preference = __prefs__['file_preference']
         self._mobi = __prefs__['mobi']
         self._azw3 = __prefs__['azw3']
+
 
     def create_files(self):
         '''Creates files depending on user's settings'''

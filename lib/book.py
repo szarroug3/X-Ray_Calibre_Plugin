@@ -509,7 +509,8 @@ class Book(object):
         except:
             return
 
-    def _calculate_percentage(self, amt_completed, total):
+    @staticmethod
+    def _calculate_percentage(amt_completed, total):
         '''Calculates percentage of amt_completed compared to total; Minimum returned is .01'''
         return amt_completed/total if amt_completed/total >= .01 else .01
 
