@@ -70,10 +70,10 @@ F_UNABLE_TO_UPDATE_ASIN = 'Unable to update ASIN in book on device.'
 class Book(object):
     '''Class to hold book information and creates/sends files depending on user settings'''
 
-    def __init__(self, db, book_id, goodreads_conn, amazon_conn, formats, send_to_device, create_files_when_sending,
+    def __init__(self, database, book_id, goodreads_conn, amazon_conn, formats, send_to_device, create_files_when_sending,
                  expand_aliases, overwrite_local, overwrite_device, create_send_xray, create_send_author_profile,
                  create_send_start_actions, create_send_end_actions, file_preference):
-        self._db = db
+        self._database = database
         self._book_id = book_id
         self._goodreads_conn = goodreads_conn
         self._formats = formats
@@ -118,7 +118,7 @@ class Book(object):
         self._goodreads_start_actions = None
         self._goodreads_xray = None
 
-        self._book_settings = BookSettings(self._db, self._book_id, self._goodreads_conn, amazon_conn, expand_aliases)
+        self._book_settings = BookSettings(self._database, self._book_id, self._goodreads_conn, amazon_conn, expand_aliases)
 
         self._get_basic_information()
 
@@ -267,8 +267,8 @@ class Book(object):
 
     def _get_basic_information(self):
         '''Gets title, author, goodreads url, ASIN, and file specific info for the book'''
-        self._title = self._db.field_for('title', self._book_id)
-        self._author = ' & '.join(self._db.field_for('authors', self._book_id))
+        self._title = self._database.field_for('title', self._book_id)
+        self._author = ' & '.join(self._database.field_for('authors', self._book_id))
 
         if self._title == 'Unknown' or self._author == 'Unknown':
             self._status = FAIL
@@ -306,7 +306,7 @@ class Book(object):
             info = {'status': IN_PROGRESS, 'status_message': None}
 
             # find local book if it exists; fail if it doesn't
-            local_book = self._db.format_abspath(self._book_id, fmt.upper())
+            local_book = self._database.format_abspath(self._book_id, fmt.upper())
             if not local_book or not os.path.exists(local_book):
                 info['status'] = FAIL
                 info['status_message'] = F_LOCAL_BOOK_NOT_FOUND
@@ -323,7 +323,7 @@ class Book(object):
 
     def _get_basic_non_xray_information(self):
         '''Gets local book's directory and initializes non-xray variables'''
-        book_path = self._db.field_for('path', self._book_id).replace('/', os.sep)
+        book_path = self._database.field_for('path', self._book_id).replace('/', os.sep)
         local_book_directory = os.path.join(LIBRARY, book_path)
         self._local_book_directory = os.path.join(local_book_directory, 'non_xray')
         if not os.path.exists(self._local_book_directory):
@@ -951,8 +951,8 @@ class ASINUpdater(MetadataUpdater):
         update_exth_record((504, asin.encode(self.codec, 'replace')))
 
         # Include remaining original EXTH fields
-        for id in sorted(self.original_exth_records):
-            recs.append((id, self.original_exth_records[id]))
+        for record_id in sorted(self.original_exth_records):
+            recs.append((record_id, self.original_exth_records[record_id]))
         recs = sorted(recs, key=lambda x: (x[0], x[0]))
 
         exth = StringIO()

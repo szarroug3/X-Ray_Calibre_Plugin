@@ -88,7 +88,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
     def book_config(self):
         '''Opens up a dialog that allows user to set book specific preferences'''
-        db = self.gui.current_db
+        database = self.gui.current_db
         rows = self.gui.library_view.selectionModel().selectedRows()
         if not rows or len(rows) == 0:
             error_dialog(self.gui, 'Cannot set book preferences',
@@ -96,9 +96,8 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
             return
 
         ids = list(map(self.gui.library_view.model().id, rows))
-        db = db.new_api
 
-        BookConfigWidget(db, ids, self._expand_aliases, self.gui)
+        BookConfigWidget(database.new_api, ids, self._expand_aliases, self.gui)
 
     def created_files(self, job):
         '''Dispatcher for create_files'''
@@ -110,7 +109,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
     def _get_books(self, error_msg):
         '''Gets selected books'''
-        db = self.gui.current_db
+        database = self.gui.current_db
         rows = self.gui.library_view.selectionModel().selectedRows()
         if not rows or len(rows) == 0:
             error_dialog(self.gui, error_msg,
@@ -118,7 +117,6 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
             return None
 
         ids = list(map(self.gui.library_view.model().id, rows))
-        db = db.new_api
 
         formats = []
         if self._mobi:
@@ -126,7 +124,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         if self._azw3:
             formats.append('azw3')
 
-        xray_creator = XRayCreator(db, ids, formats, self._send_to_device, self._create_files_when_sending,
+        xray_creator = XRayCreator(database.new_api, ids, formats, self._send_to_device, self._create_files_when_sending,
                                    self._expand_aliases, self._overwrite_local, self._overwrite_device,
                                    self._create_send_xray, self._create_send_author_profile,
                                    self._create_send_start_actions, self._create_send_end_actions, self._file_preference)

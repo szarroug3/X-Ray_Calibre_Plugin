@@ -180,14 +180,14 @@ class GoodreadsParser(object):
 
     def _compile_author_profile(self):
         '''Compiles author profile data into dict'''
-        self._author_profile = {"u": [{"y": 277,
-                                       "l": [x["a"] for x in self._author_other_books],
-                                       "n": self._author_info[0]['name'],
-                                       "b": self._author_info[0]['bio'],
-                                       "i": self._author_info[0]['encoded_image']}],
-                                "d": int((datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds()),
-                                "o": self._author_other_books,
-                                "a": self._asin
+        self._author_profile = {'u': [{'y': 277,
+                                       'l': [x['a'] for x in self._author_other_books],
+                                       'n': self._author_info[0]['name'],
+                                       'b': self._author_info[0]['bio'],
+                                       'i': self._author_info[0]['encoded_image']}],
+                                'd': int((datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds()),
+                                'o': self._author_other_books,
+                                'a': self._asin
                                }
 
     def _compile_start_actions(self):

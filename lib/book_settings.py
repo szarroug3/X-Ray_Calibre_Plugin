@@ -40,14 +40,13 @@ class BookSettings(object):
 
     COMMON_WORDS = 'the of de'.split()
 
-    def __init__(self, db, book_id, goodreads_conn, amazon_conn, expand_aliases):
-        self._db = db
+    def __init__(self, database, book_id, goodreads_conn, amazon_conn, expand_aliases):
         self._book_id = book_id
         self._goodreads_conn = goodreads_conn
         self._amazon_conn = amazon_conn
         self._expand_aliases = expand_aliases
 
-        book_path = self._db.field_for('path', book_id).replace('/', os.sep)
+        book_path = database.field_for('path', book_id).replace('/', os.sep)
 
         self._prefs = JSONConfig(os.path.join(book_path, 'book_settings'), base_path=self.LIBRARY)
         self.prefs.setdefault('asin', '')
@@ -55,25 +54,25 @@ class BookSettings(object):
         self.prefs.setdefault('aliases', {})
         self.prefs.commit()
 
-        self._title = self._db.field_for('title', book_id)
-        self._author = ' & '.join(self._db.field_for('authors', self._book_id))
+        self._title = database.field_for('title', book_id)
+        self._author = ' & '.join(database.field_for('authors', self._book_id))
 
-        self.asin = self.prefs['asin'] if self.prefs['asin'] != '' else None
-        self.goodreads_url = self.prefs['goodreads_url']
+        self._asin = self.prefs['asin'] if self.prefs['asin'] != '' else None
+        self._goodreads_url = self.prefs['goodreads_url']
 
         if not self.asin:
-            identifiers = self._db.field_for('identifiers', self._book_id)
+            identifiers = database.field_for('identifiers', self._book_id)
             if 'mobi-asin' in identifiers.keys():
-                self.asin = self._db.field_for('identifiers', self._book_id)['mobi-asin'].decode('ascii')
+                self.asin = database.field_for('identifiers', self._book_id)['mobi-asin'].decode('ascii')
                 self.prefs['asin'] = self.asin
             else:
                 self.asin = self.search_for_asin_on_amazon(self.title_and_author)
                 if self.asin:
-                    mi = self._db.get_metadata(self._book_id)
-                    identifiers = mi.get_identifiers()
+                    metadata = database.get_metadata(self._book_id)
+                    identifiers = metadata.get_identifiers()
                     identifiers['mobi-asin'] = self.asin
-                    mi.set_identifiers(identifiers)
-                    self._db.set_metadata(self._book_id, mi)
+                    metadata.set_identifiers(identifiers)
+                    database.set_metadata(self._book_id, metadata)
                     self.prefs['asin'] = self.asin
 
         if self.goodreads_url == '':
@@ -89,11 +88,11 @@ class BookSettings(object):
                 if not self.asin:
                     self.asin = self.search_for_asin_on_goodreads(self.goodreads_url)
                     if self.asin:
-                        mi = self._db.get_metadata(self._book_id)
-                        identifiers = mi.get_identifiers()
+                        metadata = database.get_metadata(self._book_id)
+                        identifiers = metadata.get_identifiers()
                         identifiers['mobi-asin'] = self.asin
-                        mi.set_identifiers(identifiers)
-                        self._db.set_metadata(self._book_id, mi)
+                        metadata.set_identifiers(identifiers)
+                        database.set_metadata(self._book_id, metadata)
                         self.prefs['asin'] = self.asin
 
         self._aliases = self.prefs['aliases']
@@ -147,14 +146,14 @@ class BookSettings(object):
 
     @aliases.setter
     def aliases(self, val):
-        '''
-        'aliases' is a string containing a comma separated list of aliases.
+        '''Sets _aliases dict entry using key=val[0], value=val[1]'''
 
-        Split it, remove whitespace from each element, drop empty strings (strangely,
-        split only does this if you don't specify a separator)
+        # 'aliases' is a string containing a comma separated list of aliases.
 
-        so "" -> []  "foo,bar" and " foo   , bar " -> ["foo", "bar"]
-        '''
+        # Split it, remove whitespace from each element, drop empty strings (strangely,
+        # split only does this if you don't specify a separator)
+
+        # so "" -> []  "foo,bar" and " foo   , bar " -> ["foo", "bar"]
         label, aliases = val
         aliases = [x.strip() for x in aliases.split(",") if x.strip()]
         self._aliases[label] = aliases
@@ -183,8 +182,8 @@ class BookSettings(object):
                 return None
 
         # check to make sure there are results
-        if ('did not match any products' in response and not 'Did you mean:' in response and
-               not 'so we searched in All Departments' in response):
+        if ('did not match any products' in response and not 'Did you mean:' in response
+                and not 'so we searched in All Departments' in response):
             return None
 
         soup = BeautifulSoup(response)
@@ -193,11 +192,11 @@ class BookSettings(object):
         if not results or len(results) == 0:
             return None
 
-        for r in results:
-            if 'Buy now with 1-Click' in str(r):
-                asinSearch = self.AMAZON_ASIN_PAT.search(str(r))
-                if asinSearch:
-                    return asinSearch.group(1)
+        for result in results:
+            if 'Buy now with 1-Click' in str(result):
+                asin_search = self.AMAZON_ASIN_PAT.search(str(result))
+                if asin_search:
+                    return asin_search.group(1)
 
         return None
 

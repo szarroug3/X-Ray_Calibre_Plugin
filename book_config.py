@@ -27,11 +27,10 @@ class BookConfigWidget(QDialog):
     # title case given words except for articles in the middle
     # i.e the lord ruler would become The Lord Ruler but john the great would become John the Great
     ARTICLES = ['The', 'For', 'De', 'And', 'Or', 'Of', 'La']
-    TITLE_CASE = lambda self, words: ' '.join([word.lower()
-                                               if word in self.ARTICLES and index != 0
+    TITLE_CASE = lambda self, words: ' '.join([word.lower() if word in self.ARTICLES and index != 0
                                                else word
                                                for index, word in enumerate(words.title().split())])
-    def __init__(self, db, ids, expand_aliases, parent):
+    def __init__(self, database, ids, expand_aliases, parent):
         QDialog.__init__(self, parent)
         self.resize(500, 500)
         self._index = 0
@@ -51,7 +50,7 @@ class BookConfigWidget(QDialog):
             amazon_conn = HTTPSConnection('www.amazon.com')
 
         for book_id in ids:
-            book_settings = BookSettings(db, book_id, goodreads_conn, amazon_conn, expand_aliases)
+            book_settings = BookSettings(database, book_id, goodreads_conn, amazon_conn, expand_aliases)
             if len(book_settings.aliases) == 0 and book_settings.goodreads_url != '':
                 book_settings.update_aliases(book_settings.goodreads_url)
                 book_settings.save()
@@ -194,9 +193,9 @@ class BookConfigWidget(QDialog):
                 country = json.loads(urllib2.urlopen('http://ipinfo.io/json').read())['country']
             except:
                 country = 'unknown'
-            country_tld=defaultdict(lambda:'com', {'AU': 'com.au', 'BR': 'com.br', 'CA': 'ca', 'CN': 'cn', 'FR': 'fr',
-                                                   'DE': 'de', 'IN': 'in', 'IT': 'it', 'JP': 'co.jp', 'MX': 'com.mx',
-                                                   'NL': 'nl', 'ES': 'es', 'GB': 'co.uk', 'US': 'com'})
+            country_tld = defaultdict(lambda: 'com', {'AU': 'com.au', 'BR': 'com.br', 'CA': 'ca', 'CN': 'cn', 'FR': 'fr',
+                                                      'DE': 'de', 'IN': 'in', 'IT': 'it', 'JP': 'co.jp', 'MX': 'com.mx',
+                                                      'NL': 'nl', 'ES': 'es', 'GB': 'co.uk', 'US': 'com'})
             prefs['tld'] = country_tld[country]
         webbrowser.open('https://www.amazon.{0}/gp/product/{1}/'.format(prefs['tld'], self.asin_edit.text()))
 

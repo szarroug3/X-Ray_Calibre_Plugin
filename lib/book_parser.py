@@ -97,15 +97,17 @@ class BookParser(object):
                         entity_id = term['entity_id']
                         term['mentions'] += 1
                         term['excerpt_ids'].append(excerpt_id)
-                        term['occurrence'].append({'loc': word_loc['locs'][self._find_start(match.start(0), word_loc['words'])],
-                                                   'len': self._find_len_word(match.start(0), match.end(0), word_loc)})
+                        word_start = self._find_start(match.start(0), word_loc['words'])
+                        word_len = self._find_len_word(match.start(0), match.end(0), word_loc)
+                        term['occurrence'].append({'loc': word_loc['locs'][word_start],
+                                                   'len': word_len})
                         if entity_id not in rel_ent:
                             rel_ent.append(entity_id)
                 for quote in self._quotes:
                     if quote.lower() in word_loc['words'].lower() and excerpt_id not in notable_clips:
                         notable_clips.append(excerpt_id)
                 excerpt_data[excerpt_id] = {'loc': para_start, 'len': self._find_len_excerpt(word_loc),
-                                                  'related_entities': rel_ent}
+                                            'related_entities': rel_ent}
                 excerpt_id += 1
 
             # add random excerpts to make sure notable clips has at least 20 excerpts

@@ -16,10 +16,10 @@ from calibre_plugins.xray_creator.lib.book import Book, FAIL
 
 class XRayCreator(object):
     '''Automates x-ray, author profile, start actions, and end actions creation and sending to device'''
-    def __init__(self, db, book_ids, formats, send_to_device, create_files_when_sending, expand_aliases,
+    def __init__(self, database, book_ids, formats, send_to_device, create_files_when_sending, expand_aliases,
                  overwrite_local, overwrite_device, create_send_xray, create_send_author_profile,
                  create_send_start_actions, create_send_end_actions, file_preference):
-        self._db = db
+        self._database = database
         self._book_ids = book_ids
         self._formats = formats
         self._send_to_device = send_to_device
@@ -55,7 +55,7 @@ class XRayCreator(object):
 
         self._books = []
         for book_id in self._book_ids:
-            self._books.append(Book(self._db, book_id, goodreads_conn, amazon_conn, self._formats,
+            self._books.append(Book(self._database, book_id, goodreads_conn, amazon_conn, self._formats,
                                     self._send_to_device, self._create_files_when_sending,
                                     self._expand_aliases, self._overwrite_local, self._overwrite_device,
                                     self._create_send_xray, self._create_send_author_profile,
@@ -67,7 +67,7 @@ class XRayCreator(object):
         duplicate_uuids = []
         for book in self.books_not_failing():
             self._total_not_failing += 1
-            uuid = self._db.field_for('uuid', book.book_id)
+            uuid = self._database.field_for('uuid', book.book_id)
             if book_lookup.has_key(uuid):
                 book.status = FAIL
                 book.status_message = 'This book has the same UUID as another.'
