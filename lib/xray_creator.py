@@ -34,6 +34,10 @@ class XRayCreator(object):
         self._file_preference = file_preference
         self._num_of_formats_found_on_device = -1
 
+        self._total_not_failing = None
+        self._books = None
+        self._device_books = None
+
     @property
     def books(self):
         return self._books
@@ -189,24 +193,24 @@ class XRayCreator(object):
         scanner = DeviceScanner()
         scanner.scan()
         connected_devices = []
-        for d in device_plugins():
-            dev_connected = scanner.is_device_connected(d)
+        for device in device_plugins():
+            dev_connected = scanner.is_device_connected(device)
             if isinstance(dev_connected, tuple):
-                ok, det = dev_connected
-                if ok:
-                    dev = d
+                device_ok, det = dev_connected
+                if device_ok:
+                    dev = device
                     connected_devices.append((det, dev))
 
         if dev is None:
             return None
 
-        for det, d in connected_devices:
+        for det, device in connected_devices:
             try:
-                d.open(det, None)
-            except:
+                device.open(det, None)
+            except (NotImplementedError, TypeError):
                 continue
             else:
-                dev = d
+                dev = device
                 break
 
         self._num_of_formats_found_on_device = 0
@@ -214,11 +218,10 @@ class XRayCreator(object):
             books = defaultdict(dict)
             for book in dev.books():
                 if book_lookup.has_key(book._data['uuid']):
+                    print book._data['uuid']
                     book_id = book_lookup[book._data['uuid']].book_id
                     fmt = book.path.split('.')[-1].lower()
-                    if ((fmt != 'mobi' and fmt != 'azw3') or
-                            (fmt == 'mobi' and 'mobi' not in self._formats) or
-                            (fmt == 'azw3' and 'azw3' not in self._formats)):
+                    if (fmt != 'mobi' and fmt != 'azw3') or fmt not in self._formats:
                         continue
                     books[book_id][fmt] = {'device_book': book.path,
                                            'device_sdr': '.'.join(book.path.split('.')[:-1]) + '.sdr'}
@@ -229,11 +232,9 @@ class XRayCreator(object):
             log(('{0} Device found but cannot be accessed. '
                  'It may have been ejected but not unplugged.').format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
             return None
-        except Exception as e:
-            self._num_of_formats_found_on_device = -1
-            log('%s Something unexpectedly went wrong: %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), e))
 
-    def _find_device_root(self, device_book):
+    @staticmethod
+    def _find_device_root(device_book):
         '''
         Given the full path to a book on the device, return the path to the Kindle device
 
@@ -308,7 +309,7 @@ class XRayCreator(object):
         if self._num_of_formats_found_on_device == 0:
             if notifications: notifications.put((100, ' Unable to send files.'))
             if log: log(('{0} No matching books found on device. '
-                     'It may have been ejected but not unplugged.').format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
+                         'It may have been ejected but not unplugged.').format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
             return
 
         for book_num, book in enumerate(self.books_not_failing()):

@@ -135,9 +135,8 @@ class BookSettings(object):
     def aliases(self):
         return self._aliases
 
-    @aliases.setter
-    def aliases(self, val):
-        '''Sets _aliases dict entry using key=val[0], value=val[1]'''
+    def set_aliases(self, label, aliases):
+        '''Sets label's aliases to aliases'''
 
         # 'aliases' is a string containing a comma separated list of aliases.
 
@@ -145,7 +144,6 @@ class BookSettings(object):
         # split only does this if you don't specify a separator)
 
         # so "" -> []  "foo,bar" and " foo   , bar " -> ["foo", "bar"]
-        label, aliases = val
         aliases = [x.strip() for x in aliases.split(",") if x.strip()]
         self._aliases[label] = aliases
 
@@ -263,7 +261,7 @@ class BookSettings(object):
             alias_lookup[char_data['label']] = char_data['label']
 
             if char_data['label'] not in self.aliases.keys():
-                self.aliases = (char_data['label'], ','.join(goodreads_chars[char]['aliases']))
+                self.set_aliases(char_data['label'], ','.join(goodreads_chars[char]['aliases']))
 
             if not self._expand_aliases:
                 continue
@@ -274,10 +272,10 @@ class BookSettings(object):
 
         aliases = self.auto_expand_aliases(characters)
         for alias, fullname in aliases.items():
-            self.aliases = (alias_lookup[fullname], alias + ',' + ','.join(self.aliases[alias_lookup[fullname]]))
+            self.set_aliases(alias_lookup[fullname], alias + ',' + ','.join(self.aliases[alias_lookup[fullname]]))
 
         for setting_data in goodreads_parser.settings.values():
-            self.aliases = (setting_data['label'], '')
+            self.set_aliases(setting_data['label'], '')
 
     def auto_expand_aliases(self, characters):
         '''Goes through each character and expands them using fullname_to_possible_aliases without adding duplicates'''

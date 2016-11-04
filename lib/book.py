@@ -555,7 +555,8 @@ class Book(object):
     def _check_for_existing_files(self):
         '''Checks if files exist and fails for that type if they do'''
         if self._create_send_xray:
-            for fmt, info in self.xray_formats_not_failing():
+            for fmt_info in self.xray_formats_not_failing():
+                info = fmt_info[1]
                 if os.path.exists(os.path.join(info['local_xray'], 'XRAY.entities.{0}.asc'.format(self._asin))):
                     info['status'] = self.FAIL
                     info['status_message'] = self.F_PREFS_NOT_OVERWRITE_LOCAL_XRAY

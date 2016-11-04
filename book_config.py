@@ -235,7 +235,7 @@ class BookConfigWidget(QDialog):
 
     def edit_aliases(self, term, val):
         '''Sets book's aliases to tuple (term, val)'''
-        self.book.aliases = (term, val)
+        self.book.set_aliases(term, val)
 
     def previous_clicked(self):
         '''Goes to previous book'''
