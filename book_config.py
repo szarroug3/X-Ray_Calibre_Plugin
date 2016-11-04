@@ -1,11 +1,11 @@
 #!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-'''Creates dialog to allow finer control of book specific settings'''
+'''Creates dialog to allow control of book specific settings'''
 
 from __future__ import (unicode_literals, division, absolute_import,
                         print_function)
 
-__license__   = 'GPL v3'
+__license__ = 'GPL v3'
 __copyright__ = '2016, Samreen Zarroug, Anthony Toole, & Alex Mayer'
 __docformat__ = 'restructuredtext en'
 
@@ -148,7 +148,6 @@ class BookConfigWidget(QDialog):
 
     @property
     def book(self):
-        '''returns book setting's book object.'''
         return self._book_settings[self._index]
 
     def set_status_and_repaint(self, message):
@@ -157,7 +156,6 @@ class BookConfigWidget(QDialog):
         self.status.repaint()
 
     def edit_asin(self, val):
-        '''Sets book's asin to val'''
         self.book.asin = val
 
     def edit_goodreads_url(self, val):

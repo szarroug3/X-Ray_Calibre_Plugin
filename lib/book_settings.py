@@ -101,47 +101,38 @@ class BookSettings(object):
 
     @property
     def prefs(self):
-        '''Returns _prefs object.'''
         return self._prefs
 
     @property
     def asin(self):
-        '''Returns _asin object.'''
         return self._asin
 
     @asin.setter
     def asin(self, val):
-        '''Sets _asin to val'''
         self._asin = val
 
     @property
     def title(self):
-        '''Returns _title object.'''
         return self._title
 
     @property
     def author(self):
-        '''Returns _author object.'''
         return self._author
 
     @property
     def title_and_author(self):
-        '''Returns title and author in the format title - author'''
         return '{0} - {1}'.format(self.title, self.author)
 
     @property
     def goodreads_url(self):
-        '''Returns _goodreads_url object.'''
         return self._goodreads_url
 
     @goodreads_url.setter
     def goodreads_url(self, val):
-        '''Sets _goodreads_url to val'''
         self._goodreads_url = val
 
     @property
     def aliases(self):
-        '''Returns _aliases object.'''
         return self._aliases
 
     @aliases.setter

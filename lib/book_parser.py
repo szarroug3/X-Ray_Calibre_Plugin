@@ -54,7 +54,6 @@ class BookParser(object):
 
     @property
     def parsed_data(self):
-        '''Returns _parsed_data object.'''
         return self._parsed_data
 
     def parse(self):

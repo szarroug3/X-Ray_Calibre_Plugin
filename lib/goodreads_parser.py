@@ -61,32 +61,26 @@ class GoodreadsParser(object):
 
     @property
     def xray(self):
-        '''Returns _xray object.'''
         return self._xray
 
     @property
     def characters(self):
-        '''Returns _characters object.'''
         return self._characters
 
     @property
     def settings(self):
-        '''Returns _settings object.'''
         return self._settings
 
     @property
     def author_profile(self):
-        '''Returns _author_profile object.'''
         return self._author_profile
 
     @property
     def start_actions(self):
-        '''Returns _start_actions object.'''
         return self._start_actions
 
     @property
     def end_actions(self):
-        '''Returns _end_actions object.'''
         return self._end_actions
 
     def parse(self):
