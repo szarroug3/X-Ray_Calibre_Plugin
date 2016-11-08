@@ -11,13 +11,11 @@ __docformat__ = 'restructuredtext en'
 
 import functools
 import webbrowser
-from httplib import HTTPSConnection
 
 from PyQt5.QtCore import Qt
 from PyQt5.Qt import QDialog, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout
 from PyQt5.Qt import QLabel, QLineEdit, QPushButton, QScrollArea
 
-from calibre import get_proxies
 from calibre_plugins.xray_creator.lib.book_settings import BookSettings
 from calibre_plugins.xray_creator.config import __prefs__ as prefs
 
@@ -30,24 +28,12 @@ class BookConfigWidget(QDialog):
     TITLE_CASE = lambda self, words: ' '.join([word.lower() if word in self.ARTICLES and index != 0
                                                else word
                                                for index, word in enumerate(words.title().split())])
-    def __init__(self, database, ids, expand_aliases, parent):
+    def __init__(self, database, ids, expand_aliases, parent, goodreads_conn, amazon_conn):
         QDialog.__init__(self, parent)
         self.resize(500, 500)
         self._index = 0
 
         self._book_settings = []
-
-        https_proxy = get_proxies(debug=False).get('https', None)
-        if https_proxy:
-            https_address = ':'.join(https_proxy.split(':')[:-1])
-            https_port = int(https_proxy.split(':')[-1])
-            goodreads_conn = HTTPSConnection(https_address, https_port)
-            goodreads_conn.set_tunnel('www.goodreads.com', 443)
-            amazon_conn = HTTPSConnection(https_address, https_port)
-            amazon_conn.set_tunnel('www.amazon.com', 443)
-        else:
-            goodreads_conn = HTTPSConnection('www.goodreads.com')
-            amazon_conn = HTTPSConnection('www.amazon.com')
 
         for book_id in ids:
             book_settings = BookSettings(database, book_id, goodreads_conn, amazon_conn, expand_aliases)

@@ -6,22 +6,22 @@ import sys
 import errno
 
 from datetime import datetime
-from httplib import HTTPSConnection
 from collections import defaultdict
 
-from calibre import get_proxies
 from calibre.customize.ui import device_plugins
 from calibre.devices.scanner import DeviceScanner
 from calibre_plugins.xray_creator.lib.book import Book
 
 class XRayCreator(object):
     '''Automates x-ray, author profile, start actions, and end actions creation and sending to device'''
-    def __init__(self, database, book_ids, formats, send_to_device, create_files_when_sending, expand_aliases,
-                 overwrite_local, overwrite_device, create_send_xray, create_send_author_profile,
+    def __init__(self, database, book_ids, formats, goodreads_conn, amazon_conn, send_to_device, create_files_when_sending,
+                 expand_aliases, overwrite_local, overwrite_device, create_send_xray, create_send_author_profile,
                  create_send_start_actions, create_send_end_actions, file_preference):
         self._database = database
         self._book_ids = book_ids
         self._formats = formats
+        self._goodreads_conn = goodreads_conn
+        self._amazon_conn = amazon_conn
         self._send_to_device = send_to_device
         self._create_files_when_sending = create_files_when_sending
         self._expand_aliases = expand_aliases
@@ -44,26 +44,13 @@ class XRayCreator(object):
 
     def _initialize_books(self, log):
         '''Initializes each book's information'''
-        https_proxy = get_proxies(debug=False).get('https', None)
-        if https_proxy:
-            https_address = ':'.join(https_proxy.split(':')[:-1])
-            https_port = int(https_proxy.split(':')[-1])
-            goodreads_conn = HTTPSConnection(https_address, https_port)
-            goodreads_conn.set_tunnel('www.goodreads.com', 443)
-            amazon_conn = HTTPSConnection(https_address, https_port)
-            amazon_conn.set_tunnel('www.amazon.com', 443)
-        else:
-            goodreads_conn = HTTPSConnection('www.goodreads.com')
-            amazon_conn = HTTPSConnection('www.amazon.com')
-
         self._books = []
         for book_id in self._book_ids:
-            self._books.append(Book(self._database, book_id, goodreads_conn, amazon_conn, self._formats,
-                                    self._send_to_device, self._create_files_when_sending,
-                                    self._expand_aliases, self._overwrite_local, self._overwrite_device,
-                                    self._create_send_xray, self._create_send_author_profile,
-                                    self._create_send_start_actions, self._create_send_end_actions,
-                                    self._file_preference))
+            self._books.append(Book(self._database, book_id, self._goodreads_conn, self._amazon_conn, self._formats,
+                                    self._send_to_device, self._create_files_when_sending, self._expand_aliases,
+                                    self._overwrite_local, self._overwrite_device, self._create_send_xray,
+                                    self._create_send_author_profile, self._create_send_start_actions,
+                                    self._create_send_end_actions, self._file_preference))
 
         self._total_not_failing = 0
         book_lookup = {}

@@ -9,10 +9,13 @@ __license__ = 'GPL v3'
 __copyright__ = '2016, Samreen Zarroug, Anthony Toole, & Alex Mayer'
 __docformat__ = 'restructuredtext en'
 
+from httplib import HTTPSConnection
 from PyQt5.Qt import QMenu, QToolButton
 
-from calibre.gui2 import error_dialog
+from calibre import get_proxies
+
 from calibre.gui2 import Dispatcher
+from calibre.gui2 import error_dialog
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2.threaded_jobs import ThreadedJob
 
@@ -73,6 +76,18 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         self._azw3 = __prefs__['azw3']
 
 
+        https_proxy = get_proxies(debug=False).get('https', None)
+        if https_proxy:
+            https_address = ':'.join(https_proxy.split(':')[:-1])
+            https_port = int(https_proxy.split(':')[-1])
+            self._goodreads_conn = HTTPSConnection(https_address, https_port)
+            self._goodreads_conn.set_tunnel('www.goodreads.com', 443)
+            self._amazon_conn = HTTPSConnection(https_address, https_port)
+            self._amazon_conn.set_tunnel('www.amazon.com', 443)
+        else:
+            self._goodreads_conn = HTTPSConnection('www.goodreads.com')
+            self._amazon_conn = HTTPSConnection('www.amazon.com')
+
     def create_files(self):
         '''Creates files depending on user's settings'''
         xray_creator = self._get_books('Cannot create Files')
@@ -100,7 +115,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
         ids = list(map(self.gui.library_view.model().id, rows))
 
-        BookConfigWidget(database.new_api, ids, self._expand_aliases, self.gui)
+        BookConfigWidget(database.new_api, ids, self._expand_aliases, self.gui, self._goodreads_conn, self._amazon_conn)
 
     def created_files(self, job):
         '''Dispatcher for create_files'''
@@ -127,10 +142,11 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         if self._azw3:
             formats.append('azw3')
 
-        xray_creator = XRayCreator(database.new_api, ids, formats, self._send_to_device, self._create_files_when_sending,
-                                   self._expand_aliases, self._overwrite_local, self._overwrite_device,
-                                   self._create_send_xray, self._create_send_author_profile,
-                                   self._create_send_start_actions, self._create_send_end_actions, self._file_preference)
+        xray_creator = XRayCreator(database.new_api, ids, formats, self._goodreads_conn, self._amazon_conn,
+                                   self._send_to_device, self._create_files_when_sending, self._expand_aliases,
+                                   self._overwrite_local, self._overwrite_device, self._create_send_xray,
+                                   self._create_send_author_profile, self._create_send_start_actions,
+                                   self._create_send_end_actions, self._file_preference)
         return xray_creator
 
     def config(self):
