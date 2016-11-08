@@ -11,6 +11,7 @@ from collections import defaultdict
 from calibre.customize.ui import device_plugins
 from calibre.devices.scanner import DeviceScanner
 from calibre_plugins.xray_creator.lib.book import Book
+from calibre_plugins.xray_creator.lib.status_info import StatusInfo
 
 class XRayCreator(object):
     '''Automates x-ray, author profile, start actions, and end actions creation and sending to device'''
@@ -59,14 +60,14 @@ class XRayCreator(object):
             self._total_not_failing += 1
             uuid = self._database.field_for('uuid', book.book_id)
             if book_lookup.has_key(uuid):
-                book.status = book.FAIL
+                book.status = StatusInfo.FAIL
                 book.status_message = 'This book has the same UUID as another.'
                 if uuid not in duplicate_uuids:
                     duplicate_uuids.append(uuid)
                 continue
             book_lookup[uuid] = book
         for uuid in duplicate_uuids:
-            book_lookup[uuid].status = book_lookup[uuid].FAIL
+            book_lookup[uuid].status = StatusInfo.FAIL
             book_lookup[uuid].status_message = 'This book has the same UUID as another.'
             book_lookup.pop(uuid)
         self._device_books = self._find_device_books(book_lookup, log)
@@ -74,7 +75,7 @@ class XRayCreator(object):
     def books_not_failing(self):
         '''Gets books that didn't fail'''
         for book in self._books:
-            if book.status is not book.FAIL:
+            if book.status.status is not StatusInfo.FAIL:
                 yield book
 
     def get_results_create(self):
@@ -83,41 +84,42 @@ class XRayCreator(object):
         create_failed = []
 
         for book in self._books:
-            if book.status == book.FAIL:
+            if book.status.status == StatusInfo.FAIL:
                 if book.title and book.author:
                     known_info = book.title_and_author
                 elif book.title:
                     known_info = book.title
                 elif book.author:
                     known_info = 'Book by {0}'.format(book.author)
-                elif not known_info:
+
+                if not known_info:
                     known_info = 'Unknown book'
-                create_failed.append('{0}: {1}'.format(known_info, book.status_message))
+                create_failed.append('{0}: {1}'.format(known_info, book.status.message))
                 continue
             fmts_completed = []
             fmts_failed = []
             if self._create_send_xray:
-                if book.xray_status == book.FAIL:
-                    fmts_failed.append('X-Ray: {0}'.format(book.xray_status_message))
+                if book.xray_status.status == StatusInfo.FAIL:
+                    fmts_failed.append('X-Ray: {0}'.format(book.xray_status.message))
                 else:
                     for fmt, info in book.xray_formats_failing():
-                        fmts_failed.append('X-Ray ({0}): {1}'.format(fmt, info['status_message']))
+                        fmts_failed.append('X-Ray ({0}): {1}'.format(fmt, info['status'].message))
                     if book.xray_formats_not_failing_exist():
                         completed_xray_formats = [fmt for fmt, info in book.xray_formats_not_failing()]
                         fmts_completed.append('X-Ray ({0})'.format(', '.join(completed_xray_formats)))
             if self._create_send_author_profile:
-                if book.author_profile_status == book.FAIL:
-                    fmts_failed.append('Author Profile: {0}'.format(book.author_profile_status_message))
+                if book.author_profile_status.status == StatusInfo.FAIL:
+                    fmts_failed.append('Author Profile: {0}'.format(book.author_profile_status.message))
                 else:
                     fmts_completed.append('Author Profile')
             if self._create_send_start_actions:
-                if book.start_actions_status == book.FAIL:
-                    fmts_failed.append('Start Actions: {0}'.format(book.start_actions_status_message))
+                if book.start_actions_status.status == StatusInfo.FAIL:
+                    fmts_failed.append('Start Actions: {0}'.format(book.start_actions_status.message))
                 else:
                     fmts_completed.append('Start Actions')
             if self._create_send_end_actions:
-                if book.end_actions_status == book.FAIL:
-                    fmts_failed.append('End Actions: {0}'.format(book.end_actions_status_message))
+                if book.end_actions_status.status == StatusInfo.FAIL:
+                    fmts_failed.append('End Actions: {0}'.format(book.end_actions_status.message))
                 else:
                     fmts_completed.append('End Actions')
 
@@ -134,35 +136,35 @@ class XRayCreator(object):
         send_completed = []
         send_failed = []
         for book in self._books:
-            if book.status is book.FAIL:
+            if book.status is StatusInfo.FAIL:
                 send_failed.append('{0}: {1}'.format(book.title_and_author, book.status_message))
                 continue
             fmts_completed = []
             fmts_failed = []
-            if self._create_send_xray and book.xray_send_status != None:
-                if book.xray_send_status == book.FAIL:
+            if self._create_send_xray and book.xray_send_status.status != None:
+                if book.xray_send_status.status == StatusInfo.FAIL:
                     if book.xray_send_fmt != None:
-                        fmts_failed.append('X-Ray ({0}): {1}'.format(book.xray_send_fmt, book.xray_send_status_message))
+                        fmts_failed.append('X-Ray ({0}): {1}'.format(book.xray_send_fmt, book.xray_send_status.message))
                     else:
-                        fmts_failed.append('X-Ray: {0}'.format(book.xray_send_status_message))
+                        fmts_failed.append('X-Ray: {0}'.format(book.xray_send_status.message))
                 else:
                     fmts_completed.append('X-Ray ({0})'.format(book.xray_send_fmt))
             if self._create_send_author_profile:
-                if book.author_profile_status != book.FAIL:
-                    if book.author_profile_send_status == book.FAIL:
-                        fmts_failed.append('Author Profile: {0}'.format(book.author_profile_send_status_message))
+                if book.author_profile_status.status != StatusInfo.FAIL:
+                    if book.author_profile_send_status.status == StatusInfo.FAIL:
+                        fmts_failed.append('Author Profile: {0}'.format(book.author_profile_send_status.message))
                     else:
                         fmts_completed.append('Author Profile')
             if self._create_send_start_actions:
-                if book.start_actions_status != book.FAIL:
-                    if book.start_actions_send_status == book.FAIL:
-                        fmts_failed.append('Start Actions: {0}'.format(book.start_actions_send_status_message))
+                if book.start_actions_status.status != StatusInfo.FAIL:
+                    if book.start_actions_send_status.status == StatusInfo.FAIL:
+                        fmts_failed.append('Start Actions: {0}'.format(book.start_actions_send_status.message))
                     else:
                         fmts_completed.append('Start Actions')
             if self._create_send_end_actions:
-                if book.end_actions_status != book.FAIL:
-                    if book.end_actions_send_status == book.FAIL:
-                        fmts_failed.append('End Actions: {0}'.format(book.end_actions_send_status_message))
+                if book.end_actions_status.status != StatusInfo.FAIL:
+                    if book.end_actions_send_status.status == StatusInfo.FAIL:
+                        fmts_failed.append('End Actions: {0}'.format(book.end_actions_send_status.message))
                     else:
                         fmts_completed.append('End Actions')
 

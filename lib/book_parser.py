@@ -46,18 +46,19 @@ class BookParser(object):
                 for alias in alias_list:
                     self._aliases[alias.lower()] = term.lower()
 
-        words_list = self._aliases.keys() + self._entity_data.keys()
-
-        # named this way to keep same format as other regex's above
-        escaped_word_list = [re.escape(word) for word in words_list]
-        self.WORD_PAT = re.compile(r'(\b' + r'\b|\b'.join(escaped_word_list) + r'\b)', re.I)
-
     @property
     def parsed_data(self):
         return self._parsed_data
 
     def parse(self):
         '''Parses book'''
+
+        words_list = self._aliases.keys() + self._entity_data.keys()
+
+        # named this way to keep same format as other regex's above
+        escaped_word_list = [re.escape(word) for word in words_list]
+        word_pat = re.compile(r'(\b' + r'\b|\b'.join(escaped_word_list) + r'\b)', re.I)
+
         book_html = MobiExtractor(self._book_path, open(os.devnull, 'w')).extract_text()
         erl, codec = self.find_erl_and_encoding()
         paragraph_data = []
@@ -86,7 +87,7 @@ class BookParser(object):
             rel_ent = []
             if len(self._entity_data.keys()) > 0:
             # for each match found, fill in entity_data and excerpt_data information
-                for match in re.finditer(self.WORD_PAT, word_loc['words']):
+                for match in re.finditer(word_pat, word_loc['words']):
                     matched_word = match.group(1).decode(codec).lower()
                     if matched_word in self._entity_data.keys():
                         term = self._entity_data[matched_word]

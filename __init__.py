@@ -48,7 +48,7 @@ class XRayCreatorPlugin(InterfaceActionBase):
         True if the user clicks OK, False otherwise. The changes are
         automatically applied.
         '''
-        from PyQt5.Qt import QDialog, QDialogButtonBox, QVBoxLayout, QLabel, Qt, QLineEdit
+        from PyQt5.Qt import QDialog, QDialogButtonBox, QVBoxLayout
         from calibre.gui2 import gprefs
 
         prefname = 'plugin config dialog:' + self.type + ':' + self.name
@@ -69,37 +69,11 @@ class XRayCreatorPlugin(InterfaceActionBase):
         button_box.rejected.connect(config_dialog.reject)
         config_dialog.setWindowTitle('Customize ' + self.name)
 
-        try:
-            config_widget = self.config_widget()
-        except NotImplementedError:
-            config_widget = None
-
-        if config_widget is not None:
-            layout.addWidget(config_widget)
-            layout.addWidget(button_box)
-            size_dialog()
-            config_dialog.exec_()
-        else:
-            from calibre.customize.ui import plugin_customization, customize_plugin
-            help_text = self.customization_help(gui=True)
-            help_text = QLabel(help_text, config_dialog)
-            help_text.setWordWrap(True)
-            help_text.setTextInteractionFlags(Qt.LinksAccessibleByMouse | Qt.LinksAccessibleByKeyboard)
-            help_text.setOpenExternalLinks(True)
-            layout.addWidget(help_text)
-            plugin_cust = plugin_customization(self)
-            if not plugin_cust:
-                plugin_cust = ''
-            plugin_cust = plugin_cust.strip()
-            plugin_cust = QLineEdit(plugin_cust, config_dialog)
-            layout.addWidget(plugin_cust)
-            layout.addWidget(button_box)
-            size_dialog()
-            config_dialog.exec_()
-
-            if config_dialog.result() == QDialog.Accepted:
-                plugin_cust = unicode(plugin_cust.text()).strip()
-                customize_plugin(self, plugin_cust)
+        config_widget = self.config_widget()
+        layout.addWidget(config_widget)
+        layout.addWidget(button_box)
+        size_dialog()
+        config_dialog.exec_()
 
         geom = bytearray(config_dialog.saveGeometry())
         gprefs[prefname] = geom
