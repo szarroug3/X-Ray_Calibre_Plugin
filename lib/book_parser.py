@@ -6,6 +6,7 @@ import re
 from struct import unpack
 from random import randrange
 
+from calibre.ebooks.mobi import MobiError
 from calibre.ebooks.mobi.huffcdic import HuffReader
 from calibre.ebooks.mobi.reader.mobi6 import MobiReader
 from calibre.ebooks.compression.palmdoc import decompress_doc
@@ -53,31 +54,10 @@ class BookParser(object):
     def parse(self):
         '''Parses book'''
 
-        words_list = self._aliases.keys() + self._entity_data.keys()
-
-        # named this way to keep same format as other regex's above
-        escaped_word_list = [re.escape(word) for word in words_list]
+        escaped_word_list = [re.escape(word) for word in self._aliases.keys() + self._entity_data.keys()]
         word_pat = re.compile(r'(\b' + r'\b|\b'.join(escaped_word_list) + r'\b)', re.I)
-
-        book_html = MobiExtractor(self._book_path, open(os.devnull, 'w')).extract_text()
         erl, codec = self.find_erl_and_encoding()
-        paragraph_data = []
-
-        # find all paragraphs (sections enclosed in html p tags) and their starting offset
-        for node in re.finditer(PARAGRAPH_PAT, book_html):
-            # get plain text from paragraph and locations of letters from beginning of file
-            results = [(word.group(0)[1:-1].decode(codec), word.start(0))
-                       for word in re.finditer(PLAIN_TEXT_PAT, node.group(0))]
-            word_loc = {'words': '', 'locs': [], 'char_sizes': []}
-            for group, loc in results:
-                start = node.start(0) + loc + 1 + self._offset
-                for char in group:
-                    word_loc['words'] += char
-                    word_loc['locs'].append(start)
-                    start += len(char.encode(codec))
-                    word_loc['char_sizes'].append(len(char.encode(codec)))
-            if len(word_loc['locs']) > 0:
-                paragraph_data.append((word_loc, word_loc['locs'][0]))
+        paragraph_data = self._get_paragraph_data(codec)
 
         # get db data
         excerpt_id = 0
@@ -124,6 +104,29 @@ class BookParser(object):
                              'notable_clips': notable_clips,
                              'entity_data': self._entity_data,
                              'codec': codec}
+
+    def _get_paragraph_data(self, codec):
+        paragraph_data = []
+        book_html = MobiExtractor(self._book_path, open(os.devnull, 'w')).extract_text()
+
+        # find all paragraphs (sections enclosed in html p tags) and their starting offset
+        for node in re.finditer(PARAGRAPH_PAT, book_html):
+            # get plain text from paragraph and locations of letters from beginning of file
+            results = [(word.group(0)[1:-1].decode(codec), word.start(0))
+                       for word in re.finditer(PLAIN_TEXT_PAT, node.group(0))]
+            word_loc = {'words': '', 'locs': [], 'char_sizes': []}
+            for group, loc in results:
+                start = node.start(0) + loc + 1 + self._offset
+                for char in group:
+                    word_loc['words'] += char
+                    word_loc['locs'].append(start)
+                    start += len(char.encode(codec))
+                    word_loc['char_sizes'].append(len(char.encode(codec)))
+            if len(word_loc['locs']) > 0:
+                paragraph_data.append((word_loc, word_loc['locs'][0]))
+
+        return paragraph_data
+
 
     @staticmethod
     def _find_start(start, string):
