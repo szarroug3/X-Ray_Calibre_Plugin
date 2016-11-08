@@ -47,7 +47,7 @@ class DBWriter(object):
                              'num_terms INTEGER, num_images INTEGER, preview_images TEXT)')
 
         # insert base data
-        dir_path = os.path.join(os.getcwd(), 'lib')
+        dir_path = os.path.join(os.getcwd(), 'templates')
         with open(os.path.join(dir_path, 'xray_data_template.json'), 'r') as template:
             xray_templates = json.load(template)
 

@@ -60,7 +60,7 @@ class GoodreadsParser(object):
         self._author_other_books = []
 
         if create_start_actions or create_end_actions:
-            dir_path = os.path.join(os.getcwd(), 'lib')
+            dir_path = os.path.join(os.getcwd(), 'templates')
             with open(os.path.join(dir_path, 'goodreads_data_template.json'), 'r') as template:
                 goodreads_templates = json.load(template)
 
