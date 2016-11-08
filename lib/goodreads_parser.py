@@ -4,7 +4,6 @@
 import os
 import re
 import json
-import copy
 import base64
 import datetime
 import urlparse
@@ -24,6 +23,7 @@ class GoodreadsParser(object):
         self._url = url
         self._connection = connection
         self._asin = asin
+        self._raise_error_on_page_not_found = raise_error_on_page_not_found
         self._create_xray = create_xray
         self._create_author_profile = create_author_profile
         self._create_start_actions = create_start_actions
@@ -251,7 +251,7 @@ class GoodreadsParser(object):
             data['customersWhoBoughtRecs'] = {'class': 'featuredRecommendationList',
                                               'recommendations': self._cust_recommendations}
 
-    def _open_url(self, url, raise_error_on_page_not_found=False, return_redirect_url=False):
+    def _open_url(self, url, return_redirect_url=False):
         '''Tries to open url and return page's html'''
         if 'goodreads.com' in url:
             url = url[url.find('goodreads.com') + len('goodreads.com'):]
@@ -265,7 +265,7 @@ class GoodreadsParser(object):
             else:
                 response = response.read()
         except GoodreadsPageDoesNotExist as e:
-            if raise_error_on_page_not_found:
+            if self._raise_error_on_page_not_found:
                 raise e
             else:
                 return None

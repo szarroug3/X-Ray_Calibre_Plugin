@@ -218,7 +218,6 @@ class XRayCreator(object):
             books = defaultdict(dict)
             for book in dev.books():
                 if book_lookup.has_key(book._data['uuid']):
-                    print book._data['uuid']
                     book_id = book_lookup[book._data['uuid']].book_id
                     fmt = book.path.split('.')[-1].lower()
                     if (fmt != 'mobi' and fmt != 'azw3') or fmt not in self._formats:
