@@ -20,8 +20,9 @@ from calibre.gui2.actions import InterfaceAction
 from calibre.gui2.threaded_jobs import ThreadedJob
 
 from calibre_plugins.xray_creator.config import __prefs__
-from calibre_plugins.xray_creator.lib.xray_creator import XRayCreator
 from calibre_plugins.xray_creator.book_config import BookConfigWidget
+from calibre_plugins.xray_creator.lib.xray_creator import XRayCreator
+from calibre_plugins.xray_creator.lib.book_settings import BookSettings
 
 class XRayCreatorInterfacePlugin(InterfaceAction):
     '''Initializes plugin's interface'''
@@ -115,7 +116,15 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
         ids = list(map(self.gui.library_view.model().id, rows))
 
-        BookConfigWidget(database, ids, self._expand_aliases, self.gui, self._goodreads_conn, self._amazon_conn)
+        book_settings_list = []
+        for book_id in ids:
+            book_settings = BookSettings(database, book_id, self._goodreads_conn, self._amazon_conn, self._expand_aliases)
+            if len(book_settings.aliases) == 0 and book_settings.goodreads_url != '':
+                book_settings.update_aliases(book_settings.goodreads_url)
+                book_settings.save()
+            book_settings_list.append(book_settings)
+
+        BookConfigWidget(self.gui, book_settings_list)
 
     def created_files(self, job):
         '''Dispatcher for create_files'''
