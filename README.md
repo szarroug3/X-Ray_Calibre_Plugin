@@ -3,23 +3,7 @@ Downloads:
 ----------------------------------------------------------------------------------------------------------------------------------
 [3.0.1](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_3_0_1.zip?raw=true)
 
-[3.0.0](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_3_0_0.zip?raw=true)
-
-[2.2.1](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_2_2_1.zip?raw=true)
-
-[2.2.0](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_2_2_0.zip?raw=true)
-
-[2.1.2](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_2_1_2.zip?raw=true)
-
-[2.1.1](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_2_1_1.zip?raw=true)
-
-[2.1.0](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_2_1_0.zip?raw=true)
-
-[2.0.0](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_2_0_0.zip?raw=true)
-
-[1.1.0](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_1_1_0.zip?raw=true)
-
-[1.0.0](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_1_0_0.zip?raw=true)
+[Older Versions](https://github.com/szarroug3/X-Ray_Calibre_Plugin/releases)
 
 Websites:
 ----------------------------------------------------------------------------------------------------------------------------------
