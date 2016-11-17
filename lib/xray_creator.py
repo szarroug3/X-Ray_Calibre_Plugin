@@ -60,15 +60,13 @@ class XRayCreator(object):
             self._total_not_failing += 1
             uuid = self._database.field_for('uuid', book.book_id)
             if book_lookup.has_key(uuid):
-                book.status = StatusInfo.FAIL
-                book.status_message = 'This book has the same UUID as another.'
+                book.status.set(StatusInfo.FAIL, 'This book has the same UUID as another.')
                 if uuid not in duplicate_uuids:
                     duplicate_uuids.append(uuid)
                 continue
             book_lookup[uuid] = book
         for uuid in duplicate_uuids:
-            book_lookup[uuid].status = StatusInfo.FAIL
-            book_lookup[uuid].status_message = 'This book has the same UUID as another.'
+            book_lookup[uuid].status.set(StatusInfo.FAIL, 'This book has the same UUID as another.')
             book_lookup.pop(uuid)
         self._device_books = self._find_device_books(book_lookup, log)
 
@@ -136,37 +134,47 @@ class XRayCreator(object):
         send_completed = []
         send_failed = []
         for book in self._books:
-            if book.status is StatusInfo.FAIL:
-                send_failed.append('{0}: {1}'.format(book.title_and_author, book.status_message))
+            if book.status.status is StatusInfo.FAIL:
+                send_failed.append('{0}: {1}'.format(book.title_and_author, book.status.message))
                 continue
             fmts_completed = []
             fmts_failed = []
-            if self._create_send_xray and book.xray_send_status.status != None:
-                if book.xray_send_status.status == StatusInfo.FAIL:
-                    if book.xray_send_fmt != None:
-                        fmts_failed.append('X-Ray ({0}): {1}'.format(book.xray_send_fmt, book.xray_send_status.message))
+            if self._create_send_xray:
+                if book.xray_status.status != StatusInfo.FAIL:
+                    if book.xray_send_status.status == StatusInfo.FAIL:
+                        if book.xray_send_fmt != None:
+                            fmts_failed.append('X-Ray ({0}): {1}'.format(book.xray_send_fmt, book.xray_send_status.message))
+                        else:
+                            fmts_failed.append('X-Ray: {0}'.format(book.xray_send_status.message))
                     else:
-                        fmts_failed.append('X-Ray: {0}'.format(book.xray_send_status.message))
+                        fmts_completed.append('X-Ray ({0})'.format(book.xray_send_fmt))
                 else:
-                    fmts_completed.append('X-Ray ({0})'.format(book.xray_send_fmt))
+                    fmts_failed.append('X-Ray: {0}'.format(book.xray_status.message))
+
             if self._create_send_author_profile:
                 if book.author_profile_status.status != StatusInfo.FAIL:
                     if book.author_profile_send_status.status == StatusInfo.FAIL:
                         fmts_failed.append('Author Profile: {0}'.format(book.author_profile_send_status.message))
                     else:
                         fmts_completed.append('Author Profile')
+                else:
+                    fmts_failed.append('Author Profile: {0}'.format(book.author_profile_status.message))
             if self._create_send_start_actions:
                 if book.start_actions_status.status != StatusInfo.FAIL:
                     if book.start_actions_send_status.status == StatusInfo.FAIL:
                         fmts_failed.append('Start Actions: {0}'.format(book.start_actions_send_status.message))
                     else:
                         fmts_completed.append('Start Actions')
+                else:
+                    fmts_failed.append('Start Actions: {0}'.format(book.start_actions_status.message))
             if self._create_send_end_actions:
                 if book.end_actions_status.status != StatusInfo.FAIL:
                     if book.end_actions_send_status.status == StatusInfo.FAIL:
                         fmts_failed.append('End Actions: {0}'.format(book.end_actions_send_status.message))
                     else:
                         fmts_completed.append('End Actions')
+                else:
+                    fmts_failed.append('End Actions: {0}'.format(book.end_actions_status.message))
 
             if len(fmts_completed) > 0:
                 send_completed.append('{0}: {1}'.format(book.title_and_author, ', '.join(fmts_completed)))
@@ -248,12 +256,27 @@ class XRayCreator(object):
         if log: log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
         if notifications: notifications.put((0.01, 'Initializing...'))
         self._initialize_books(log)
+
+        actions = 1.0
+        if not self._overwrite_local:
+            actions += 1
+        if self._create_send_xray:
+            actions += 2
+        if self._create_send_author_profile:
+            actions += 1
+        if self._create_send_start_actions:
+            actions += 1
+        if self._create_send_end_actions:
+            actions += 1
+        if self._send_to_device and self._device_books is not None:
+            actions += 1
+        total_not_failing_actions = self._total_not_failing * actions
         for book_num, book in enumerate(self.books_not_failing()):
             if abort.isSet():
                 return
             if log: log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
-            book.create_files_event(self._device_books, log=log, notifications=notifications, abort=abort, book_num=book_num,
-                                    total=self._total_not_failing)
+            book.create_files_event(self._device_books, book_num * actions, total_not_failing_actions, log=log,
+                                    notifications=notifications, abort=abort)
 
         create_completed, create_failed = self.get_results_create()
         log('\nFile Creation:')

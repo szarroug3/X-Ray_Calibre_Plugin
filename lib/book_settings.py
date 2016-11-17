@@ -41,7 +41,6 @@ class BookSettings(object):
     COMMON_WORDS = 'the of de'.split()
 
     def __init__(self, database, book_id, goodreads_conn, amazon_conn, expand_aliases):
-        self._book_id = book_id
         self._goodreads_conn = goodreads_conn
         self._amazon_conn = amazon_conn
         self._expand_aliases = expand_aliases
@@ -55,24 +54,24 @@ class BookSettings(object):
         self.prefs.commit()
 
         self._title = database.field_for('title', book_id)
-        self._author = ' & '.join(database.field_for('authors', self._book_id))
+        self._author = ' & '.join(database.field_for('authors', book_id))
 
         self._asin = self.prefs['asin'] if self.prefs['asin'] != '' else None
         self._goodreads_url = self.prefs['goodreads_url']
 
         if not self.asin:
-            identifiers = database.field_for('identifiers', self._book_id)
+            identifiers = database.field_for('identifiers', book_id)
             if 'mobi-asin' in identifiers.keys():
-                self.asin = database.field_for('identifiers', self._book_id)['mobi-asin'].decode('ascii')
+                self.asin = database.field_for('identifiers', book_id)['mobi-asin'].decode('ascii')
                 self.prefs['asin'] = self.asin
             else:
                 self.asin = self.search_for_asin_on_amazon(self.title_and_author)
                 if self.asin:
-                    metadata = database.get_metadata(self._book_id)
+                    metadata = database.get_metadata(book_id)
                     identifiers = metadata.get_identifiers()
                     identifiers['mobi-asin'] = self.asin
                     metadata.set_identifiers(identifiers)
-                    database.set_metadata(self._book_id, metadata)
+                    database.set_metadata(book_id, metadata)
                     self.prefs['asin'] = self.asin
 
         if self.goodreads_url == '':
@@ -88,11 +87,11 @@ class BookSettings(object):
                 if not self.asin:
                     self.asin = self.search_for_asin_on_goodreads(self.goodreads_url)
                     if self.asin:
-                        metadata = database.get_metadata(self._book_id)
+                        metadata = database.get_metadata(book_id)
                         identifiers = metadata.get_identifiers()
                         identifiers['mobi-asin'] = self.asin
                         metadata.set_identifiers(identifiers)
-                        database.set_metadata(self._book_id, metadata)
+                        database.set_metadata(book_id, metadata)
                         self.prefs['asin'] = self.asin
 
         self._aliases = self.prefs['aliases']
