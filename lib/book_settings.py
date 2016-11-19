@@ -287,14 +287,10 @@ class BookSettings(object):
                 # if this alias has already been flagged as a duplicate or is a common word, skip it
                 if alias in duplicates or alias in self.COMMON_WORDS:
                     continue
-                # check if this alias is a duplicate but isn't in the duplicates list
-                if actual_aliases.has_key(alias):
-                    duplicates.append(alias)
-                    actual_aliases.pop(alias)
-                    continue
 
                 # at this point, the alias is new -- add it to the dict with the alias as the key and fullname as the value
                 actual_aliases[alias] = fullname
+                duplicates.append(alias)
 
         return actual_aliases
 
