@@ -6,6 +6,8 @@ import re
 from urllib import urlencode
 from urllib2 import urlparse
 
+from calibre_plugins.xray_creator.lib.utilities import open_url
+from calibre_plugins.xray_creator.lib.exceptions import PageDoesNotExist
 from calibre_plugins.xray_creator.lib.goodreads_parser import GoodreadsParser
 
 from calibre.utils.config import JSONConfig
@@ -18,27 +20,7 @@ class BookSettings(object):
     BOOK_ID_PAT = re.compile(r'\/show\/([\d]+)')
     AMAZON_ASIN_PAT = re.compile(r'data\-asin=\"([a-zA-z0-9]+)\"')
     GOODREADS_ASIN_PAT = re.compile(r'"asin":"(.+?)"')
-
-    HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/html",
-               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0"}
     LIBRARY = current_library_path()
-    HONORIFICS = 'mr mrs ms esq prof dr fr rev pr atty adv hon pres gov sen ofc pvt cpl sgt maj capt cmdr lt col gen'
-    HONORIFICS = HONORIFICS.split()
-    HONORIFICS.extend([x + '.' for x in HONORIFICS])
-    HONORIFICS += 'miss master sir madam lord dame lady esquire professor doctor father mother brother sister'.split()
-    HONORIFICS += 'reverend pastor elder rabbi sheikh attorney advocate honorable president governor senator'.split()
-    HONORIFICS += 'officer private corporal sargent major captain commander lieutenant colonel general'.split()
-    RELIGIOUS_HONORIFICS = 'fr br sr rev pr'
-    RELIGIOUS_HONORIFICS = RELIGIOUS_HONORIFICS.split()
-    RELIGIOUS_HONORIFICS.extend([x + '.' for x in RELIGIOUS_HONORIFICS])
-    RELIGIOUS_HONORIFICS += 'father mother brother sister reverend pastor elder rabbi sheikh'.split()
-    DOUBLE_HONORIFICS = 'lord'
-    # We want all the honorifics to be in the general honorifics list so when we're
-    # checking if a word is an honorifics, we only need to search in one list
-    HONORIFICS += RELIGIOUS_HONORIFICS
-    HONORIFICS += DOUBLE_HONORIFICS
-
-    COMMON_WORDS = 'the of de'.split()
 
     def __init__(self, database, book_id, goodreads_conn, amazon_conn, expand_aliases):
         self._book_id = book_id
@@ -156,19 +138,11 @@ class BookSettings(object):
     def search_for_asin_on_amazon(self, query):
         '''Search for book's asin on amazon using given query'''
         query = urlencode({'keywords': query})
+        url = '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query
         try:
-            self._amazon_conn.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' +
-                                      query[9:] + '&' + query, headers=self.HEADERS)
-            response = self._amazon_conn.getresponse().read()
-        except:
-            try:
-                self._amazon_conn.close()
-                self._amazon_conn.connect()
-                self._amazon_conn.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' +
-                                          query[9:] + '&' + query, headers=self.HEADERS)
-                response = self._amazon_conn.getresponse().read()
-            except:
-                return None
+            response = open_url(self._amazon_conn, url)
+        except PageDoesNotExist:
+            return None
 
         # check to make sure there are results
         if ('did not match any products' in response and not 'Did you mean:' in response
@@ -193,16 +167,9 @@ class BookSettings(object):
         '''Searches for book's goodreads url using given keywords'''
         query = urlencode({'q': keywords})
         try:
-            self._goodreads_conn.request('GET', '/search?' + query)
-            response = self._goodreads_conn.getresponse().read()
-        except:
-            try:
-                self._goodreads_conn.close()
-                self._goodreads_conn.connect()
-                self._goodreads_conn.request('GET', '/search?' + query)
-                response = self._goodreads_conn.getresponse().read()
-            except:
-                return None
+            response = open_url(self._goodreads_conn, '/search?' + query)
+        except PageDoesNotExist:
+            return None
 
         # check to make sure there are results
         if 'No results' in response:
@@ -225,16 +192,9 @@ class BookSettings(object):
         book_id = book_id_search.group(1)
 
         try:
-            self._goodreads_conn.request('GET', '/buttons/glide/' + book_id)
-            response = self._goodreads_conn.getresponse().read()
-        except:
-            try:
-                self._goodreads_conn.close()
-                self._goodreads_conn.connect()
-                self._goodreads_conn.request('GET', '/buttons/glide/' + book_id)
-                response = self._goodreads_conn.getresponse().read()
-            except:
-                return None
+            response = open_url(self._goodreads_conn, '/buttons/glide/' + book_id)
+        except PageDoesNotExist:
+            return None
 
         book_asin_search = self.GOODREADS_ASIN_PAT.search(response)
         if not book_asin_search:
@@ -242,121 +202,20 @@ class BookSettings(object):
 
         return book_asin_search.group(1)
 
-    def update_aliases(self, url, raise_error_on_page_not_found=False):
+    def update_aliases(self, url):
         '''Gets aliases from Goodreads and expands them if users settings say to do so'''
         try:
             goodreads_parser = GoodreadsParser(url, self._goodreads_conn, self._asin, create_xray=True,
-                                               raise_error_on_page_not_found=raise_error_on_page_not_found)
+                                               expand_aliases=self._expand_aliases)
             goodreads_parser.get_characters()
             goodreads_parser.get_settings()
             goodreads_chars = goodreads_parser.characters
-        except:
-            return
+            goodreads_settings = goodreads_parser.settings
+        except PageDoesNotExist:
+            goodreads_chars = {}
+            goodreads_settings = {}
 
         self._aliases = {}
-        characters = {}
-        alias_lookup = {}
-        for char, char_data in goodreads_chars.items():
-            characters[char_data['label']] = []
-            alias_lookup[char_data['label']] = char_data['label']
-
+        for char_data in goodreads_chars.values() + goodreads_settings.values():
             if char_data['label'] not in self.aliases.keys():
-                self.set_aliases(char_data['label'], ','.join(goodreads_chars[char]['aliases']))
-
-            if not self._expand_aliases:
-                continue
-
-            for alias in char_data['aliases']:
-                characters[char_data['label']].append(alias)
-                alias_lookup[alias] = char_data['label']
-
-        aliases = self.auto_expand_aliases(characters)
-        for alias, fullname in aliases.items():
-            self.set_aliases(alias_lookup[fullname], alias + ',' + ','.join(self.aliases[alias_lookup[fullname]]))
-
-        for setting_data in goodreads_parser.settings.values():
-            self.set_aliases(setting_data['label'], '')
-
-    def auto_expand_aliases(self, characters):
-        '''Goes through each character and expands them using fullname_to_possible_aliases without adding duplicates'''
-        actual_aliases = {}
-        duplicates = [x.lower() for x in characters.keys()]
-        duplicates += [alias.lower() for aliases in characters.values() for alias in aliases]
-        for fullname, gr_aliases in characters.items():
-            # get all expansions for original name and aliases retrieved from goodreads
-            aliases = self.fullname_to_possible_aliases(fullname.lower())
-            for alias in gr_aliases:
-                new_aliases = self.fullname_to_possible_aliases(alias.lower())
-                aliases += [new_alias for new_alias in new_aliases if new_alias not in aliases]
-
-            for alias in aliases:
-                # if this alias has already been flagged as a duplicate or is a common word, skip it
-                if alias in duplicates or alias in self.COMMON_WORDS:
-                    continue
-
-                # check if this alias is a duplicate but isn't in the duplicates list
-                if actual_aliases.has_key(alias):
-                    duplicates.append(alias)
-                    actual_aliases.pop(alias)
-                    continue
-
-                # at this point, the alias is new -- add it to the dict with the alias as the key and fullname as the value
-                actual_aliases[alias] = fullname
-
-        return actual_aliases
-
-    def fullname_to_possible_aliases(self, fullname):
-        '''
-        Given a full name ("{Title} ChristianName {Middle Names} {Surname}"), return a list of possible aliases
-
-        ie. Title Surname, ChristianName Surname, Title ChristianName, {the full name}
-
-        The returned aliases are in the order they should match
-        '''
-        aliases = []
-        parts = fullname.split()
-
-        if parts[0].lower() in self.HONORIFICS:
-            title_list = []
-            while len(parts) > 0 and parts[0].lower() in self.HONORIFICS:
-                title_list.append(parts.pop(0))
-            title = ' '.join(title_list)
-        else:
-            title = None
-
-        if len(parts) >= 2:
-            # Assume: {Title} Firstname {Middlenames} Lastname
-            # Already added the full form, also add Title Lastname, and for some Title Firstname
-            surname = parts.pop() # This will cover double barrel surnames, we split on whitespace only
-            christian_name = parts.pop(0)
-            if title:
-                # Religious Honorifics usually only use {Title} {ChristianName}
-                # ie. John Doe could be Father John but usually not Father Doe
-                if title in self.RELIGIOUS_HONORIFICS:
-                    aliases.append("%s %s" % (title, christian_name))
-                # Some titles work as both {Title} {ChristianName} and {Title} {Lastname}
-                # ie. John Doe could be Lord John or Lord Doe
-                elif title in self.DOUBLE_HONORIFICS:
-                    aliases.append("%s %s" % (title, christian_name))
-                    aliases.append("%s %s" % (title, surname))
-                # Everything else usually goes {Title} {Lastname}
-                # ie. John Doe could be Captain Doe but usually not Captain John
-                else:
-                    aliases.append("%s %s" % (title, surname))
-            # Don't want the formats {ChristianName}, {Surname} and {ChristianName} {Lastname} in special cases
-            # i.e. The Lord Ruler should never have "The Ruler", "Lord" or "Ruler" as aliases
-            if christian_name in self.COMMON_WORDS:
-                aliases.append('{0} {1}'.format(' '.join(parts), surname))
-            else:
-                aliases.append(christian_name)
-                aliases.append(surname)
-                aliases.append("%s %s" % (christian_name, surname))
-
-        elif title:
-            # Odd, but got Title Name (eg. Lord Buttsworth), so see if we can alias
-            if len(parts) > 0:
-                aliases.append(parts[0])
-        else:
-            # We've got no title, so just a single word name.  No alias needed
-            pass
-        return aliases
+                self._aliases[char_data['label']] = char_data['aliases']

@@ -16,6 +16,7 @@ from calibre_plugins.xray_creator.lib.status_info import StatusInfo
 from calibre_plugins.xray_creator.lib.book_parser import BookParser
 from calibre_plugins.xray_creator.lib.book_settings import BookSettings
 from calibre_plugins.xray_creator.lib.xray_db_writer import XRayDBWriter
+from calibre_plugins.xray_creator.lib.exceptions import PageDoesNotExist
 from calibre_plugins.xray_creator.lib.goodreads_parser import GoodreadsParser
 
 class Book(object):
@@ -64,7 +65,7 @@ class Book(object):
         self._goodreads_start_actions = None
         self._goodreads_xray = None
 
-        self._book_settings = BookSettings(self._database, self._book_id, self._goodreads_conn, amazon_conn, expand_aliases)
+        self._book_settings = BookSettings(database, book_id, goodreads_conn, amazon_conn, expand_aliases)
 
         self._get_basic_information()
 
@@ -399,40 +400,38 @@ class Book(object):
             goodreads_data = GoodreadsParser(self._goodreads_url, self._goodreads_conn, self._asin,
                                              create_xray=create_xray, create_author_profile=create_author_profile,
                                              create_start_actions=create_start_actions,
-                                             create_end_actions=create_end_actions)
+                                             create_end_actions=create_end_actions, expand_aliases=self._expand_aliases)
             goodreads_data.parse()
-
-            if create_xray:
-                if goodreads_data.xray:
-                    self._goodreads_xray = goodreads_data.xray
-                    for char in self._goodreads_xray['characters'].values():
-                        if char['label'] not in self._aliases.keys():
-                            self._aliases[char['label']] = char['aliases']
-
-                    self._book_settings.prefs['aliases'] = self._aliases
-                    self._xray_status.status = StatusInfo.SUCCESS
-                else:
-                    self._xray_status.set(StatusInfo.FAIL, StatusInfo.F_UNABLE_TO_CREATE_XRAY)
-            if create_author_profile:
-                if goodreads_data.author_profile:
-                    self._goodreads_author_profile = goodreads_data.author_profile
-                else:
-                    self._author_profile_status.set(StatusInfo.FAIL,
-                                                                       StatusInfo.F_UNABLE_TO_CREATE_AUTHOR_PROFILE)
-            if create_start_actions:
-                if goodreads_data.start_actions:
-                    self._goodreads_start_actions = goodreads_data.start_actions
-                else:
-                    self._start_actions_status.set(StatusInfo.FAIL,
-                                                                      StatusInfo.F_UNABLE_TO_CREATE_START_ACTIONS)
-            if create_end_actions:
-                if goodreads_data.end_actions:
-                    self._goodreads_end_actions = goodreads_data.end_actions
-                else:
-                    self._end_actions_status.set(StatusInfo.FAIL,
-                                                                    StatusInfo.F_UNABLE_TO_CREATE_END_ACTIONS)
-        except:
+        except PageDoesNotExist:
             self._status.set(StatusInfo.FAIL, StatusInfo.F_COULD_NOT_PARSE_GOODREADS_DATA)
+            return
+
+        if create_xray:
+            if goodreads_data.xray:
+                self._goodreads_xray = goodreads_data.xray
+                for char in self._goodreads_xray['characters'].values():
+                    if char['label'] not in self._aliases.keys():
+                        self._aliases[char['label']] = char['aliases']
+
+                self._book_settings.prefs['aliases'] = self._aliases
+                self._xray_status.status = StatusInfo.SUCCESS
+            else:
+                self._xray_status.set(StatusInfo.FAIL, StatusInfo.F_UNABLE_TO_CREATE_XRAY)
+        if create_author_profile:
+            if goodreads_data.author_profile:
+                self._goodreads_author_profile = goodreads_data.author_profile
+            else:
+                self._author_profile_status.set(StatusInfo.FAIL, StatusInfo.F_UNABLE_TO_CREATE_AUTHOR_PROFILE)
+        if create_start_actions:
+            if goodreads_data.start_actions:
+                self._goodreads_start_actions = goodreads_data.start_actions
+            else:
+                self._start_actions_status.set(StatusInfo.FAIL, StatusInfo.F_UNABLE_TO_CREATE_START_ACTIONS)
+        if create_end_actions:
+            if goodreads_data.end_actions:
+                self._goodreads_end_actions = goodreads_data.end_actions
+            else:
+                self._end_actions_status.set(StatusInfo.FAIL, StatusInfo.F_UNABLE_TO_CREATE_END_ACTIONS)
 
     def _parse_book(self, fmt, info):
         '''Will parse book using the format info given'''
