@@ -345,7 +345,9 @@ class BookSettings(object):
                     aliases.append("%s %s" % (title, surname))
             # Don't want the formats {ChristianName}, {Surname} and {ChristianName} {Lastname} in special cases
             # i.e. The Lord Ruler should never have "The Ruler", "Lord" or "Ruler" as aliases
-            if christian_name not in self.COMMON_WORDS:
+            if christian_name in self.COMMON_WORDS:
+                aliases.append('{0} {1}'.format(' '.join(parts), surname))
+            else:
                 aliases.append(christian_name)
                 aliases.append(surname)
                 aliases.append("%s %s" % (christian_name, surname))
