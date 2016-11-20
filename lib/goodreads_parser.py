@@ -312,7 +312,8 @@ class GoodreadsParser(object):
             else:
                 desc = 'No description found on Goodreads.'
 
-            aliases = [re.sub(r'\s+', ' ', x).strip() for x in char_page.xpath('//div[@class="grey500BoxContent" and contains(.,"aliases")]/text()') if re.sub(r'\s+', ' ', x).strip()]
+            alias_list = [re.sub(r'\s+', ' ', x).strip() for x in char_page.xpath('//div[@class="grey500BoxContent" and contains(.,"aliases")]/text()') if re.sub(r'\s+', ' ', x).strip()]
+            aliases = [alias for aliases in alias_list for alias in aliases.split(',')]
             self._characters[self._entity_id] = {'label': label, 'description': desc, 'aliases': aliases}
             self._entity_id += 1
 

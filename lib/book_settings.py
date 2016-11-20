@@ -254,10 +254,10 @@ class BookSettings(object):
             return
 
         self._aliases = {}
-        characters = []
+        characters = {}
         alias_lookup = {}
         for char, char_data in goodreads_chars.items():
-            characters.append(char_data['label'])
+            characters[char_data['label']] = []
             alias_lookup[char_data['label']] = char_data['label']
 
             if char_data['label'] not in self.aliases.keys():
@@ -267,7 +267,7 @@ class BookSettings(object):
                 continue
 
             for alias in char_data['aliases']:
-                characters.append(alias)
+                characters[char_data['label']].append(alias)
                 alias_lookup[alias] = char_data['label']
 
         aliases = self.auto_expand_aliases(characters)
@@ -280,17 +280,28 @@ class BookSettings(object):
     def auto_expand_aliases(self, characters):
         '''Goes through each character and expands them using fullname_to_possible_aliases without adding duplicates'''
         actual_aliases = {}
-        duplicates = [x.lower() for x in characters]
-        for fullname in characters:
+        duplicates = [x.lower() for x in characters.keys()]
+        duplicates += [alias.lower() for aliases in characters.values() for alias in aliases]
+        for fullname, gr_aliases in characters.items():
+            # get all expansions for original name and aliases retrieved from goodreads
             aliases = self.fullname_to_possible_aliases(fullname.lower())
+            for alias in gr_aliases:
+                new_aliases = self.fullname_to_possible_aliases(alias.lower())
+                aliases += [new_alias for new_alias in new_aliases if new_alias not in aliases]
+
             for alias in aliases:
                 # if this alias has already been flagged as a duplicate or is a common word, skip it
                 if alias in duplicates or alias in self.COMMON_WORDS:
                     continue
 
+                # check if this alias is a duplicate but isn't in the duplicates list
+                if actual_aliases.has_key(alias):
+                    duplicates.append(alias)
+                    actual_aliases.pop(alias)
+                    continue
+
                 # at this point, the alias is new -- add it to the dict with the alias as the key and fullname as the value
                 actual_aliases[alias] = fullname
-                duplicates.append(alias)
 
         return actual_aliases
 
@@ -332,9 +343,12 @@ class BookSettings(object):
                 # ie. John Doe could be Captain Doe but usually not Captain John
                 else:
                     aliases.append("%s %s" % (title, surname))
-            aliases.append(christian_name)
-            aliases.append(surname)
-            aliases.append("%s %s" % (christian_name, surname))
+            # Don't want the formats {ChristianName}, {Surname} and {ChristianName} {Lastname} in special cases
+            # i.e. The Lord Ruler should never have "The Ruler", "Lord" or "Ruler" as aliases
+            if christian_name not in self.COMMON_WORDS:
+                aliases.append(christian_name)
+                aliases.append(surname)
+                aliases.append("%s %s" % (christian_name, surname))
 
         elif title:
             # Odd, but got Title Name (eg. Lord Buttsworth), so see if we can alias
