@@ -16,6 +16,7 @@ from calibre_plugins.xray_creator.lib.status_info import StatusInfo
 from calibre_plugins.xray_creator.lib.book_parser import BookParser
 from calibre_plugins.xray_creator.lib.book_settings import BookSettings
 from calibre_plugins.xray_creator.lib.xray_db_writer import XRayDBWriter
+from calibre_plugins.xray_creator.lib.exceptions import PageDoesNotExist
 from calibre_plugins.xray_creator.lib.goodreads_parser import GoodreadsParser
 
 class Book(object):
@@ -62,7 +63,7 @@ class Book(object):
         self._goodreads_start_actions = None
         self._goodreads_xray = None
 
-        self._book_settings = BookSettings(database, self._book_id, self._goodreads_conn, amazon_conn, expand_aliases)
+        self._book_settings = BookSettings(database, book_id, goodreads_conn, amazon_conn, expand_aliases)
 
         self._get_basic_information(database, formats)
 
@@ -237,6 +238,8 @@ class Book(object):
             self._parse_goodreads_data(create_xray=create_xray, create_author_profile=author_profile,
                                        create_start_actions=start_actions, create_end_actions=end_actions)
             perc += 1
+            if self._status.status is StatusInfo.FAIL:
+                return
 
             # Creating Files
             if abort.isSet():
@@ -379,11 +382,15 @@ class Book(object):
         create_start_actions = self._create_send_start_actions if create_start_actions is None else create_start_actions
         create_end_actions = self._create_send_end_actions if create_end_actions is None else create_end_actions
 
-        goodreads_data = GoodreadsParser(self._goodreads_url, self._goodreads_conn, self._asin,
-                                         create_xray=create_xray, create_author_profile=create_author_profile,
-                                         create_start_actions=create_start_actions,
-                                         create_end_actions=create_end_actions)
-        goodreads_data.parse()
+        try:
+            goodreads_data = GoodreadsParser(self._goodreads_url, self._goodreads_conn, self._asin,
+                                             create_xray=create_xray, create_author_profile=create_author_profile,
+                                             create_start_actions=create_start_actions,
+                                             create_end_actions=create_end_actions, expand_aliases=self._expand_aliases)
+            goodreads_data.parse()
+        except PageDoesNotExist:
+            self._status.set(StatusInfo.FAIL, StatusInfo.F_COULD_NOT_PARSE_GOODREADS_DATA)
+            return
 
         if create_xray:
             self._process_goodreads_xray_results(goodreads_data)
