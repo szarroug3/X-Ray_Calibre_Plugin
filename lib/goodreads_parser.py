@@ -474,51 +474,57 @@ class GoodreadsParser(object):
             if not book_data:
                 continue
             book_data = html.fromstring(book_data)
-
-            title = book_data.xpath('//a[contains(@class, "readable")]')[0].text
-            authors = [book_data.xpath('//a[contains(@class, "authorName")]')[0].text]
-            rating_info = book_data.xpath('//div[@class="bookRatingAndPublishing"]/span[@class="minirating"]')
-            if len(rating_info) > 0:
-                rating_string = rating_info[0].text_content().strip().replace(',', '').split()
-                rating = float(rating_string[rating_string.index('avg')-1])
-                num_of_reviews = int(rating_string[-2])
-            else:
-                rating = None
-                num_of_reviews = None
-
-            try:
-                asin_elements = book_data.xpath('//a[contains(@class, "kindlePreviewButtonIcon")]/@href')
-                book_asin = urlparse.parse_qs(urlparse.urlsplit(asin_elements[0]).query)["asin"][0]
-            except:
-                book_asin = None
-
-            # We should get the ASIN from the tooltips file, but just in case we'll
-            # keep this as a fallback (though this only works in some regions - just USA?)
-            if not book_asin:
-                asin_data_page = self._open_url('/buttons/glide/' + book_id)
-                book_asin = self.ASIN_PAT.search(asin_data_page)
-                if not book_asin:
-                    continue
-                book_asin = book_asin.group(1)
-
-            if len(book_data.xpath('//div[@class="addBookTipDescription"]//span[not(contains(@id, "freeTextContainer"))]')) > 0:
-                desc = re.sub(r'\s+', ' ', book_data.xpath('//div[@class="addBookTipDescription"]//span[not(contains(@id, "freeTextContainer"))]')[0].text).strip()
-            elif len(book_data.xpath('//div[@class="addBookTipDescription"]//span[contains(@id, "freeTextContainer")]')) > 0:
-                desc = re.sub(r'\s+', ' ', book_data.xpath('//div[@class="addBookTipDescription"]//span[contains(@id, "freeTextContainer")]')[0].text).strip()
-            else:
+            parsed_data = self._parse_tooltip_info(book_data, book_id, image_url)
+            if not parsed_data:
                 continue
-
-            books_data.append({'class': "featuredRecommendation",
-                               'asin': book_asin,
-                               'title': title,
-                               'authors': authors,
-                               'imageUrl': image_url,
-                               'description': desc,
-                               'hasSample': False,
-                               'amazonRating': rating,
-                               'numberOfReviews': num_of_reviews})
+            books_data.append(parsed_data)
 
         return books_data
+
+    def _parse_tooltip_info(self, book_data, book_id, image_url):
+        '''Takes information retried from goodreads tooltips link and parses it'''
+        title = book_data.xpath('//a[contains(@class, "readable")]')[0].text
+        authors = [book_data.xpath('//a[contains(@class, "authorName")]')[0].text]
+        rating_info = book_data.xpath('//div[@class="bookRatingAndPublishing"]/span[@class="minirating"]')
+        if len(rating_info) > 0:
+            rating_string = rating_info[0].text_content().strip().replace(',', '').split()
+            rating = float(rating_string[rating_string.index('avg')-1])
+            num_of_reviews = int(rating_string[-2])
+        else:
+            rating = None
+            num_of_reviews = None
+
+        try:
+            asin_elements = book_data.xpath('//a[contains(@class, "kindlePreviewButtonIcon")]/@href')
+            book_asin = urlparse.parse_qs(urlparse.urlsplit(asin_elements[0]).query)["asin"][0]
+        except:
+            book_asin = None
+
+        # We should get the ASIN from the tooltips file, but just in case we'll
+        # keep this as a fallback (though this only works in some regions - just USA?)
+        if not book_asin:
+            asin_data_page = self._open_url('/buttons/glide/' + book_id)
+            book_asin = self.ASIN_PAT.search(asin_data_page)
+            if not book_asin:
+                return None
+            book_asin = book_asin.group(1)
+
+        if len(book_data.xpath('//div[@class="addBookTipDescription"]//span[not(contains(@id, "freeTextContainer"))]')) > 0:
+            desc = re.sub(r'\s+', ' ', book_data.xpath('//div[@class="addBookTipDescription"]//span[not(contains(@id, "freeTextContainer"))]')[0].text).strip()
+        elif len(book_data.xpath('//div[@class="addBookTipDescription"]//span[contains(@id, "freeTextContainer")]')) > 0:
+            desc = re.sub(r'\s+', ' ', book_data.xpath('//div[@class="addBookTipDescription"]//span[contains(@id, "freeTextContainer")]')[0].text).strip()
+        else:
+            return None
+
+        return {'class': 'featuredRecommendation',
+                'asin': book_asin,
+                'title': title,
+                'authors': authors,
+                'imageUrl': image_url,
+                'description': desc,
+                'hasSample': False,
+                'amazonRating': rating,
+                'numberOfReviews': num_of_reviews}
 
     def _get_book_image_url(self):
         '''Gets book's image url'''

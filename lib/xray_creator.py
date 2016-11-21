@@ -253,8 +253,8 @@ class XRayCreator(object):
 
     def create_files_event(self, abort, log, notifications):
         '''Creates files depending on users settings'''
-        if log: log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        if notifications: notifications.put((0.01, 'Initializing...'))
+        log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        notifications.put((0.01, 'Initializing...'))
         self._initialize_books(log)
 
         actions = 1.0
@@ -274,9 +274,9 @@ class XRayCreator(object):
         for book_num, book in enumerate(self.books_not_failing()):
             if abort.isSet():
                 return
-            if log: log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
-            book.create_files_event(self._device_books, book_num * actions, total_not_failing_actions, log=log,
-                                    notifications=notifications, abort=abort)
+            log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
+            book.create_files_event(self._device_books, book_num * actions, total_not_failing_actions, log,
+                                    notifications, abort)
 
         create_completed, create_failed = self.get_results_create()
         log('\nFile Creation:')
@@ -308,27 +308,27 @@ class XRayCreator(object):
 
     def send_files_event(self, abort, log, notifications):
         '''Sends files depending on users settings'''
-        if log: log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
-        if notifications: notifications.put((0.01, 'Initializing...'))
+        log('\n%s Initializing...' % datetime.now().strftime('%m-%d-%Y %H:%M:%S'))
+        notifications.put((0.01, 'Initializing...'))
         self._initialize_books(log)
 
         # something went wrong; we've already printed a message
         if self._num_of_formats_found_on_device == -1:
-            if notifications: notifications.put((100, ' Unable to send files.'))
-            if log: log('{0} No device is connected.'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
+            notifications.put((100, ' Unable to send files.'))
+            log('{0} No device is connected.'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
             return
         if self._num_of_formats_found_on_device == 0:
-            if notifications: notifications.put((100, ' Unable to send files.'))
-            if log: log(('{0} No matching books found on device. '
-                         'It may have been ejected but not unplugged.').format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
+            notifications.put((100, ' Unable to send files.'))
+            log(('{0} No matching books found on device. '
+                 'It may have been ejected but not unplugged.').format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
             return
 
         for book_num, book in enumerate(self.books_not_failing()):
             if abort.isSet():
                 return
-            if log: log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
-            book.send_files_event(self._device_books, log=log, notifications=notifications, abort=abort,
-                                  book_num=float(book_num), total=self._total_not_failing)
+            log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
+            book.send_files_event(self._device_books, log, notifications, abort, book_num=float(book_num),
+                                  total=self._total_not_failing)
 
         send_completed, send_failed = self.get_results_send()
         if len(send_completed) > 0:
