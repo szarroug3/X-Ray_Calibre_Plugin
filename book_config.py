@@ -192,11 +192,11 @@ class BookConfigWidget(QDialog):
         if not prefs['tld']:
             from collections import defaultdict
             import json
-            import urllib2
+            from urllib2 import urlopen, URLError
 
             try:
-                country = json.loads(urllib2.urlopen('http://ipinfo.io/json').read())['country']
-            except:
+                country = json.loads(urlopen('http://ipinfo.io/json').read())['country']
+            except (URLError, KeyError):
                 country = 'unknown'
             country_tld = defaultdict(lambda: 'com', {'AU': 'com.au', 'BR': 'com.br', 'CA': 'ca', 'CN': 'cn', 'FR': 'fr',
                                                       'DE': 'de', 'IN': 'in', 'IT': 'it', 'JP': 'co.jp', 'MX': 'com.mx',

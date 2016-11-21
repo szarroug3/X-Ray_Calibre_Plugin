@@ -19,6 +19,7 @@ from calibre.gui2 import error_dialog
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2.threaded_jobs import ThreadedJob
 
+from calibre_plugins.xray_creator.lib.book import Book
 from calibre_plugins.xray_creator.config import __prefs__
 from calibre_plugins.xray_creator.book_config import BookConfigWidget
 from calibre_plugins.xray_creator.lib.xray_creator import XRayCreator
@@ -41,7 +42,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
     def genesis(self):
         '''Initial setup'''
-        icon = get_icons('images/icon.png')
+        icon = get_icons('images/icon.png') # pylint: disable=undefined-variable
 
         self.create_menu_action(self.menu, 'Book Specific Preferences',
                                 'Book Specific Preferences', None, 'CTRL+SHIFT+ALT+Z',
@@ -94,7 +95,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         xray_creator = self._get_books('Cannot create Files')
         if xray_creator:
             job = ThreadedJob('create_files', 'Creating Files', xray_creator.create_files_event,
-                              (), {}, Dispatcher(self.created_files))
+                              ((self.gui.current_db.new_api,)), {}, Dispatcher(self.created_files))
             self.gui.job_manager.run_threaded_job(job)
 
     def send_files(self):
@@ -102,7 +103,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         xray_creator = self._get_books('Cannot send Files')
         if xray_creator:
             job = ThreadedJob('send_files', 'Sending Files to Device', xray_creator.send_files_event,
-                              (), {}, Dispatcher(self.sent_files))
+                              ((self.gui.current_db.new_api,)), {}, Dispatcher(self.sent_files))
             self.gui.job_manager.run_threaded_job(job)
 
     def book_config(self):
@@ -114,10 +115,10 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
                          'No books selected', show=True)
             return
 
-        ids = list(map(self.gui.library_view.model().id, rows))
+        book_ids = list(map(self.gui.library_view.model().id, rows))
 
         book_settings_list = []
-        for book_id in ids:
+        for book_id in book_ids:
             book_settings = BookSettings(database, book_id, self._goodreads_conn, self._amazon_conn, self._expand_aliases)
             if len(book_settings.aliases) == 0 and book_settings.goodreads_url != '':
                 book_settings.update_aliases(book_settings.goodreads_url)
@@ -143,7 +144,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
                          'No books selected', show=True)
             return None
 
-        ids = list(map(self.gui.library_view.model().id, rows))
+        book_ids = list(map(self.gui.library_view.model().id, rows))
 
         formats = []
         if self._mobi:
@@ -151,11 +152,18 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         if self._azw3:
             formats.append('azw3')
 
-        xray_creator = XRayCreator(database, ids, formats, self._goodreads_conn, self._amazon_conn,
-                                   self._send_to_device, self._create_files_when_sending, self._expand_aliases,
-                                   self._overwrite_local, self._overwrite_device, self._create_send_xray,
-                                   self._create_send_author_profile, self._create_send_start_actions,
-                                   self._create_send_end_actions, self._file_preference)
+        # Initialize each book's information
+        books = []
+        for book_id in book_ids:
+            books.append(Book(database, book_id, self._goodreads_conn, self._amazon_conn, formats,
+                              self._send_to_device, self._create_files_when_sending, self._expand_aliases,
+                              self._overwrite_local, self._overwrite_device, self._create_send_xray,
+                              self._create_send_author_profile, self._create_send_start_actions,
+                              self._create_send_end_actions, self._file_preference))
+
+        xray_creator = XRayCreator(books, self._send_to_device, self._overwrite_local,
+                                   self._overwrite_device, self._create_send_xray, self._create_send_author_profile,
+                                   self._create_send_start_actions, self._create_send_end_actions)
         return xray_creator
 
     def config(self):

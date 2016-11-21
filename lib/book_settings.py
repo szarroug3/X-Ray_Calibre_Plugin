@@ -5,6 +5,7 @@ import os
 import re
 from urllib import urlencode
 from urllib2 import urlparse
+from httplib import HTTPException
 
 from calibre_plugins.xray_creator.lib.goodreads_parser import GoodreadsParser
 
@@ -159,14 +160,14 @@ class BookSettings(object):
             self._amazon_conn.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' +
                                       query[9:] + '&' + query, headers=self.HEADERS)
             response = self._amazon_conn.getresponse().read()
-        except:
+        except HTTPException:
             try:
                 self._amazon_conn.close()
                 self._amazon_conn.connect()
                 self._amazon_conn.request('GET', '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' +
                                           query[9:] + '&' + query, headers=self.HEADERS)
                 response = self._amazon_conn.getresponse().read()
-            except:
+            except HTTPException:
                 return None
 
         # check to make sure there are results
@@ -194,13 +195,13 @@ class BookSettings(object):
         try:
             self._goodreads_conn.request('GET', '/search?' + query)
             response = self._goodreads_conn.getresponse().read()
-        except:
+        except HTTPException:
             try:
                 self._goodreads_conn.close()
                 self._goodreads_conn.connect()
                 self._goodreads_conn.request('GET', '/search?' + query)
                 response = self._goodreads_conn.getresponse().read()
-            except:
+            except HTTPException:
                 return None
 
         # check to make sure there are results
@@ -226,13 +227,13 @@ class BookSettings(object):
         try:
             self._goodreads_conn.request('GET', '/buttons/glide/' + book_id)
             response = self._goodreads_conn.getresponse().read()
-        except:
+        except HTTPException:
             try:
                 self._goodreads_conn.close()
                 self._goodreads_conn.connect()
                 self._goodreads_conn.request('GET', '/buttons/glide/' + book_id)
                 response = self._goodreads_conn.getresponse().read()
-            except:
+            except HTTPException:
                 return None
 
         book_asin_search = self.GOODREADS_ASIN_PAT.search(response)

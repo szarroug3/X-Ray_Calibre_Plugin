@@ -3,7 +3,7 @@
 
 import os
 import re
-from struct import unpack
+from struct import unpack, error
 from random import randrange
 
 from calibre.ebooks.mobi import MobiError
@@ -187,11 +187,14 @@ class BookParser(object):
         with open(self._book_path, 'rb') as fname:
             book_data = fname.read()
 
-        nrecs, = unpack('>H', book_data[76:78])
-        recs_start = 78 + (nrecs * 8) + 2
-        erl, = unpack('>L', book_data[recs_start + 4:recs_start + 8])
-        codec = 'latin-1' if unpack('>L', book_data[recs_start + 28:recs_start + 32])[0] == 1252 else 'utf8'
-        return erl, codec
+        try:
+            nrecs, = unpack('>H', book_data[76:78])
+            recs_start = 78 + (nrecs * 8) + 2
+            erl, = unpack('>L', book_data[recs_start + 4:recs_start + 8])
+            codec = 'latin-1' if unpack('>L', book_data[recs_start + 28:recs_start + 32])[0] == 1252 else 'utf8'
+            return erl, codec
+        except error:
+            raise MobiError
 
 class MobiExtractor(MobiReader):
     '''Reads MOBI file'''

@@ -8,6 +8,7 @@ import base64
 import datetime
 import urlparse
 from urllib2 import urlopen
+from httplib import HTTPException
 from lxml import html
 
 class GoodreadsPageDoesNotExist(Exception):
@@ -97,28 +98,16 @@ class GoodreadsParser(object):
             return
 
         if self._create_xray:
-            try:
-                self._get_xray()
-            except:
-                pass
+            self._get_xray()
 
         if self._create_author_profile:
-            try:
-                self._get_author_profile()
-            except:
-                pass
+            self._get_author_profile()
 
         if self._create_start_actions:
-            try:
-                self._get_start_actions()
-            except:
-                pass
+            self._get_start_actions()
 
         if self._create_end_actions:
-            try:
-                self._get_end_actions()
-            except:
-                return
+            self._get_end_actions()
 
     def _get_xray(self):
         '''Gets x-ray data from goodreads and creates x-ray dict'''
@@ -269,7 +258,7 @@ class GoodreadsParser(object):
                 raise e
             else:
                 return None
-        except:
+        except HTTPException:
             self._connection.close()
             self._connection.connect()
             self._connection.request('GET', url)
@@ -497,7 +486,7 @@ class GoodreadsParser(object):
         try:
             asin_elements = book_data.xpath('//a[contains(@class, "kindlePreviewButtonIcon")]/@href')
             book_asin = urlparse.parse_qs(urlparse.urlsplit(asin_elements[0]).query)["asin"][0]
-        except:
+        except KeyError:
             book_asin = None
 
         # We should get the ASIN from the tooltips file, but just in case we'll
