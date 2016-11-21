@@ -486,7 +486,7 @@ class GoodreadsParser(object):
         try:
             asin_elements = book_data.xpath('//a[contains(@class, "kindlePreviewButtonIcon")]/@href')
             book_asin = urlparse.parse_qs(urlparse.urlsplit(asin_elements[0]).query)["asin"][0]
-        except KeyError:
+        except (KeyError, IndexError):
             book_asin = None
 
         # We should get the ASIN from the tooltips file, but just in case we'll

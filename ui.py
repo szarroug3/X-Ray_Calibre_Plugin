@@ -161,7 +161,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
                               self._create_send_author_profile, self._create_send_start_actions,
                               self._create_send_end_actions, self._file_preference))
 
-        xray_creator = XRayCreator(books, self._send_to_device, self._overwrite_local,
+        xray_creator = XRayCreator(books, formats, self._send_to_device, self._overwrite_local,
                                    self._overwrite_device, self._create_send_xray, self._create_send_author_profile,
                                    self._create_send_start_actions, self._create_send_end_actions)
         return xray_creator

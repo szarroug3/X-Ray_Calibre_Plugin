@@ -14,9 +14,10 @@ from calibre_plugins.xray_creator.lib.status_info import StatusInfo
 
 class XRayCreator(object):
     '''Automates x-ray, author profile, start actions, and end actions creation and sending to device'''
-    def __init__(self, books, send_to_device, overwrite_local, overwrite_device, create_send_xray,
+    def __init__(self, books, formats, send_to_device, overwrite_local, overwrite_device, create_send_xray,
                  create_send_author_profile, create_send_start_actions, create_send_end_actions):
         self._books = books
+        self._formats = formats
         self._send_to_device = send_to_device
         self._overwrite_local = overwrite_local
         self._overwrite_device = overwrite_device
@@ -241,8 +242,9 @@ class XRayCreator(object):
         try:
             books = defaultdict(dict)
             for book in dev.books():
-                if book_lookup.has_key(book._data['uuid']):
-                    book_id = book_lookup[book._data['uuid']].book_id
+                uuid = getattr(book, 'uuid', None)
+                if book_lookup.has_key(uuid):
+                    book_id = book_lookup[uuid].book_id
                     fmt = book.path.split('.')[-1].lower()
                     if (fmt != 'mobi' and fmt != 'azw3') or fmt not in self._formats:
                         continue
