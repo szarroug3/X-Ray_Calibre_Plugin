@@ -5,7 +5,6 @@ import os
 import re
 from urllib import urlencode
 from urllib2 import urlparse
-from httplib import HTTPException
 
 from calibre_plugins.xray_creator.lib.utilities import open_url
 from calibre_plugins.xray_creator.lib.exceptions import PageDoesNotExist

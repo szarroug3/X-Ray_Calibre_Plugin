@@ -8,7 +8,6 @@ import base64
 import datetime
 import urlparse
 from urllib2 import urlopen
-from httplib import HTTPException
 from lxml import html
 
 from calibre_plugins.xray_creator.lib.utilities import open_url

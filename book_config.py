@@ -17,7 +17,7 @@ from PyQt5.Qt import QDialog, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout
 from PyQt5.Qt import QLabel, QLineEdit, QPushButton, QScrollArea
 
 from calibre_plugins.xray_creator.config import __prefs__ as prefs
-from calibre_plugins.xray_creator.lib.goodreads_parser import GoodreadsPageDoesNotExist
+from calibre_plugins.xray_creator.lib.exceptions import PageDoesNotExist
 
 class BookConfigWidget(QDialog):
     '''Creates book specific preferences dialog'''
@@ -239,7 +239,7 @@ class BookConfigWidget(QDialog):
             self.book.update_aliases(self.goodreads_url_edit.text())
             self.update_aliases_on_gui()
             self._status.setText('Aliases updated.')
-        except GoodreadsPageDoesNotExist:
+        except PageDoesNotExist:
             self._status.setText('Invalid Goodreads url.')
 
     def edit_aliases(self, term, val):

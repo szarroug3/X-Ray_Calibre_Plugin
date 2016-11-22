@@ -1,6 +1,7 @@
 # utilities.py
 '''General utility functions used throughout plugin'''
 
+from httplib import HTTPException
 from calibre_plugins.xray_creator.lib.exceptions import PageDoesNotExist
 
 HEADERS = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/html",
@@ -21,7 +22,7 @@ def open_url(connection, url, return_redirect_url=False):
             response = response.read()
     except PageDoesNotExist as e:
         raise e
-    except:
+    except HTTPException:
         connection.close()
         connection.connect()
         connection.request('GET', url, headers=HEADERS)
