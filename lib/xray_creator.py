@@ -55,10 +55,7 @@ class XRayCreator(object):
 
         for book in self._books:
             if book.status.status == StatusInfo.FAIL:
-                known_info = self._get_general_create_results(book)
-                if not known_info:
-                    known_info = 'Unknown book'
-                create_failed.append('{0}: {1}'.format(known_info, book.status.message))
+                create_failed.append('{0}: {1}'.format(book.title_and_author, book.status.message))
                 continue
 
             fmts_completed = []
@@ -79,18 +76,6 @@ class XRayCreator(object):
                 for fmt_info in fmts_failed:
                     create_failed.append('    {0}'.format(fmt_info))
         return create_completed, create_failed
-
-    @staticmethod
-    def _get_general_create_results(book):
-        '''Processes basic create results'''
-        if book.title and book.author:
-            known_info = book.title_and_author
-        elif book.title:
-            known_info = book.title
-        elif book.author:
-            known_info = 'Book by {0}'.format(book.author)
-
-        return known_info
 
     @staticmethod
     def _get_xray_create_results(book, fmts_failed, fmts_completed):
