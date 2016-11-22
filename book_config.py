@@ -38,19 +38,8 @@ class BookConfigWidget(QDialog):
 
         v_layout = QVBoxLayout(self)
 
-        # add ASIN and Goodreads url text boxes
-        self._asin_edit = QLineEdit('')
-        self._asin_edit.textEdited.connect(self.edit_asin)
-        self._initialize_asin(v_layout)
-
-        self._goodreads_url_edit = QLineEdit('')
-        self._goodreads_url_edit.textEdited.connect(self.edit_goodreads_url)
-        self._initialize_goodreads_url(v_layout)
-
-        self._update_aliases_button = QPushButton('Update Aliases from URL')
-        self._update_aliases_button.setFixedWidth(175)
-        self._update_aliases_button.clicked.connect(self.update_aliases)
-        self._initialize_update_buttons(v_layout)
+        # add ASIN and Goodreads url text boxes and update buttons
+        asin_browser_button, goodreads_browser_button = self._initialize_general(v_layout)
 
         # add scrollable area for aliases
         v_layout.addWidget(QLabel('Aliases:'))
@@ -61,68 +50,80 @@ class BookConfigWidget(QDialog):
         self._status = QLabel('')
         v_layout.addWidget(self._status)
 
+        previous_button = next_button = None
         if len(self._book_settings) > 1:
-            self._previous_button = QPushButton('Previous')
-            self._previous_button.setEnabled(False)
-            self._previous_button.setFixedWidth(100)
-            self._previous_button.clicked.connect(self.previous_clicked)
-            self._next_button = QPushButton('Next')
-            self._next_button.setFixedWidth(100)
-            self._next_button.clicked.connect(self.next_clicked)
-        self._initialize_navigation_buttons(v_layout)
+            previous_button = QPushButton('Previous')
+            previous_button.setEnabled(False)
+            previous_button.setFixedWidth(100)
+            next_button = QPushButton('Next')
+            next_button.setFixedWidth(100)
+            previous_button.clicked.connect(lambda: self.previous_clicked(previous_button, next_button,
+                                                                          asin_browser_button, goodreads_browser_button))
+            next_button.clicked.connect(lambda: self.next_clicked(previous_button, next_button,
+                                                                  asin_browser_button, goodreads_browser_button))
+        self._initialize_navigation_buttons(v_layout, previous_button, next_button)
 
         self.setLayout(v_layout)
-        self.show_book_prefs()
+        self.show_book_prefs(asin_browser_button, goodreads_browser_button)
         self.show()
 
-    def _initialize_asin(self, v_layout):
-        '''Add the ASIN label, line edit, and button to dialog'''
+    def _initialize_general(self, v_layout):
+        '''Initialize asin/goodreads sections'''
+        # Add the ASIN label, line edit, and button to dialog
+        self._asin_edit = QLineEdit('')
         asin_layout = QHBoxLayout(None)
         asin_label = QLabel('ASIN:')
         asin_label.setFixedWidth(100)
-        self._asin_browser_button = QPushButton('Open..')
-        self._asin_browser_button.clicked.connect(self.browse_amazon_url)
-        self._asin_browser_button.setToolTip('Open Amazon page for the specified ASIN')
+        asin_browser_button = QPushButton('Open..')
+        asin_browser_button.clicked.connect(self.browse_amazon_url)
+        asin_browser_button.setToolTip('Open Amazon page for the specified ASIN')
+        self._asin_edit.textEdited.connect(lambda: self.edit_asin(self._asin_edit.text(), asin_browser_button))
         asin_layout.addWidget(asin_label)
         asin_layout.addWidget(self._asin_edit)
-        asin_layout.addWidget(self._asin_browser_button)
+        asin_layout.addWidget(asin_browser_button)
         v_layout.addLayout(asin_layout)
 
-    def _initialize_goodreads_url(self, v_layout):
-        '''Add the Goodreads URL label, line edit, and button to dialog'''
+        # Add the Goodreads URL label, line edit, and button to dialog
+        self._goodreads_url_edit = QLineEdit('')
+        self._goodreads_url_edit.textEdited.connect(lambda: self.edit_goodreads_url(self._goodreads_url_edit.text(),
+                                                                                    goodreads_browser_button))
         goodreads_layout = QHBoxLayout(None)
         goodreads_url_label = QLabel('Goodreads URL:')
         goodreads_url_label.setFixedWidth(100)
-        self._goodreads_browser_button = QPushButton('Open..')
-        self._goodreads_browser_button.clicked.connect(self.browse_goodreads_url)
-        self._goodreads_browser_button.setToolTip('Open Goodreads page at the specified URL')
+        goodreads_browser_button = QPushButton('Open..')
+        goodreads_browser_button.clicked.connect(self.browse_goodreads_url)
+        goodreads_browser_button.setToolTip('Open Goodreads page at the specified URL')
         goodreads_layout.addWidget(goodreads_url_label)
         goodreads_layout.addWidget(self._goodreads_url_edit)
-        goodreads_layout.addWidget(self._goodreads_browser_button)
+        goodreads_layout.addWidget(goodreads_browser_button)
         v_layout.addLayout(goodreads_layout)
 
-    def _initialize_update_buttons(self, v_layout):
-        '''Add the update buttons to dialog'''
+        # Add the update buttons to dialog
+        self._update_aliases_button = QPushButton('Update Aliases from URL')
+        self._update_aliases_button.setFixedWidth(175)
+        self._update_aliases_button.clicked.connect(self.update_aliases)
         update_buttons_layout = QHBoxLayout(None)
         update_asin_button = QPushButton('Search for ASIN')
         update_asin_button.setFixedWidth(175)
-        update_asin_button.clicked.connect(self.search_for_asin_clicked)
+        update_asin_button.clicked.connect(lambda: self.search_for_asin_clicked(asin_browser_button))
         update_buttons_layout.addWidget(update_asin_button)
         update_goodreads_url_button = QPushButton('Search for Goodreads URL')
         update_goodreads_url_button.setFixedWidth(175)
-        update_goodreads_url_button.clicked.connect(self.search_for_goodreads_url)
+        update_goodreads_url_button.clicked.connect(lambda: self.search_for_goodreads_url(goodreads_browser_button))
         update_buttons_layout.addWidget(update_goodreads_url_button)
 
         update_buttons_layout.addWidget(self._update_aliases_button)
         v_layout.addLayout(update_buttons_layout)
 
-    def _initialize_navigation_buttons(self, v_layout):
+        return asin_browser_button, goodreads_browser_button
+
+    def _initialize_navigation_buttons(self, v_layout, previous_button, next_button):
         '''Add previous, ok, cancel, and next buttons'''
         buttons_layout = QHBoxLayout(None)
         buttons_layout.setAlignment(Qt.AlignRight)
 
         if len(self._book_settings) > 1:
-            buttons_layout.addWidget(self._previous_button)
+            buttons_layout.addWidget(previous_button)
 
         ok_button = QPushButton('OK')
         ok_button.setFixedWidth(100)
@@ -135,7 +136,7 @@ class BookConfigWidget(QDialog):
         buttons_layout.addWidget(cancel_button)
 
         if len(self._book_settings) > 1:
-            buttons_layout.addWidget(self._next_button)
+            buttons_layout.addWidget(next_button)
 
         v_layout.addLayout(buttons_layout)
 
@@ -148,27 +149,26 @@ class BookConfigWidget(QDialog):
         self._status.setText(message)
         self._status.repaint()
 
-    def edit_asin(self, val):
+    def edit_asin(self, val, asin_browser_button):
         '''Set asin edit to specified value; update asin browser button accordingly'''
         self.book.asin = val
         if val == '':
-            self._asin_browser_button.setEnabled(False)
+            asin_browser_button.setEnabled(False)
         else:
-            self._asin_browser_button.setEnabled(True)
+            asin_browser_button.setEnabled(True)
 
-    def edit_goodreads_url(self, val):
+    def edit_goodreads_url(self, val, goodreads_browser_button):
         '''Sets book's goodreads_url to val and warns if the url is invalid; update goodreads browser button accordingly'''
-        self.book.goodreads_url = val
         if val == '':
-            self._goodreads_browser_button.setEnabled(False)
+            goodreads_browser_button.setEnabled(False)
             if self._status.text() == 'Warning: Invalid Goodreads URL. URL must have goodreads as the domain.':
                 self._status.setText('')
         else:
-            self._goodreads_browser_button.setEnabled(True)
+            goodreads_browser_button.setEnabled(True)
             if 'goodreads.com' not in val:
                 self._status.setText('Warning: Invalid Goodreads URL. URL must have goodreads as the domain.')
 
-    def search_for_asin_clicked(self):
+    def search_for_asin_clicked(self, asin_browser_button):
         '''Searches for current book's ASIN on amazon'''
         asin = None
         self.set_status_and_repaint('Searching for ASIN...')
@@ -176,12 +176,12 @@ class BookConfigWidget(QDialog):
             asin = self.book.search_for_asin_on_amazon(self.book.title_and_author)
         if asin:
             self._status.setText('ASIN found.')
-            self._asin_browser_button.setEnabled(True)
+            asin_browser_button.setEnabled(True)
             self.book.asin = asin
             self._asin_edit.setText(asin)
         else:
             self._status.setText('ASIN not found.')
-            self._asin_browser_button.setEnabled(False)
+            asin_browser_button.setEnabled(False)
             self._asin_edit.setText('')
 
     def browse_amazon_url(self):
@@ -208,7 +208,7 @@ class BookConfigWidget(QDialog):
         '''Opens url for current book's goodreads url'''
         webbrowser.open(self._goodreads_url_edit.text())
 
-    def search_for_goodreads_url(self):
+    def search_for_goodreads_url(self, goodreads_browser_button):
         '''Searches for goodreads url using asin first then title and author if asin doesn't exist'''
         url = None
         self.set_status_and_repaint('Searching for Goodreads url...')
@@ -219,13 +219,13 @@ class BookConfigWidget(QDialog):
         if url:
             self._status.setText('Goodreads url found.')
             self._update_aliases_button.setEnabled(True)
-            self._goodreads_browser_button.setEnabled(True)
+            goodreads_browser_button.setEnabled(True)
             self.book.goodreads_url = url
             self._goodreads_url_edit.setText(url)
         else:
             self._status.setText('Goodreads url not found.')
             self._update_aliases_button.setEnabled(False)
-            self._goodreads_browser_button.setEnabled(False)
+            goodreads_browser_button.setEnabled(False)
             self._goodreads_url_edit.setText('')
 
     def update_aliases(self):
@@ -246,14 +246,14 @@ class BookConfigWidget(QDialog):
         '''Sets book's aliases to tuple (term, val)'''
         self.book.set_aliases(term, val)
 
-    def previous_clicked(self):
+    def previous_clicked(self, previous_button, next_button, asin_browser_button, goodreads_browser_button):
         '''Goes to previous book'''
         self._status.setText('')
         self._index -= 1
-        self._next_button.setEnabled(True)
+        next_button.setEnabled(True)
         if self._index == 0:
-            self._previous_button.setEnabled(False)
-        self.show_book_prefs()
+            previous_button.setEnabled(False)
+        self.show_book_prefs(asin_browser_button, goodreads_browser_button)
 
     def ok_clicked(self):
         '''Saves book's settings using current settings'''
@@ -265,30 +265,30 @@ class BookConfigWidget(QDialog):
         '''Closes dialog without saving settings'''
         self.close()
 
-    def next_clicked(self):
+    def next_clicked(self, previous_button, next_button, asin_browser_button, goodreads_browser_button):
         '''Goes to next book'''
         self._status.setText('')
         self._index += 1
-        self._previous_button.setEnabled(True)
+        previous_button.setEnabled(True)
         if self._index == len(self._book_settings) - 1:
-            self._next_button.setEnabled(False)
-        self.show_book_prefs()
+            next_button.setEnabled(False)
+        self.show_book_prefs(asin_browser_button, goodreads_browser_button)
 
-    def show_book_prefs(self):
+    def show_book_prefs(self, asin_browser_button, goodreads_browser_button):
         '''Shows current book's preferences'''
         self.setWindowTitle(self.book.title_and_author)
 
         self._asin_edit.setText(self.book.asin)
         if self._asin_edit.text() == '':
-            self._asin_browser_button.setEnabled(False)
+            asin_browser_button.setEnabled(False)
         else:
-            self._asin_browser_button.setEnabled(True)
+            asin_browser_button.setEnabled(True)
 
         self._goodreads_url_edit.setText(self.book.goodreads_url)
         if self._goodreads_url_edit.text() == '':
-            self._goodreads_browser_button.setEnabled(False)
+            goodreads_browser_button.setEnabled(False)
         else:
-            self._goodreads_browser_button.setEnabled(True)
+            goodreads_browser_button.setEnabled(True)
 
         self.update_aliases_on_gui()
 

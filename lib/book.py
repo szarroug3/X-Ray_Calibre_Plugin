@@ -216,8 +216,6 @@ class Book(object):
         title_and_author = self.title_and_author
 
         # Prep
-        if abort.isSet():
-            return
         if not self._overwrite_local:
             notifications.put((self._calculate_percentage(perc, total),
                                'Checking for {0} existing files'.format(title_and_author)))

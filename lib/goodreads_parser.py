@@ -333,14 +333,13 @@ class GoodreadsParser(object):
         '''
         aliases = []
         parts = fullname.split()
+        title = None
 
         if parts[0].lower() in self.HONORIFICS:
             title_list = []
             while len(parts) > 0 and parts[0].lower() in self.HONORIFICS:
                 title_list.append(parts.pop(0))
             title = ' '.join(title_list)
-        else:
-            title = None
 
         if len(parts) >= 2:
             # Assume: {Title} Firstname {Middlenames} Lastname
