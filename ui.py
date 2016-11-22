@@ -103,10 +103,9 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
         book_settings_list = []
         for book_id in book_ids:
-            book_settings = BookSettings(database, book_id, self._goodreads_conn,
-                                         self._amazon_conn, settings['expand_aliases'])
+            book_settings = BookSettings(database, book_id, self._goodreads_conn, self._amazon_conn)
             if len(book_settings.aliases) == 0 and book_settings.goodreads_url != '':
-                book_settings.update_aliases(book_settings.goodreads_url)
+                book_settings.update_aliases(book_settings.goodreads_url, settings['expand_aliases'])
                 book_settings.save()
             book_settings_list.append(book_settings)
 
@@ -131,19 +130,12 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
         book_ids = list(map(self.gui.library_view.model().id, rows))
 
-        formats = []
-        if settings['mobi']:
-            formats.append('mobi')
-        if settings['azw3']:
-            formats.append('azw3')
-
         # Initialize each book's information
         books = []
-        print (settings)
         for book_id in book_ids:
-            books.append(Book(database, book_id, self._goodreads_conn, self._amazon_conn, formats, settings))
+            books.append(Book(database, book_id, self._goodreads_conn, self._amazon_conn, settings))
 
-        return XRayCreator(books, formats, settings)
+        return XRayCreator(books, settings)
 
     def config(self):
         '''Opens up a dialog that allows user to set general preferences'''

@@ -32,6 +32,11 @@ __prefs__.defaults['mobi'] = True
 __prefs__.defaults['azw3'] = True
 __prefs__.defaults['tld'] = None
 
+if __prefs__.has_key('mobi') and __prefs__.has_key('azw3'):
+    __prefs__['formats'] = [ftype for ftype in ['mobi', 'azw3'] if __prefs__[ftype]]
+else:
+    __prefs__['formats'] = ['mobi', 'azw3']
+
 class ConfigWidget(QWidget):
     '''Creates general preferences dialog'''
     def __init__(self):
@@ -117,11 +122,11 @@ class ConfigWidget(QWidget):
         book_types_to_create.setLayout(QHBoxLayout(book_types_to_create))
 
         self._settings['mobi'] = QCheckBox('MOBI')
-        self._settings['mobi'].setChecked(__prefs__['mobi'])
+        self._settings['mobi'].setChecked('mobi' in __prefs__['formats'])
         book_types_to_create.layout().addWidget(self._settings['mobi'])
 
         self._settings['azw3'] = QCheckBox('AZW3')
-        self._settings['azw3'].setChecked(__prefs__['azw3'])
+        self._settings['azw3'].setChecked('azw3' in __prefs__['formats'])
         book_types_to_create.layout().addWidget(self._settings['azw3'])
         layout.addWidget(book_types_to_create)
 
@@ -157,7 +162,7 @@ class ConfigWidget(QWidget):
 
     def save_settings(self):
         '''Saves current settings into preferences json file'''
-        special = ['file_preference_azw3', 'file_preference_mobi']
+        special = ['file_preference_azw3', 'file_preference_mobi', 'mobi', 'azw3']
         for setting, value in self._settings.items():
             if setting not in special:
                 __prefs__[setting] = value.isChecked()
@@ -166,3 +171,5 @@ class ConfigWidget(QWidget):
             __prefs__['file_preference'] = 'mobi'
         elif self._settings['file_preference_azw3'].isChecked():
             __prefs__['file_preference'] = 'azw3'
+
+        __prefs__['formats'] = [fmt for fmt in ['mobi', 'azw3'] if self._settings[fmt].isChecked()]

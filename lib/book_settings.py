@@ -2,50 +2,43 @@
 '''Holds book specific settings and runs functions to get book specific data'''
 
 import os
-import re
 from urllib import urlencode
 from urllib2 import urlparse
 
-from calibre_plugins.xray_creator.lib.utilities import open_url
 from calibre_plugins.xray_creator.lib.exceptions import PageDoesNotExist
 from calibre_plugins.xray_creator.lib.goodreads_parser import GoodreadsParser
+from calibre_plugins.xray_creator.lib.utilities import GOODREADS_URL_PAT, GOODREADS_ASIN_PAT
+from calibre_plugins.xray_creator.lib.utilities import open_url, LIBRARY, BOOK_ID_PAT, AMAZON_ASIN_PAT
 
 from calibre.utils.config import JSONConfig
-from calibre.library import current_library_path
 from calibre.ebooks.BeautifulSoup import BeautifulSoup
 
 class BookSettings(object):
     '''Holds book specific settings'''
-    GOODREADS_URL_PAT = re.compile(r'href="(\/book\/show\/.+?)"')
-    BOOK_ID_PAT = re.compile(r'\/show\/([\d]+)')
-    AMAZON_ASIN_PAT = re.compile(r'data\-asin=\"([a-zA-z0-9]+)\"')
-    GOODREADS_ASIN_PAT = re.compile(r'"asin":"(.+?)"')
-    LIBRARY = current_library_path()
 
-    def __init__(self, database, book_id, goodreads_conn, amazon_conn, expand_aliases):
+    def __init__(self, database, book_id, goodreads_conn, amazon_conn):
         self._goodreads_conn = goodreads_conn
         self._amazon_conn = amazon_conn
-        self._expand_aliases = expand_aliases
 
         book_path = database.field_for('path', book_id).replace('/', os.sep)
 
-        self._prefs = JSONConfig(os.path.join(book_path, 'book_settings'), base_path=self.LIBRARY)
-        self.prefs.setdefault('asin', '')
-        self.prefs.setdefault('goodreads_url', '')
-        self.prefs.setdefault('aliases', {})
-        self.prefs.commit()
+        self._prefs = JSONConfig(os.path.join(book_path, 'book_settings'), base_path=LIBRARY)
+        self._prefs.setdefault('asin', '')
+        self._prefs.setdefault('goodreads_url', '')
+        self._prefs.setdefault('aliases', {})
+        self._prefs.commit()
 
         self._title = database.field_for('title', book_id)
         self._author = ' & '.join(database.field_for('authors', book_id))
 
-        self._asin = self.prefs['asin'] if self.prefs['asin'] != '' else None
-        self._goodreads_url = self.prefs['goodreads_url']
+        self._asin = self._prefs['asin'] if self._prefs['asin'] != '' else None
+        self._goodreads_url = self._prefs['goodreads_url']
 
         if not self.asin:
             identifiers = database.field_for('identifiers', book_id)
             if 'mobi-asin' in identifiers.keys():
                 self.asin = database.field_for('identifiers', book_id)['mobi-asin'].decode('ascii')
-                self.prefs['asin'] = self.asin
+                self._prefs['asin'] = self.asin
             else:
                 self.asin = self.search_for_asin_on_amazon(self.title_and_author)
                 if self.asin:
@@ -54,7 +47,7 @@ class BookSettings(object):
                     identifiers['mobi-asin'] = self.asin
                     metadata.set_identifiers(identifiers)
                     database.set_metadata(book_id, metadata)
-                    self.prefs['asin'] = self.asin
+                    self._prefs['asin'] = self.asin
 
         if self.goodreads_url == '':
             url = None
@@ -65,7 +58,7 @@ class BookSettings(object):
 
             if url:
                 self.goodreads_url = url
-                self.prefs['goodreads_url'] = self.goodreads_url
+                self._prefs['goodreads_url'] = self.goodreads_url
                 if not self.asin:
                     self.asin = self.search_for_asin_on_goodreads(self.goodreads_url)
                     if self.asin:
@@ -74,9 +67,9 @@ class BookSettings(object):
                         identifiers['mobi-asin'] = self.asin
                         metadata.set_identifiers(identifiers)
                         database.set_metadata(book_id, metadata)
-                        self.prefs['asin'] = self.asin
+                        self._prefs['asin'] = self.asin
 
-        self._aliases = self.prefs['aliases']
+        self._aliases = self._prefs['aliases']
 
         self.save()
 
@@ -156,7 +149,7 @@ class BookSettings(object):
 
         for result in results:
             if 'Buy now with 1-Click' in str(result):
-                asin_search = self.AMAZON_ASIN_PAT.search(str(result))
+                asin_search = AMAZON_ASIN_PAT.search(str(result))
                 if asin_search:
                     return asin_search.group(1)
 
@@ -174,7 +167,7 @@ class BookSettings(object):
         if 'No results' in response:
             return None
 
-        urlsearch = self.GOODREADS_URL_PAT.search(response)
+        urlsearch = GOODREADS_URL_PAT.search(response)
         if not urlsearch:
             return None
 
@@ -184,7 +177,7 @@ class BookSettings(object):
 
     def search_for_asin_on_goodreads(self, url):
         '''Searches for ASIN of book at given url'''
-        book_id_search = self.BOOK_ID_PAT.search(url)
+        book_id_search = BOOK_ID_PAT.search(url)
         if not book_id_search:
             return None
 
@@ -195,17 +188,17 @@ class BookSettings(object):
         except PageDoesNotExist:
             return None
 
-        book_asin_search = self.GOODREADS_ASIN_PAT.search(response)
+        book_asin_search = GOODREADS_ASIN_PAT.search(response)
         if not book_asin_search:
             return None
 
         return book_asin_search.group(1)
 
-    def update_aliases(self, url):
+    def update_aliases(self, url, expand_aliases):
         '''Gets aliases from Goodreads and expands them if users settings say to do so'''
         try:
             goodreads_parser = GoodreadsParser(url, self._goodreads_conn, self._asin, create_xray=True,
-                                               expand_aliases=self._expand_aliases)
+                                               expand_aliases=expand_aliases)
             goodreads_parser.get_characters()
             goodreads_parser.get_settings()
             goodreads_chars = goodreads_parser.characters

@@ -10,7 +10,7 @@ import urlparse
 from urllib2 import urlopen
 from lxml import html
 
-from calibre_plugins.xray_creator.lib.utilities import open_url
+from calibre_plugins.xray_creator.lib.utilities import open_url, BOOK_ID_PAT, GOODREADS_ASIN_PAT
 
 class GoodreadsParser(object):
     '''Parses Goodreads page for x-ray, author profile, start actions, and end actions as needed'''
@@ -32,8 +32,7 @@ class GoodreadsParser(object):
 
     COMMON_WORDS = 'the of de'.split()
 
-    BOOK_ID_PAT = re.compile(r'\/show\/([\d]+)')
-    ASIN_PAT = re.compile(r'"asin":"(.+?)"')
+
 
     def __init__(self, url, connection, asin, expand_aliases=True):
         self._connection = connection
@@ -53,7 +52,7 @@ class GoodreadsParser(object):
         self._start_actions = None
         self._end_actions = None
 
-        book_id_search = self.BOOK_ID_PAT.search(url)
+        book_id_search = BOOK_ID_PAT.search(url)
         self._goodreads_book_id = book_id_search.group(1) if book_id_search else None
 
         response = open_url(self._connection, url)
@@ -503,7 +502,7 @@ class GoodreadsParser(object):
         book_info = []
         for book in self._page_source.xpath('//div[@class="bookCarousel"]/div[@class="carouselRow"]/ul/li/a'):
             book_url = book.get('href')
-            book_id_search = self.BOOK_ID_PAT.search(book_url)
+            book_id_search = BOOK_ID_PAT.search(book_url)
             book_id = book_id_search.group(1) if book_id_search else None
 
             if book_id and book_id != self._goodreads_book_id:
@@ -556,7 +555,7 @@ class GoodreadsParser(object):
         # keep this as a fallback (though this only works in some regions - just USA?)
         if not book_asin:
             asin_data_page = open_url(self._connection, '/buttons/glide/' + book_id)
-            book_asin = self.ASIN_PAT.search(asin_data_page)
+            book_asin = GOODREADS_ASIN_PAT.search(asin_data_page)
             if not book_asin:
                 return None
             book_asin = book_asin.group(1)

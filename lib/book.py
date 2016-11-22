@@ -9,22 +9,20 @@ from cStringIO import StringIO
 from shutil import copy
 
 from calibre.ebooks.mobi import MobiError
-from calibre.library import current_library_path
 from calibre.ebooks.metadata.mobi import MetadataUpdater
 
+from calibre_plugins.xray_creator.lib.utilities import LIBRARY
 from calibre_plugins.xray_creator.lib.status_info import StatusInfo
 from calibre_plugins.xray_creator.lib.book_parser import BookParser
 from calibre_plugins.xray_creator.lib.book_settings import BookSettings
-from calibre_plugins.xray_creator.lib.xray_db_writer import XRayDBWriter
 from calibre_plugins.xray_creator.lib.exceptions import PageDoesNotExist
+from calibre_plugins.xray_creator.lib.xray_db_writer import XRayDBWriter
 from calibre_plugins.xray_creator.lib.goodreads_parser import GoodreadsParser
 
 class Book(object):
     '''Class to hold book information and creates/sends files depending on user settings'''
 
-    LIBRARY = current_library_path().replace('/', os.sep)
-
-    def __init__(self, database, book_id, goodreads_conn, amazon_conn, formats, settings):
+    def __init__(self, database, book_id, goodreads_conn, amazon_conn, settings):
         self._book_id = book_id
         self._goodreads_conn = goodreads_conn
         self._settings = settings
@@ -51,9 +49,10 @@ class Book(object):
         self._goodreads_start_actions = None
         self._goodreads_xray = None
 
-        self._book_settings = BookSettings(database, book_id, goodreads_conn, amazon_conn, settings['expand_aliases'])
+        self._book_settings = BookSettings(database, book_id, goodreads_conn, amazon_conn)
 
-        self._get_basic_information(database, formats)
+
+        self._get_basic_information(database, settings['formats'])
 
         if self._status.status != StatusInfo.FAIL:
             self._status.status = StatusInfo.SUCCESS
@@ -189,7 +188,7 @@ class Book(object):
     def _get_basic_non_xray_information(self, database):
         '''Gets local book's directory and initializes non-xray variables'''
         book_path = database.field_for('path', self._book_id).replace('/', os.sep)
-        local_book_directory = os.path.join(self.LIBRARY, book_path)
+        local_book_directory = os.path.join(LIBRARY, book_path)
         self._local_book_directory = os.path.join(local_book_directory, 'non_xray')
         if not os.path.exists(self._local_book_directory):
             os.mkdir(self._local_book_directory)

@@ -14,9 +14,8 @@ from calibre_plugins.xray_creator.lib.status_info import StatusInfo
 
 class XRayCreator(object):
     '''Automates x-ray, author profile, start actions, and end actions creation and sending to device'''
-    def __init__(self, books, formats, settings):
+    def __init__(self, books, settings):
         self._books = books
-        self._formats = formats
         self._settings = settings
         self._num_of_formats_found_on_device = -1
         self._total_not_failing = None
@@ -238,7 +237,7 @@ class XRayCreator(object):
                 if book_lookup.has_key(uuid):
                     book_id = book_lookup[uuid].book_id
                     fmt = book.path.split('.')[-1].lower()
-                    if (fmt != 'mobi' and fmt != 'azw3') or fmt not in self._formats:
+                    if fmt not in self._settings['formats']:
                         continue
                     books[book_id][fmt] = {'device_book': book.path,
                                            'device_sdr': '.'.join(book.path.split('.')[:-1]) + '.sdr'}
