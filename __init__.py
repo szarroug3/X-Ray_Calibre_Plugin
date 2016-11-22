@@ -33,14 +33,10 @@ class XRayCreatorPlugin(InterfaceActionBase):
         from calibre_plugins.xray_creator.config import ConfigWidget
         return ConfigWidget()
 
-    def save_settings(self, config_widget):
+    @staticmethod
+    def save_settings(config_widget):
         '''Saves preferences into book setting's json file'''
         config_widget.save_settings()
-
-        # Apply the changes
-        plugin = self.actual_plugin_
-        if plugin is not None:
-            plugin.apply_settings()
 
     def do_user_config(self, parent=None):
         '''

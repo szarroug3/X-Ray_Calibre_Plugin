@@ -20,7 +20,7 @@ from calibre.gui2.actions import InterfaceAction
 from calibre.gui2.threaded_jobs import ThreadedJob
 
 from calibre_plugins.xray_creator.lib.book import Book
-from calibre_plugins.xray_creator.config import __prefs__
+from calibre_plugins.xray_creator.config import __prefs__ as settings
 from calibre_plugins.xray_creator.book_config import BookConfigWidget
 from calibre_plugins.xray_creator.lib.xray_creator import XRayCreator
 from calibre_plugins.xray_creator.lib.book_settings import BookSettings
@@ -37,7 +37,19 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
     def __init__(self, parent, site_customization):
         InterfaceAction.__init__(self, parent, site_customization)
-        self.apply_settings()
+
+        https_proxy = get_proxies(debug=False).get('https', None)
+        if https_proxy:
+            https_address = ':'.join(https_proxy.split(':')[:-1])
+            https_port = int(https_proxy.split(':')[-1])
+            self._goodreads_conn = HTTPSConnection(https_address, https_port)
+            self._goodreads_conn.set_tunnel('www.goodreads.com', 443)
+            self._amazon_conn = HTTPSConnection(https_address, https_port)
+            self._amazon_conn.set_tunnel('www.amazon.com', 443)
+        else:
+            self._goodreads_conn = HTTPSConnection('www.goodreads.com')
+            self._amazon_conn = HTTPSConnection('www.amazon.com')
+
         self.menu = QMenu(self.gui)
 
     def genesis(self):
@@ -61,34 +73,6 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
                                 'Create X-Rays for Chosen Books', self.config)
         self.qaction.setIcon(icon)
         self.qaction.setMenu(self.menu)
-
-    def apply_settings(self):
-        '''Gets settings from config file'''
-        self._send_to_device = __prefs__['send_to_device']
-        self._create_files_when_sending = __prefs__['create_files_when_sending']
-        self._expand_aliases = __prefs__['expand_aliases']
-        self._overwrite_local = __prefs__['overwrite_when_creating']
-        self._overwrite_device = __prefs__['overwrite_when_sending']
-        self._create_send_xray = __prefs__['create_send_xray']
-        self._create_send_author_profile = __prefs__['create_send_author_profile']
-        self._create_send_start_actions = __prefs__['create_send_start_actions']
-        self._create_send_end_actions = __prefs__['create_send_end_actions']
-        self._file_preference = __prefs__['file_preference']
-        self._mobi = __prefs__['mobi']
-        self._azw3 = __prefs__['azw3']
-
-
-        https_proxy = get_proxies(debug=False).get('https', None)
-        if https_proxy:
-            https_address = ':'.join(https_proxy.split(':')[:-1])
-            https_port = int(https_proxy.split(':')[-1])
-            self._goodreads_conn = HTTPSConnection(https_address, https_port)
-            self._goodreads_conn.set_tunnel('www.goodreads.com', 443)
-            self._amazon_conn = HTTPSConnection(https_address, https_port)
-            self._amazon_conn.set_tunnel('www.amazon.com', 443)
-        else:
-            self._goodreads_conn = HTTPSConnection('www.goodreads.com')
-            self._amazon_conn = HTTPSConnection('www.amazon.com')
 
     def create_files(self):
         '''Creates files depending on user's settings'''
@@ -119,7 +103,8 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
         book_settings_list = []
         for book_id in book_ids:
-            book_settings = BookSettings(database, book_id, self._goodreads_conn, self._amazon_conn, self._expand_aliases)
+            book_settings = BookSettings(database, book_id, self._goodreads_conn,
+                                         self._amazon_conn, settings['expand_aliases'])
             if len(book_settings.aliases) == 0 and book_settings.goodreads_url != '':
                 book_settings.update_aliases(book_settings.goodreads_url)
                 book_settings.save()
@@ -147,24 +132,18 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         book_ids = list(map(self.gui.library_view.model().id, rows))
 
         formats = []
-        if self._mobi:
+        if settings['mobi']:
             formats.append('mobi')
-        if self._azw3:
+        if settings['azw3']:
             formats.append('azw3')
 
         # Initialize each book's information
         books = []
+        print (settings)
         for book_id in book_ids:
-            books.append(Book(database, book_id, self._goodreads_conn, self._amazon_conn, formats,
-                              self._send_to_device, self._create_files_when_sending, self._expand_aliases,
-                              self._overwrite_local, self._overwrite_device, self._create_send_xray,
-                              self._create_send_author_profile, self._create_send_start_actions,
-                              self._create_send_end_actions, self._file_preference))
+            books.append(Book(database, book_id, self._goodreads_conn, self._amazon_conn, formats, settings))
 
-        xray_creator = XRayCreator(books, formats, self._send_to_device, self._overwrite_local,
-                                   self._overwrite_device, self._create_send_xray, self._create_send_author_profile,
-                                   self._create_send_start_actions, self._create_send_end_actions)
-        return xray_creator
+        return XRayCreator(books, formats, settings)
 
     def config(self):
         '''Opens up a dialog that allows user to set general preferences'''

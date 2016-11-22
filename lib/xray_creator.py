@@ -14,19 +14,11 @@ from calibre_plugins.xray_creator.lib.status_info import StatusInfo
 
 class XRayCreator(object):
     '''Automates x-ray, author profile, start actions, and end actions creation and sending to device'''
-    def __init__(self, books, formats, send_to_device, overwrite_local, overwrite_device, create_send_xray,
-                 create_send_author_profile, create_send_start_actions, create_send_end_actions):
+    def __init__(self, books, formats, settings):
         self._books = books
         self._formats = formats
-        self._send_to_device = send_to_device
-        self._overwrite_local = overwrite_local
-        self._overwrite_device = overwrite_device
-        self._create_send_xray = create_send_xray
-        self._create_send_author_profile = create_send_author_profile
-        self._create_send_start_actions = create_send_start_actions
-        self._create_send_end_actions = create_send_end_actions
+        self._settings = settings
         self._num_of_formats_found_on_device = -1
-
         self._total_not_failing = None
 
     @property
@@ -72,13 +64,13 @@ class XRayCreator(object):
 
             fmts_completed = []
             fmts_failed = []
-            if self._create_send_xray:
+            if self._settings['create_send_xray']:
                 self._get_xray_create_results(book, fmts_failed, fmts_completed)
-            if self._create_send_author_profile:
+            if self._settings['create_send_author_profile']:
                 self._get_author_profile_create_results(book, fmts_failed, fmts_completed)
-            if self._create_send_start_actions:
+            if self._settings['create_send_start_actions']:
                 self._get_start_actions_create_results(book, fmts_failed, fmts_completed)
-            if self._create_send_end_actions:
+            if self._settings['create_send_end_actions']:
                 self._get_end_actions_create_results(book, fmts_failed, fmts_completed)
 
             if len(fmts_completed) > 0:
@@ -147,14 +139,14 @@ class XRayCreator(object):
                 continue
             fmts_completed = []
             fmts_failed = []
-            if self._create_send_xray:
+            if self._settings['create_send_xray']:
                 self._get_xray_send_results(book, fmts_failed, fmts_completed)
 
-            if self._create_send_author_profile:
+            if self._settings['create_send_author_profile']:
                 self._get_author_profile_send_results(book, fmts_failed, fmts_completed)
-            if self._create_send_start_actions:
+            if self._settings['create_send_start_actions']:
                 self._get_start_actions_send_results(book, fmts_failed, fmts_completed)
-            if self._create_send_end_actions:
+            if self._settings['create_send_end_actions']:
                 self._get_end_actions_send_results(book, fmts_failed, fmts_completed)
 
             if len(fmts_completed) > 0:
@@ -287,17 +279,17 @@ class XRayCreator(object):
         device_books = self._initialize_books(log, database)
 
         actions = 1.0
-        if not self._overwrite_local:
+        if not self._settings['overwrite_when_creating']:
             actions += 1
-        if self._create_send_xray:
+        if self._settings['create_send_xray']:
             actions += 2
-        if self._create_send_author_profile:
+        if self._settings['create_send_author_profile']:
             actions += 1
-        if self._create_send_start_actions:
+        if self._settings['create_send_start_actions']:
             actions += 1
-        if self._create_send_end_actions:
+        if self._settings['create_send_end_actions']:
             actions += 1
-        if self._send_to_device and device_books is not None:
+        if self._settings['send_to_device'] and device_books is not None:
             actions += 1
         total_not_failing_actions = self._total_not_failing * actions
         for book_num, book in enumerate(self.books_not_failing()):
@@ -322,7 +314,7 @@ class XRayCreator(object):
             for line in create_failed:
                 log('        %s' % line)
 
-        if self._send_to_device:
+        if self._settings['send_to_device']:
             if device_books is None:
                 log('\nX-Ray Sending:')
                 log('    No device is connected.')
