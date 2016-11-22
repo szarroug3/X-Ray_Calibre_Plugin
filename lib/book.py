@@ -22,9 +22,9 @@ from calibre_plugins.xray_creator.lib.goodreads_parser import GoodreadsParser
 class Book(object):
     '''Class to hold book information and creates/sends files depending on user settings'''
 
-    def __init__(self, database, book_id, goodreads_conn, amazon_conn, settings):
+    def __init__(self, database, book_id, connections, settings):
         self._book_id = book_id
-        self._goodreads_conn = goodreads_conn
+        self._goodreads_conn = connections['goodreads']
         self._settings = settings
 
         self._aliases = None
@@ -49,8 +49,7 @@ class Book(object):
         self._goodreads_start_actions = None
         self._goodreads_xray = None
 
-        self._book_settings = BookSettings(database, book_id, goodreads_conn, amazon_conn)
-
+        self._book_settings = BookSettings(database, book_id, connections)
 
         self._get_basic_information(database, settings['formats'])
 
@@ -377,25 +376,26 @@ class Book(object):
         try:
             goodreads_data = GoodreadsParser(self._goodreads_url, self._goodreads_conn, self._asin,
                                              expand_aliases=self._settings['expand_aliases'])
-            goodreads_data.parse(create_xray=create_xray, create_author_profile=create_author_profile,
-                                 create_start_actions=create_start_actions, create_end_actions=create_end_actions)
+            results = goodreads_data.parse(create_xray=create_xray, create_author_profile=create_author_profile,
+                                           create_start_actions=create_start_actions, create_end_actions=create_end_actions)
+            compiled_xray, compiled_author_profile, compiled_start_actions, compiled_end_actions = results
         except PageDoesNotExist:
             self._status.set(StatusInfo.FAIL, StatusInfo.F_COULD_NOT_PARSE_GOODREADS_DATA)
             return
 
         if create_xray:
-            self._process_goodreads_xray_results(goodreads_data)
+            self._process_goodreads_xray_results(compiled_xray)
         if create_author_profile:
-            self._process_goodreads_author_profile_results(goodreads_data)
+            self._process_goodreads_author_profile_results(compiled_author_profile)
         if create_start_actions:
-            self._process_goodreads_start_actions_results(goodreads_data)
+            self._process_goodreads_start_actions_results(compiled_start_actions)
         if create_end_actions:
-            self._process_goodreads_end_actions_results(goodreads_data)
+            self._process_goodreads_end_actions_results(compiled_end_actions)
 
-    def _process_goodreads_xray_results(self, goodreads_data):
+    def _process_goodreads_xray_results(self, compiled_xray):
         '''Checks if goodreads sucessfully retrieved xray data; Updates status if not'''
-        if goodreads_data.xray:
-            self._goodreads_xray = goodreads_data.xray
+        if compiled_xray:
+            self._goodreads_xray = compiled_xray
             for char in self._goodreads_xray['characters'].values():
                 if char['label'] not in self._aliases.keys():
                     self._aliases[char['label']] = char['aliases']
@@ -404,24 +404,24 @@ class Book(object):
         else:
             self._xray_status.set(StatusInfo.FAIL, StatusInfo.F_UNABLE_TO_CREATE_XRAY)
 
-    def _process_goodreads_author_profile_results(self, goodreads_data):
+    def _process_goodreads_author_profile_results(self, compiled_author_profile):
         '''Checks if goodreads sucessfully created author profile; Updates status if not'''
-        if goodreads_data.author_profile:
-            self._goodreads_author_profile = goodreads_data.author_profile
+        if compiled_author_profile:
+            self._goodreads_author_profile = compiled_author_profile
         else:
             self._author_profile_status.set(StatusInfo.FAIL, StatusInfo.F_UNABLE_TO_CREATE_AUTHOR_PROFILE)
 
-    def _process_goodreads_start_actions_results(self, goodreads_data):
+    def _process_goodreads_start_actions_results(self, compiled_start_actions):
         '''Checks if goodreads sucessfully created start actions; Updates status if not'''
-        if goodreads_data.start_actions:
-            self._goodreads_start_actions = goodreads_data.start_actions
+        if compiled_start_actions:
+            self._goodreads_start_actions = compiled_start_actions
         else:
             self._start_actions_status.set(StatusInfo.FAIL, StatusInfo.F_UNABLE_TO_CREATE_START_ACTIONS)
 
-    def _process_goodreads_end_actions_results(self, goodreads_data):
+    def _process_goodreads_end_actions_results(self, compiled_end_actions):
         '''Checks if goodreads sucessfully created start actions; Updates status if not'''
-        if goodreads_data.end_actions:
-            self._goodreads_end_actions = goodreads_data.end_actions
+        if compiled_end_actions:
+            self._goodreads_end_actions = compiled_end_actions
         else:
             self._end_actions_status.set(StatusInfo.FAIL, StatusInfo.F_UNABLE_TO_CREATE_END_ACTIONS)
 

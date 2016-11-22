@@ -42,14 +42,15 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         if https_proxy:
             https_address = ':'.join(https_proxy.split(':')[:-1])
             https_port = int(https_proxy.split(':')[-1])
-            self._goodreads_conn = HTTPSConnection(https_address, https_port)
-            self._goodreads_conn.set_tunnel('www.goodreads.com', 443)
-            self._amazon_conn = HTTPSConnection(https_address, https_port)
-            self._amazon_conn.set_tunnel('www.amazon.com', 443)
+            goodreads_conn = HTTPSConnection(https_address, https_port)
+            goodreads_conn.set_tunnel('www.goodreads.com', 443)
+            amazon_conn = HTTPSConnection(https_address, https_port)
+            amazon_conn.set_tunnel('www.amazon.com', 443)
         else:
-            self._goodreads_conn = HTTPSConnection('www.goodreads.com')
-            self._amazon_conn = HTTPSConnection('www.amazon.com')
+            goodreads_conn = HTTPSConnection('www.goodreads.com')
+            amazon_conn = HTTPSConnection('www.amazon.com')
 
+        self._connections = {'goodreads': goodreads_conn, 'amazon': amazon_conn}
         self.menu = QMenu(self.gui)
 
     def genesis(self):
@@ -103,7 +104,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
         book_settings_list = []
         for book_id in book_ids:
-            book_settings = BookSettings(database, book_id, self._goodreads_conn, self._amazon_conn)
+            book_settings = BookSettings(database, book_id, self._connections)
             if len(book_settings.aliases) == 0 and book_settings.goodreads_url != '':
                 book_settings.update_aliases(book_settings.goodreads_url, settings['expand_aliases'])
                 book_settings.save()
@@ -133,7 +134,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         # Initialize each book's information
         books = []
         for book_id in book_ids:
-            books.append(Book(database, book_id, self._goodreads_conn, self._amazon_conn, settings))
+            books.append(Book(database, book_id, self._connections, settings))
 
         return XRayCreator(books, settings)
 

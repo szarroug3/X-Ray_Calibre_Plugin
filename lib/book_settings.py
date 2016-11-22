@@ -16,9 +16,8 @@ from calibre.ebooks.BeautifulSoup import BeautifulSoup
 class BookSettings(object):
     '''Holds book specific settings'''
 
-    def __init__(self, database, book_id, goodreads_conn, amazon_conn):
-        self._goodreads_conn = goodreads_conn
-        self._amazon_conn = amazon_conn
+    def __init__(self, database, book_id, connections):
+        self._connections = connections
 
         book_path = database.field_for('path', book_id).replace('/', os.sep)
 
@@ -34,40 +33,40 @@ class BookSettings(object):
         self._asin = self._prefs['asin'] if self._prefs['asin'] != '' else None
         self._goodreads_url = self._prefs['goodreads_url']
 
-        if not self.asin:
+        if not self._asin:
             identifiers = database.field_for('identifiers', book_id)
             if 'mobi-asin' in identifiers.keys():
-                self.asin = database.field_for('identifiers', book_id)['mobi-asin'].decode('ascii')
-                self._prefs['asin'] = self.asin
+                self._asin = database.field_for('identifiers', book_id)['mobi-asin'].decode('ascii')
+                self._prefs['asin'] = self._asin
             else:
-                self.asin = self.search_for_asin_on_amazon(self.title_and_author)
-                if self.asin:
+                self._asin = self.search_for_asin_on_amazon(self.title_and_author)
+                if self._asin:
                     metadata = database.get_metadata(book_id)
                     identifiers = metadata.get_identifiers()
-                    identifiers['mobi-asin'] = self.asin
+                    identifiers['mobi-asin'] = self._asin
                     metadata.set_identifiers(identifiers)
                     database.set_metadata(book_id, metadata)
-                    self._prefs['asin'] = self.asin
+                    self._prefs['asin'] = self._asin
 
-        if self.goodreads_url == '':
+        if self._goodreads_url == '':
             url = None
-            if self.asin:
-                url = self.search_for_goodreads_url(self.asin)
-            if not url and self.title != 'Unknown' and self.author != 'Unknown':
+            if self._asin:
+                url = self.search_for_goodreads_url(self._asin)
+            if not url and self._title != 'Unknown' and self._author != 'Unknown':
                 url = self.search_for_goodreads_url(self.title_and_author)
 
             if url:
-                self.goodreads_url = url
-                self._prefs['goodreads_url'] = self.goodreads_url
-                if not self.asin:
-                    self.asin = self.search_for_asin_on_goodreads(self.goodreads_url)
-                    if self.asin:
+                self._goodreads_url = url
+                self._prefs['goodreads_url'] = self._goodreads_url
+                if not self._asin:
+                    self._asin = self.search_for_asin_on_goodreads(self._goodreads_url)
+                    if self._asin:
                         metadata = database.get_metadata(book_id)
                         identifiers = metadata.get_identifiers()
-                        identifiers['mobi-asin'] = self.asin
+                        identifiers['mobi-asin'] = self._asin
                         metadata.set_identifiers(identifiers)
                         database.set_metadata(book_id, metadata)
-                        self._prefs['asin'] = self.asin
+                        self._prefs['asin'] = self._asin
 
         self._aliases = self._prefs['aliases']
 
@@ -95,7 +94,7 @@ class BookSettings(object):
 
     @property
     def title_and_author(self):
-        return '{0} - {1}'.format(self.title, self.author)
+        return '{0} - {1}'.format(self._title, self._author)
 
     @property
     def goodreads_url(self):
@@ -123,16 +122,16 @@ class BookSettings(object):
 
     def save(self):
         '''Saves current settings in book's settings file'''
-        self.prefs['asin'] = self.asin
-        self.prefs['goodreads_url'] = self.goodreads_url
-        self.prefs['aliases'] = self.aliases
+        self._prefs['asin'] = self._asin
+        self._prefs['goodreads_url'] = self._goodreads_url
+        self._prefs['aliases'] = self._aliases
 
     def search_for_asin_on_amazon(self, query):
         '''Search for book's asin on amazon using given query'''
         query = urlencode({'keywords': query})
         url = '/s/ref=sr_qz_back?sf=qz&rh=i%3Adigital-text%2Cn%3A154606011%2Ck%3A' + query[9:] + '&' + query
         try:
-            response = open_url(self._amazon_conn, url)
+            response = open_url(self._connections['amazon'], url)
         except PageDoesNotExist:
             return None
 
@@ -159,7 +158,7 @@ class BookSettings(object):
         '''Searches for book's goodreads url using given keywords'''
         query = urlencode({'q': keywords})
         try:
-            response = open_url(self._goodreads_conn, '/search?' + query)
+            response = open_url(self._connections['goodreads'], '/search?' + query)
         except PageDoesNotExist:
             return None
 
@@ -184,7 +183,7 @@ class BookSettings(object):
         book_id = book_id_search.group(1)
 
         try:
-            response = open_url(self._goodreads_conn, '/buttons/glide/' + book_id)
+            response = open_url(self._connections['goodreads'], '/buttons/glide/' + book_id)
         except PageDoesNotExist:
             return None
 
@@ -197,7 +196,7 @@ class BookSettings(object):
     def update_aliases(self, url, expand_aliases):
         '''Gets aliases from Goodreads and expands them if users settings say to do so'''
         try:
-            goodreads_parser = GoodreadsParser(url, self._goodreads_conn, self._asin, create_xray=True,
+            goodreads_parser = GoodreadsParser(url, self._connections['goodreads'], self._asin, create_xray=True,
                                                expand_aliases=expand_aliases)
             goodreads_parser.get_characters()
             goodreads_parser.get_settings()
@@ -209,5 +208,5 @@ class BookSettings(object):
 
         self._aliases = {}
         for char_data in goodreads_chars.values() + goodreads_settings.values():
-            if char_data['label'] not in self.aliases.keys():
+            if char_data['label'] not in self._aliases.keys():
                 self._aliases[char_data['label']] = char_data['aliases']
