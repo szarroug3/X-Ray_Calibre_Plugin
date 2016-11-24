@@ -10,24 +10,41 @@ import urlparse
 from urllib2 import urlopen
 from lxml import html
 
-class GoodreadsPageDoesNotExist(Exception):
-    '''Exception for when goodreads page does not exist'''
-    pass
+from calibre_plugins.xray_creator.lib.utilities import open_url
 
 class GoodreadsParser(object):
     '''Parses Goodreads page for x-ray, author profile, start actions, and end actions as needed'''
+    HONORIFICS = 'mr mrs ms esq prof dr fr rev pr atty adv hon pres gov sen ofc pvt cpl sgt maj capt cmdr lt col gen'
+    HONORIFICS = HONORIFICS.split()
+    HONORIFICS.extend([x + '.' for x in HONORIFICS])
+    HONORIFICS += 'miss master sir madam lord dame lady esquire professor doctor father mother brother sister'.split()
+    HONORIFICS += 'reverend pastor elder rabbi sheikh attorney advocate honorable president governor senator'.split()
+    HONORIFICS += 'officer private corporal sargent major captain commander lieutenant colonel general'.split()
+    RELIGIOUS_HONORIFICS = 'fr br sr rev pr'
+    RELIGIOUS_HONORIFICS = RELIGIOUS_HONORIFICS.split()
+    RELIGIOUS_HONORIFICS.extend([x + '.' for x in RELIGIOUS_HONORIFICS])
+    RELIGIOUS_HONORIFICS += 'father mother brother sister reverend pastor elder rabbi sheikh'.split()
+    DOUBLE_HONORIFICS = 'lord'
+    # We want all the honorifics to be in the general honorifics list so when we're
+    # checking if a word is an honorifics, we only need to search in one list
+    HONORIFICS += RELIGIOUS_HONORIFICS
+    HONORIFICS += DOUBLE_HONORIFICS
+
+    COMMON_WORDS = 'the of de'.split()
+
     BOOK_ID_PAT = re.compile(r'\/show\/([\d]+)')
     ASIN_PAT = re.compile(r'"asin":"(.+?)"')
-    def __init__(self, url, connection, asin, raise_error_on_page_not_found=False, create_xray=False,
-                 create_author_profile=False, create_start_actions=False, create_end_actions=False):
+
+    def __init__(self, url, connection, asin, create_xray=False, create_author_profile=False,
+                 create_start_actions=False, create_end_actions=False, expand_aliases=True):
         self._url = url
         self._connection = connection
         self._asin = asin
-        self._raise_error_on_page_not_found = raise_error_on_page_not_found
         self._create_xray = create_xray
         self._create_author_profile = create_author_profile
         self._create_start_actions = create_start_actions
         self._create_end_actions = create_end_actions
+        self._expand_aliases = expand_aliases
         self._characters = {}
         self._settings = {}
         self._quotes = []
@@ -50,7 +67,7 @@ class GoodreadsParser(object):
         book_id_search = self.BOOK_ID_PAT.search(url)
         self._goodreads_book_id = book_id_search.group(1) if book_id_search else None
 
-        response = self._open_url(url)
+        response = open_url(self._connection, url)
         self._page_source = None
         if not response:
             return
@@ -251,41 +268,6 @@ class GoodreadsParser(object):
             data['customersWhoBoughtRecs'] = {'class': 'featuredRecommendationList',
                                               'recommendations': self._cust_recommendations}
 
-    def _open_url(self, url, return_redirect_url=False):
-        '''Tries to open url and return page's html'''
-        if 'goodreads.com' in url:
-            url = url[url.find('goodreads.com') + len('goodreads.com'):]
-        try:
-            self._connection.request('GET', url)
-            response = self._connection.getresponse()
-            if response.status == 301 or response.status == 302:
-                if return_redirect_url:
-                    return response.msg['location']
-                response = self._open_url(response.msg['location'])
-            else:
-                response = response.read()
-        except GoodreadsPageDoesNotExist as e:
-            if self._raise_error_on_page_not_found:
-                raise e
-            else:
-                return None
-        except:
-            self._connection.close()
-            self._connection.connect()
-            self._connection.request('GET', url)
-            response = self._connection.getresponse()
-            if response.status == 301 or response.status == 302:
-                if return_redirect_url:
-                    return response.msg['location']
-                response = self._open_url(response.msg['location'])
-            else:
-                response = response.read()
-
-        if 'Page Not Found' in response:
-            raise GoodreadsPageDoesNotExist('Goodreads page not found.')
-
-        return response
-
     def get_characters(self):
         '''Gets book's character data'''
         if self._page_source is None:
@@ -297,7 +279,7 @@ class GoodreadsParser(object):
             if '/characters/' not in char.get('href'):
                 continue
             label = char.text
-            resp = self._open_url(char.get('href'))
+            resp = open_url(self._connection, char.get('href'))
 
             if not resp:
                 continue
@@ -312,9 +294,102 @@ class GoodreadsParser(object):
             else:
                 desc = 'No description found on Goodreads.'
 
-            aliases = [re.sub(r'\s+', ' ', x).strip() for x in char_page.xpath('//div[@class="grey500BoxContent" and contains(.,"aliases")]/text()') if re.sub(r'\s+', ' ', x).strip()]
-            self._characters[self._entity_id] = {'label': label, 'description': desc, 'aliases': aliases}
+            alias_list = [re.sub(r'\s+', ' ', x).strip() for x in char_page.xpath('//div[@class="grey500BoxContent" and contains(.,"aliases")]/text()') if re.sub(r'\s+', ' ', x).strip()]
+            alias_list = [alias for aliases in alias_list for alias in aliases.split(',')]
+            self._characters[self._entity_id] = {'label': label, 'description': desc, 'aliases': alias_list}
             self._entity_id += 1
+
+        if self._expand_aliases:
+            characters = {}
+            for char, char_data in self._characters.items():
+                characters[char] = [char_data['label']] + char_data['aliases']
+
+            expanded_aliases = self.auto_expand_aliases(characters)
+            for alias, entity_id in expanded_aliases.items():
+                self._characters[entity_id]['aliases'].append(alias)
+
+    def auto_expand_aliases(self, characters):
+        '''Goes through each character and expands them using fullname_to_possible_aliases without adding duplicates'''
+        actual_aliases = {}
+        duplicates = [alias.lower() for aliases in characters.values() for alias in aliases]
+        for entity_id, aliases in characters.items():
+            # get all expansions for original name and aliases retrieved from goodreads
+            expanded_aliases = []
+            for alias in aliases:
+                new_aliases = self.fullname_to_possible_aliases(alias.lower())
+                expanded_aliases += [new_alias for new_alias in new_aliases if new_alias not in expanded_aliases]
+
+            for alias in expanded_aliases:
+                # if this alias has already been flagged as a duplicate or is a common word, skip it
+                if alias in duplicates or alias in self.COMMON_WORDS:
+                    continue
+
+                # check if this alias is a duplicate but isn't in the duplicates list
+                if actual_aliases.has_key(alias):
+                    duplicates.append(alias)
+                    actual_aliases.pop(alias)
+                    continue
+
+                # at this point, the alias is new -- add it to the dict with the alias as the key and fullname as the value
+                actual_aliases[alias] = entity_id
+
+        return actual_aliases
+
+    def fullname_to_possible_aliases(self, fullname):
+        '''
+        Given a full name ("{Title} ChristianName {Middle Names} {Surname}"), return a list of possible aliases
+
+        ie. Title Surname, ChristianName Surname, Title ChristianName, {the full name}
+
+        The returned aliases are in the order they should match
+        '''
+        aliases = []
+        parts = fullname.split()
+
+        if parts[0].lower() in self.HONORIFICS:
+            title_list = []
+            while len(parts) > 0 and parts[0].lower() in self.HONORIFICS:
+                title_list.append(parts.pop(0))
+            title = ' '.join(title_list)
+        else:
+            title = None
+
+        if len(parts) >= 2:
+            # Assume: {Title} Firstname {Middlenames} Lastname
+            # Already added the full form, also add Title Lastname, and for some Title Firstname
+            surname = parts.pop() # This will cover double barrel surnames, we split on whitespace only
+            christian_name = parts.pop(0)
+            if title:
+                # Religious Honorifics usually only use {Title} {ChristianName}
+                # ie. John Doe could be Father John but usually not Father Doe
+                if title in self.RELIGIOUS_HONORIFICS:
+                    aliases.append("%s %s" % (title, christian_name))
+                # Some titles work as both {Title} {ChristianName} and {Title} {Lastname}
+                # ie. John Doe could be Lord John or Lord Doe
+                elif title in self.DOUBLE_HONORIFICS:
+                    aliases.append("%s %s" % (title, christian_name))
+                    aliases.append("%s %s" % (title, surname))
+                # Everything else usually goes {Title} {Lastname}
+                # ie. John Doe could be Captain Doe but usually not Captain John
+                else:
+                    aliases.append("%s %s" % (title, surname))
+            # Don't want the formats {ChristianName}, {Surname} and {ChristianName} {Lastname} in special cases
+            # i.e. The Lord Ruler should never have "The Ruler", "Lord" or "Ruler" as aliases
+            if christian_name in self.COMMON_WORDS:
+                aliases.append('{0} {1}'.format(' '.join(parts), surname))
+            else:
+                aliases.append(christian_name)
+                aliases.append(surname)
+                aliases.append("%s %s" % (christian_name, surname))
+
+        elif title:
+            # Odd, but got Title Name (eg. Lord Buttsworth), so see if we can alias
+            if len(parts) > 0:
+                aliases.append(parts[0])
+        else:
+            # We've got no title, so just a single word name.  No alias needed
+            pass
+        return aliases
 
     def get_settings(self):
         '''Gets book's setting data'''
@@ -327,7 +402,7 @@ class GoodreadsParser(object):
             if '/places/' not in setting.get('href'):
                 continue
             label = setting.text
-            resp = self._open_url(setting.get('href'))
+            resp = open_url(self._connection, setting.get('href'))
             if not resp:
                 continue
             setting_page = html.fromstring(resp)
@@ -346,7 +421,7 @@ class GoodreadsParser(object):
         quotes_page = self._page_source.xpath('//a[@class="actionLink" and contains(., "More quotes")]')
         self._quotes = []
         if len(quotes_page) > 0:
-            resp = self._open_url(quotes_page[0].get('href'))
+            resp = open_url(self._connection, quotes_page[0].get('href'))
             if not resp:
                 return
             quotes_page = html.fromstring(resp)
@@ -376,7 +451,7 @@ class GoodreadsParser(object):
             return
 
         author = self._author_info[0]
-        author['page'] = html.fromstring(self._open_url(author['url']))
+        author['page'] = html.fromstring(open_url(self._connection, author['url']))
         author['bio'] = self._get_author_bio(author['page'])
         author['image_url'], author['encoded_image'] = self._get_author_image(author['page'], encode_image=True)
 
@@ -386,7 +461,7 @@ class GoodreadsParser(object):
             return
 
         for author in self._author_info[1:]:
-            author['page'] = html.fromstring(self._open_url(author['url']))
+            author['page'] = html.fromstring(open_url(self._connection, author['url']))
             author['bio'] = self._get_author_bio(author['page'])
             author['image_url'] = self._get_author_image(author['page'])
 
@@ -467,7 +542,7 @@ class GoodreadsParser(object):
         books_data = []
         link_pattern = 'resources[Book.{0}][type]=Book&resources[Book.{0}][id]={0}'
         tooltips_page_url = '/tooltips?' + "&".join([link_pattern.format(book_id) for book_id, image_url in book_info])
-        tooltips_page_info = json.loads(self._open_url(tooltips_page_url))['tooltips']
+        tooltips_page_info = json.loads(open_url(self._connection, tooltips_page_url))['tooltips']
 
         for book_id, image_url in book_info:
             book_data = tooltips_page_info['Book.{0}'.format(book_id)]
@@ -495,7 +570,7 @@ class GoodreadsParser(object):
             # We should get the ASIN from the tooltips file, but just in case we'll
             # keep this as a fallback (though this only works in some regions - just USA?)
             if not book_asin:
-                asin_data_page = self._open_url('/buttons/glide/' + book_id)
+                asin_data_page = open_url(self._connection, '/buttons/glide/' + book_id)
                 book_asin = self.ASIN_PAT.search(asin_data_page)
                 if not book_asin:
                     continue
