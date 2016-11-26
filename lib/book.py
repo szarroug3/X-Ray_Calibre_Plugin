@@ -229,7 +229,7 @@ class Book(object):
                 return
             self._create_files(perc, total, notifications, log)
 
-            self._udpate_general_statuses()
+            self._update_general_statuses()
 
             # Sending Files
             if self._settings['send_to_device'] and device_books is not None:
