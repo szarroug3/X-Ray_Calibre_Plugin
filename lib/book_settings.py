@@ -196,12 +196,10 @@ class BookSettings(object):
     def update_aliases(self, url, expand_aliases):
         '''Gets aliases from Goodreads and expands them if users settings say to do so'''
         try:
-            goodreads_parser = GoodreadsParser(url, self._connections['goodreads'], self._asin, create_xray=True,
+            goodreads_parser = GoodreadsParser(url, self._connections['goodreads'], self._asin,
                                                expand_aliases=expand_aliases)
-            goodreads_parser.get_characters()
-            goodreads_parser.get_settings()
-            goodreads_chars = goodreads_parser.characters
-            goodreads_settings = goodreads_parser.settings
+            goodreads_chars = goodreads_parser.get_characters(1)
+            goodreads_settings = goodreads_parser.get_settings(len(goodreads_chars))
         except PageDoesNotExist:
             goodreads_chars = {}
             goodreads_settings = {}
