@@ -74,7 +74,7 @@ class GoodreadsParser(object):
         compiled_start_actions = None
         compiled_end_actions = None
 
-        if not create_author_profile or not create_start_actions or not create_end_actions:
+        if not create_author_profile and not create_start_actions and not create_end_actions:
             return compiled_author_profile, compiled_start_actions, compiled_end_actions
 
         author_info = self._get_author_info()

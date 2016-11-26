@@ -30,7 +30,6 @@ class Book(object):
         self._aliases = None
         self._device_sdr = None
         self._local_book_directory = None
-        self._formats_on_device = None
         self._xray_format_information = None
 
         self._xray_send_fmt = None
@@ -316,7 +315,7 @@ class Book(object):
                                        create_start_actions=create_start_actions, create_end_actions=create_end_actions)
             if self._statuses['general'].status is StatusInfo.FAIL:
                 return
-            if create_xray_format_info and self._statuses['xray'].status != StatusInfo.FAIL:
+            if create_xray and self._statuses['xray'].status != StatusInfo.FAIL:
                 log('{0}    Creating {1} x-ray...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S'),
                                                           self.title_and_author))
                 self._parse_book(create_xray_format_info['format'],
@@ -558,15 +557,14 @@ class Book(object):
         if not os.path.exists(self._device_sdr):
             os.mkdir(self._device_sdr)
 
-        self._formats_on_device = device_books[self._book_id].keys()
-
         if self._settings['create_send_xray'] and self.xray_formats_not_failing_exist():
             # figure out which format to send
-            self._check_xray_format_to_create()
+            self._check_xray_format_to_create(device_books)
 
-    def _check_xray_format_to_create(self):
+    def _check_xray_format_to_create(self, device_books):
         formats_not_failing = [fmt for fmt, info in self.xray_formats_not_failing()]
-        common_formats = list(set(self._formats_on_device).intersection(formats_not_failing))
+        formats_on_device = device_books[self._book_id].keys()
+        common_formats = list(set(formats_on_device).intersection(formats_not_failing))
 
         if len(common_formats) == 0:
             for fmt, info in self.xray_formats_not_failing():
@@ -608,11 +606,9 @@ class Book(object):
         if not os.path.exists(self._device_sdr):
             os.mkdir(self._device_sdr)
 
-        self._formats_on_device = device_books[self._book_id].keys()
-
         if self._settings['create_send_xray']:
             # figure out which format to send
-            create_xray = self._check_xray_fmt_for_send()
+            create_xray = self._check_xray_fmt_for_send(device_books)
         if self._settings['create_send_author_profile']:
             create_author_profile = self._check_author_profile_for_send()
         if self._settings['create_send_start_actions']:
@@ -622,10 +618,11 @@ class Book(object):
 
         return create_xray, create_author_profile, create_start_actions, create_end_actions
 
-    def _check_xray_fmt_for_send(self):
+    def _check_xray_fmt_for_send(self, device_books):
         '''Check if there's a valid x-ray to send'''
         formats_not_failing = [fmt for fmt, info in self._xray_format_information.items()]
-        common_formats = list(set(self._formats_on_device).intersection(formats_not_failing))
+        formats_on_device = device_books[self._book_id].keys()
+        common_formats = list(set(formats_on_device).intersection(formats_not_failing))
 
         if len(common_formats) == 0:
             for fmt, info in self._xray_format_information.items():
@@ -702,8 +699,9 @@ class Book(object):
     def _send_files(self, device_books):
         '''Sends files to device depending on list compiled in self._files_to_send'''
         number_of_failed_asin_updates = 0
+        formats_on_device = device_books[self._book_id].keys()
         try:
-            for fmt in self._formats_on_device:
+            for fmt in formats_on_device:
                 with open(device_books[self._book_id][fmt]['device_book'], 'r+b') as stream:
                     mobi_updater = ASINUpdater(stream)
                     mobi_updater.update(self._asin)
@@ -715,7 +713,7 @@ class Book(object):
                 self._xray_send_fmt = self._files_to_send['xray']['format']
                 if self._files_to_send.has_key('xray'):
                     del self._files_to_send['xray']
-            if number_of_failed_asin_updates == len(self._formats_on_device):
+            if number_of_failed_asin_updates == len(formats_on_device):
                 if self._settings['create_send_author_profile']:
                     self._statuses['author_profile_send'].set(StatusInfo.FAIL, StatusInfo.F_UNABLE_TO_UPDATE_ASIN)
                 if self._settings['create_send_start_actions']:
