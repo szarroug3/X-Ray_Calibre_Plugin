@@ -340,19 +340,19 @@ class Book(object):
                                                                 self.title_and_author))
                 self._write_end_actions()
 
-        self._udpate_general_statuses()
+        self._update_general_statuses()
         if len(self._files_to_send) > 0:
             log('{0}    Sending files to device...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
             self._send_files(device_books)
 
-    def _udpate_general_statuses(self):
+    def _update_general_statuses(self):
         if self._settings['create_send_xray'] and self._statuses['xray'].status != StatusInfo.FAIL:
             self._statuses['xray'].status = StatusInfo.SUCCESS
-        if self._settings['create_send_author_profile'] and self._statuses['author_profile'] != StatusInfo.FAIL:
+        if self._settings['create_send_author_profile'] and self._statuses['author_profile'].status != StatusInfo.FAIL:
             self._statuses['author_profile'].status = StatusInfo.SUCCESS
-        if self._settings['create_send_start_actions'] and self._statuses['start_actions'] != StatusInfo.FAIL:
+        if self._settings['create_send_start_actions'] and self._statuses['start_actions'].status != StatusInfo.FAIL:
             self._statuses['start_actions'].status = StatusInfo.SUCCESS
-        if self._settings['create_send_end_actions'] and self._statuses['start_actions'] != StatusInfo.FAIL:
+        if self._settings['create_send_end_actions'] and self._statuses['end_actions'].status != StatusInfo.FAIL:
             self._statuses['end_actions'].status = StatusInfo.SUCCESS
 
     @staticmethod
