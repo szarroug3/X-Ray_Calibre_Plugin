@@ -385,10 +385,6 @@ class Book(object):
         '''Checks if goodreads sucessfully retrieved xray data; Updates status if not'''
         if compiled_xray:
             self._goodreads_data['xray'] = compiled_xray
-            print '*'*100
-            print self._goodreads_data['xray']['characters']
-            print '*'*100
-
             for char in self._goodreads_data['xray']['characters'].values():
                 if char['label'] not in self._basic_info['aliases'].keys():
                     self._basic_info['aliases'][char['label']] = char['aliases']
