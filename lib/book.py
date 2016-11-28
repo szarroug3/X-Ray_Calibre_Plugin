@@ -23,15 +23,10 @@ class Book(object):
     '''Class to hold book information and creates/sends files depending on user settings'''
 
     def __init__(self, database, book_id, connections, settings):
-        self._book_id = book_id
+        self._basic_info = {'book_id': book_id}
         self._goodreads_conn = connections['goodreads']
         self._settings = settings
-
-        self._aliases = None
-        self._device_sdr = None
-        self._local_book_directory = None
         self._xray_format_information = None
-
         self._xray_send_fmt = None
         self._statuses = {'general': StatusInfo(status=StatusInfo.IN_PROGRESS),
                           'xray': StatusInfo(), 'xray_send': StatusInfo(),
@@ -39,10 +34,8 @@ class Book(object):
                           'start_actions': StatusInfo(), 'start_actions_send': StatusInfo(),
                           'end_actions': StatusInfo(), 'end_actions_send': StatusInfo()}
 
-        self._goodreads_data = {'xray': None, 'author_profile': None, 'start_actions': None, 'end_actions': None}
-
+        self._goodreads_data = {}
         self._book_settings = BookSettings(database, book_id, connections)
-
         self._get_basic_information(database, settings['formats'])
 
         if self._statuses['general'].status != StatusInfo.FAIL:
@@ -90,19 +83,19 @@ class Book(object):
 
     @property
     def book_id(self):
-        return self._book_id
+        return self._basic_info['book_id']
 
     @property
     def title(self):
-        return self._title
+        return self._basic_info['title']
 
     @property
     def author(self):
-        return self._author
+        return self._basic_info['author']
 
     @property
     def title_and_author(self):
-        return '{0} - {1}'.format(self._title, self._author)
+        return '{0} - {1}'.format(self._basic_info['title'], self._basic_info['author'])
 
     def xray_formats_failing(self):
         '''Yields x-ray formats that are failing'''
@@ -122,10 +115,10 @@ class Book(object):
 
     def _get_basic_information(self, database, formats):
         '''Gets title, author, goodreads url, ASIN, and file specific info for the book'''
-        self._title = database.field_for('title', self._book_id)
-        self._author = ' & '.join(database.field_for('authors', self._book_id))
+        self._basic_info['title'] = database.field_for('title', self._basic_info['book_id'])
+        self._basic_info['author'] = ' & '.join(database.field_for('authors', self._basic_info['book_id']))
 
-        if self._title == 'Unknown' or self._author == 'Unknown':
+        if self._basic_info['title'] == 'Unknown' or self._basic_info['author'] == 'Unknown':
             self._statuses['general'].set(StatusInfo.FAIL, StatusInfo.F_BASIC_INFORMATION_MISSING)
             return
 
@@ -137,8 +130,8 @@ class Book(object):
             self._statuses['general'].set(StatusInfo.FAIL, StatusInfo.F_COULD_NOT_FIND_ASIN)
             return
 
-        self._goodreads_url = self._book_settings.prefs['goodreads_url']
-        self._asin = self._book_settings.prefs['asin']
+        self._basic_info['goodreads_url'] = self._book_settings.prefs['goodreads_url']
+        self._basic_info['asin'] = self._book_settings.prefs['asin']
 
         if self._settings['create_send_xray']:
             self._get_basic_xray_information(database, formats)
@@ -149,7 +142,7 @@ class Book(object):
 
     def _get_basic_xray_information(self, database, formats):
         '''Gets aliases and format information for the book and initializes x-ray variables'''
-        self._aliases = self._book_settings.prefs['aliases']
+        self._basic_info['aliases'] = self._book_settings.prefs['aliases']
         self._xray_format_information = {}
         self._statuses['xray'].status = StatusInfo.IN_PROGRESS
 
@@ -157,7 +150,7 @@ class Book(object):
             info = {'status': StatusInfo(status=StatusInfo.IN_PROGRESS)}
 
             # find local book if it exists; fail if it doesn't
-            local_book = database.format_abspath(self._book_id, fmt.upper())
+            local_book = database.format_abspath(self._basic_info['book_id'], fmt.upper())
             if not local_book or not os.path.exists(local_book):
                 info['status'].set(StatusInfo.FAIL, StatusInfo.F_LOCAL_BOOK_NOT_FOUND)
             else:
@@ -176,11 +169,11 @@ class Book(object):
 
     def _get_basic_non_xray_information(self, database):
         '''Gets local book's directory and initializes non-xray variables'''
-        book_path = database.field_for('path', self._book_id).replace('/', os.sep)
+        book_path = database.field_for('path', self._basic_info['book_id']).replace('/', os.sep)
         local_book_directory = os.path.join(LIBRARY, book_path)
-        self._local_book_directory = os.path.join(local_book_directory, 'non_xray')
-        if not os.path.exists(self._local_book_directory):
-            os.mkdir(self._local_book_directory)
+        self._basic_info['local_non_xray'] = os.path.join(local_book_directory, 'non_xray')
+        if not os.path.exists(self._basic_info['local_non_xray']):
+            os.mkdir(self._basic_info['local_non_xray'])
 
         if self._settings['create_send_author_profile']:
             self._statuses['author_profile'].status = StatusInfo.IN_PROGRESS
@@ -370,8 +363,8 @@ class Book(object):
             create_end_actions = self._settings['create_send_end_actions']
 
         try:
-            goodreads_data = GoodreadsParser(self._goodreads_url, self._goodreads_conn, self._asin,
-                                             expand_aliases=self._settings['expand_aliases'])
+            goodreads_data = GoodreadsParser(self._basic_info['goodreads_url'], self._goodreads_conn,
+                                             self._basic_info['asin'], expand_aliases=self._settings['expand_aliases'])
             results = goodreads_data.parse(create_xray=create_xray, create_author_profile=create_author_profile,
                                            create_start_actions=create_start_actions, create_end_actions=create_end_actions)
             compiled_xray, compiled_author_profile, compiled_start_actions, compiled_end_actions = results
@@ -392,11 +385,15 @@ class Book(object):
         '''Checks if goodreads sucessfully retrieved xray data; Updates status if not'''
         if compiled_xray:
             self._goodreads_data['xray'] = compiled_xray
-            for char in self._goodreads_data['xray']['characters'].values():
-                if char['label'] not in self._aliases.keys():
-                    self._aliases[char['label']] = char['aliases']
+            print '*'*100
+            print self._goodreads_data['xray']['characters']
+            print '*'*100
 
-            self._book_settings.prefs['aliases'] = self._aliases
+            for char in self._goodreads_data['xray']['characters'].values():
+                if char['label'] not in self._basic_info['aliases'].keys():
+                    self._basic_info['aliases'][char['label']] = char['aliases']
+
+            self._book_settings.prefs['aliases'] = self._basic_info['aliases']
         else:
             self._statuses['xray'].set(StatusInfo.FAIL, StatusInfo.F_UNABLE_TO_CREATE_XRAY)
 
@@ -424,7 +421,7 @@ class Book(object):
     def _parse_book(self, fmt, info):
         '''Will parse book using the format info given'''
         try:
-            book_parser = BookParser(fmt, info['local_book'], self._goodreads_data['xray'], self._aliases)
+            book_parser = BookParser(fmt, info['local_book'], self._goodreads_data['xray'], self._basic_info['aliases'])
             book_parser.parse()
             info['parsed_book_data'] = book_parser.parsed_data
         except MobiError:
@@ -435,31 +432,36 @@ class Book(object):
         if self._settings['create_send_xray']:
             for fmt_info in self.xray_formats_not_failing():
                 info = fmt_info[1]
-                if os.path.exists(os.path.join(info['local_xray'], 'XRAY.entities.{0}.asc'.format(self._asin))):
+                if os.path.exists(os.path.join(info['local_xray'],
+                                               'XRAY.entities.{0}.asc'.format(self._basic_info['asin']))):
                     info['status'].set(StatusInfo.FAIL, StatusInfo.F_PREFS_NOT_OVERWRITE_LOCAL_XRAY)
         if self._settings['create_send_author_profile']:
-            if os.path.exists(os.path.join(self._local_book_directory, 'AuthorProfile.profile.{0}.asc'.format(self._asin))):
+            if os.path.exists(os.path.join(self._basic_info['local_non_xray'],
+                                           'AuthorProfile.profile.{0}.asc'.format(self._basic_info['asin']))):
                 self._statuses['author_profile'].set(StatusInfo.FAIL, StatusInfo.F_PREFS_NOT_OVERWRITE_LOCAL_AUTHOR_PROFILE)
         if self._settings['create_send_start_actions']:
-            if os.path.exists(os.path.join(self._local_book_directory, 'StartActions.data.{0}.asc'.format(self._asin))):
+            if os.path.exists(os.path.join(self._basic_info['local_non_xray'],
+                                           'StartActions.data.{0}.asc'.format(self._basic_info['asin']))):
                 self._statuses['start_actions'].set(StatusInfo.FAIL, StatusInfo.F_PREFS_NOT_OVERWRITE_LOCAL_START_ACTIONS)
         if self._settings['create_send_end_actions']:
-            if os.path.exists(os.path.join(self._local_book_directory, 'EndActions.data.{0}.asc'.format(self._asin))):
+            if os.path.exists(os.path.join(self._basic_info['local_non_xray'],
+                                           'EndActions.data.{0}.asc'.format(self._basic_info['asin']))):
                 self._statuses['end_actions'].set(StatusInfo.FAIL, StatusInfo.F_PREFS_NOT_OVERWRITE_LOCAL_END_ACTIONS)
 
     def _write_xray(self, info):
         '''Writes x-ray file using goodreads and parsed book data; Will save in local directory'''
         try:
-            filename = os.path.join(info['local_xray'], 'XRAY.entities.{0}.asc'.format(self._asin))
+            filename = os.path.join(info['local_xray'], 'XRAY.entities.{0}.asc'.format(self._basic_info['asin']))
             if os.path.exists(filename):
                 os.remove(filename)
         except OSError:
             info['status'].set(StatusInfo.FAIL, StatusInfo.F_REMOVE_LOCAL_XRAY)
 
-        xray_db_writer = XRayDBWriter(info['local_xray'], self._goodreads_url, self._asin, info['parsed_book_data'])
+        xray_db_writer = XRayDBWriter(info['local_xray'], self._basic_info['goodreads_url'],
+                                      self._basic_info['asin'], info['parsed_book_data'])
         xray_db_writer.write_xray()
 
-        if not os.path.exists(os.path.join(info['local_xray'], 'XRAY.entities.{0}.asc'.format(self._asin))):
+        if not os.path.exists(os.path.join(info['local_xray'], 'XRAY.entities.{0}.asc'.format(self._basic_info['asin']))):
             info['status'].set(StatusInfo.FAIL, StatusInfo.F_UNABLE_TO_WRITE_XRAY)
             return
 
@@ -468,14 +470,16 @@ class Book(object):
     def _write_author_profile(self, files_to_send):
         '''Writes author profile file using goodreads; Will save in local directory'''
         try:
-            filename = os.path.join(self._local_book_directory, 'AuthorProfile.profile.{0}.asc'.format(self._asin))
+            filename = os.path.join(self._basic_info['local_non_xray'],
+                                    'AuthorProfile.profile.{0}.asc'.format(self._basic_info['asin']))
             if os.path.exists(filename):
                 os.remove(filename)
         except OSError:
             self._statuses['author_profile'].set(StatusInfo.FAIL, StatusInfo.F_REMOVE_LOCAL_AUTHOR_PROFILE)
 
         try:
-            with open(os.path.join(self._local_book_directory, 'AuthorProfile.profile.{0}.asc'.format(self._asin)),
+            with open(os.path.join(self._basic_info['local_non_xray'],
+                                   'AuthorProfile.profile.{0}.asc'.format(self._basic_info['asin'])),
                       'w+') as author_profile:
                 json.dump(self._goodreads_data['author_profile'], author_profile)
         except OSError:
@@ -483,21 +487,23 @@ class Book(object):
             return
 
         if self._settings['send_to_device']:
-            filename = 'AuthorProfile.profile.{0}.asc'.format(self._asin)
-            local_file = os.path.join(self._local_book_directory, filename)
+            filename = 'AuthorProfile.profile.{0}.asc'.format(self._basic_info['asin'])
+            local_file = os.path.join(self._basic_info['local_non_xray'], filename)
             files_to_send['author_profile'] = {'local': local_file, 'filename': filename}
 
     def _write_start_actions(self, files_to_send):
         '''Writes start actions file using goodreads; Will save in local directory'''
         try:
-            filename = os.path.join(self._local_book_directory, 'StartActions.data.{0}.asc'.format(self._asin))
+            filename = os.path.join(self._basic_info['local_non_xray'],
+                                    'StartActions.data.{0}.asc'.format(self._basic_info['asin']))
             if os.path.exists(filename):
                 os.remove(filename)
         except OSError:
             self._statuses['start_actions'].set(StatusInfo.FAIL, StatusInfo.F_REMOVE_LOCAL_START_ACTIONS)
 
         try:
-            with open(os.path.join(self._local_book_directory, 'StartActions.data.{0}.asc'.format(self._asin)),
+            with open(os.path.join(self._basic_info['local_non_xray'],
+                                   'StartActions.data.{0}.asc'.format(self._basic_info['asin'])),
                       'w+') as start_actions:
                 json.dump(self._goodreads_data['start_actions'], start_actions)
         except OSError:
@@ -505,21 +511,23 @@ class Book(object):
             return
 
         if self._settings['send_to_device']:
-            filename = 'StartActions.data.{0}.asc'.format(self._asin)
-            local_file = os.path.join(self._local_book_directory, filename)
+            filename = 'StartActions.data.{0}.asc'.format(self._basic_info['asin'])
+            local_file = os.path.join(self._basic_info['local_non_xray'], filename)
             files_to_send['start_actions'] = {'local': local_file, 'filename': filename}
 
     def _write_end_actions(self, files_to_send):
         '''Writes end actions file using goodreads; Will save in local directory'''
         try:
-            filename = os.path.join(self._local_book_directory, 'EndActions.data.{0}.asc'.format(self._asin))
+            filename = os.path.join(self._basic_info['local_non_xray'],
+                                    'EndActions.data.{0}.asc'.format(self._basic_info['asin']))
             if os.path.exists(filename):
                 os.remove(filename)
         except OSError:
             self._statuses['end_actions'].set(StatusInfo.FAIL, StatusInfo.F_REMOVE_LOCAL_END_ACTIONS)
 
         try:
-            with open(os.path.join(self._local_book_directory, 'EndActions.data.{0}.asc'.format(self._asin)),
+            with open(os.path.join(self._basic_info['local_non_xray'],
+                                   'EndActions.data.{0}.asc'.format(self._basic_info['asin'])),
                       'w+') as end_actions:
                 json.dump(self._goodreads_data['end_actions'], end_actions)
         except OSError:
@@ -527,13 +535,13 @@ class Book(object):
             return
 
         if self._settings['send_to_device']:
-            filename = 'EndActions.data.{0}.asc'.format(self._asin)
-            local_file = os.path.join(self._local_book_directory, filename)
+            filename = 'EndActions.data.{0}.asc'.format(self._basic_info['asin'])
+            local_file = os.path.join(self._basic_info['local_non_xray'], filename)
             files_to_send['end_actions'] = {'local': local_file, 'filename': filename}
 
     def _check_fmts_for_create_event(self, device_books, files_to_send):
         '''Compiles dict of file type info to use when creating files'''
-        if len(device_books) == 0 or not device_books.has_key(self._book_id):
+        if len(device_books) == 0 or not device_books.has_key(self._basic_info['book_id']):
             if self._settings['create_send_xray'] and self.xray_formats_not_failing_exist():
                 self._statuses['xray_send'].set(StatusInfo.FAIL, StatusInfo.F_BOOK_NOT_ON_DEVICE)
             if (self._settings['create_send_author_profile'] and
@@ -551,9 +559,10 @@ class Book(object):
                     del files_to_send['end_actions']
             return
 
-        self._device_sdr = device_books[self._book_id][device_books[self._book_id].keys()[0]]['device_sdr']
-        if not os.path.exists(self._device_sdr):
-            os.mkdir(self._device_sdr)
+        first_fmt = device_books[self._basic_info['book_id']].keys()[0]
+        self._basic_info['device_sdr'] = device_books[self._basic_info['book_id']][first_fmt]['device_sdr']
+        if not os.path.exists(self._basic_info['device_sdr']):
+            os.mkdir(self._basic_info['device_sdr'])
 
         if self._settings['create_send_xray'] and self.xray_formats_not_failing_exist():
             # figure out which format to send
@@ -562,7 +571,7 @@ class Book(object):
     def _check_xray_format_to_create(self, device_books, files_to_send):
         '''Compiles dict of file type to use for x-ray'''
         formats_not_failing = [fmt for fmt, info in self.xray_formats_not_failing()]
-        formats_on_device = device_books[self._book_id].keys()
+        formats_on_device = device_books[self._basic_info['book_id']].keys()
         common_formats = list(set(formats_on_device).intersection(formats_not_failing))
 
         if len(common_formats) == 0:
@@ -579,7 +588,7 @@ class Book(object):
                     info['status'].status = StatusInfo.SUCCESS
                     continue
 
-                filename = 'XRAY.entities.{0}.asc'.format(self._asin)
+                filename = 'XRAY.entities.{0}.asc'.format(self._basic_info['asin'])
                 local_file = os.path.join(info['local_xray'], filename)
                 files_to_send['xray'] = {'local': local_file, 'filename': filename, 'format': format_picked}
 
@@ -590,7 +599,7 @@ class Book(object):
         create_start_actions = False
         create_end_actions = False
 
-        if not device_books.has_key(self._book_id):
+        if not device_books.has_key(self._basic_info['book_id']):
             if self._settings['create_send_xray']:
                 self._statuses['xray_send'].set(StatusInfo.FAIL, StatusInfo.F_BOOK_NOT_ON_DEVICE)
             if self._settings['create_send_author_profile']:
@@ -601,9 +610,10 @@ class Book(object):
                 self._statuses['end_actions_send'].set(StatusInfo.FAIL, StatusInfo.F_BOOK_NOT_ON_DEVICE)
             return create_xray, create_author_profile, create_start_actions, create_end_actions
 
-        self._device_sdr = device_books[self._book_id][device_books[self._book_id].keys()[0]]['device_sdr']
-        if not os.path.exists(self._device_sdr):
-            os.mkdir(self._device_sdr)
+        first_fmt = device_books[self._basic_info['book_id']].keys()[0]
+        self._basic_info['device_sdr'] = device_books[self._basic_info['book_id']][first_fmt]['device_sdr']
+        if not os.path.exists(self._basic_info['device_sdr']):
+            os.mkdir(self._basic_info['device_sdr'])
 
         if self._settings['create_send_xray']:
             # figure out which format to send
@@ -620,7 +630,7 @@ class Book(object):
     def _check_xray_fmt_for_send(self, device_books, files_to_send):
         '''Check if there's a valid x-ray to send'''
         formats_not_failing = [fmt for fmt, info in self._xray_format_information.items()]
-        formats_on_device = device_books[self._book_id].keys()
+        formats_on_device = device_books[self._basic_info['book_id']].keys()
         common_formats = list(set(formats_on_device).intersection(formats_not_failing))
 
         if len(common_formats) == 0:
@@ -632,9 +642,10 @@ class Book(object):
             if len(common_formats) == 1:
                 format_picked = common_formats[0]
 
-            filename = 'XRAY.entities.{0}.asc'.format(self._asin)
+            filename = 'XRAY.entities.{0}.asc'.format(self._basic_info['asin'])
             local_file = os.path.join(self._xray_format_information[format_picked]['local_xray'], filename)
-            if os.path.exists(os.path.join(self._device_sdr, filename)) and not self._settings['overwrite_when_sending']:
+            if (os.path.exists(os.path.join(self._basic_info['device_sdr'], filename)) and not
+                    self._settings['overwrite_when_sending']):
                 self._statuses['xray_send'].set(StatusInfo.FAIL, StatusInfo.F_PREFS_NOT_OVERWRITE_DEVICE_XRAY)
             else:
                 if os.path.exists(local_file):
@@ -648,9 +659,10 @@ class Book(object):
 
     def _check_author_profile_for_send(self, files_to_send):
         '''Check if there's a valid author profile to send'''
-        filename = 'AuthorProfile.profile.{0}.asc'.format(self._asin)
-        local_file = os.path.join(self._local_book_directory, filename)
-        if os.path.exists(os.path.join(self._device_sdr, filename)) and not self._settings['overwrite_when_sending']:
+        filename = 'AuthorProfile.profile.{0}.asc'.format(self._basic_info['asin'])
+        local_file = os.path.join(self._basic_info['local_non_xray'], filename)
+        if (os.path.exists(os.path.join(self._basic_info['device_sdr'], filename)) and not
+                self._settings['overwrite_when_sending']):
             self._statuses['author_profile_send'].set(StatusInfo.FAIL,
                                                       StatusInfo.F_PREFS_NOT_OVERWRITE_DEVICE_AUTHOR_PROFILE)
         else:
@@ -665,9 +677,10 @@ class Book(object):
 
     def _check_start_actions_for_send(self, files_to_send):
         '''Check if there's a valid start actions file to send'''
-        filename = 'StartActions.data.{0}.asc'.format(self._asin)
-        local_file = os.path.join(self._local_book_directory, filename)
-        if os.path.exists(os.path.join(self._device_sdr, filename)) and not self._settings['overwrite_when_sending']:
+        filename = 'StartActions.data.{0}.asc'.format(self._basic_info['asin'])
+        local_file = os.path.join(self._basic_info['local_non_xray'], filename)
+        if (os.path.exists(os.path.join(self._basic_info['device_sdr'], filename)) and not
+                self._settings['overwrite_when_sending']):
             self._statuses['start_actions_send'].set(StatusInfo.FAIL, StatusInfo.F_PREFS_NOT_OVERWRITE_DEVICE_START_ACTIONS)
         else:
             if os.path.exists(local_file):
@@ -681,9 +694,10 @@ class Book(object):
 
     def _check_end_actions_for_send(self, files_to_send):
         '''Check if there's a valid end actions file to send'''
-        filename = 'EndActions.data.{0}.asc'.format(self._asin)
-        local_file = os.path.join(self._local_book_directory, filename)
-        if os.path.exists(os.path.join(self._device_sdr, filename)) and not self._settings['overwrite_when_sending']:
+        filename = 'EndActions.data.{0}.asc'.format(self._basic_info['asin'])
+        local_file = os.path.join(self._basic_info['local_non_xray'], filename)
+        if (os.path.exists(os.path.join(self._basic_info['device_sdr'], filename)) and not
+                self._settings['overwrite_when_sending']):
             self._statuses['end_actions_send'].set(StatusInfo.FAIL, StatusInfo.F_PREFS_NOT_OVERWRITE_DEVICE_END_ACTIONS)
         else:
             if os.path.exists(local_file):
@@ -698,12 +712,12 @@ class Book(object):
     def _send_files(self, device_books, files_to_send):
         '''Sends files to device depending on list compiled in files_to_send'''
         number_of_failed_asin_updates = 0
-        formats_on_device = device_books[self._book_id].keys()
+        formats_on_device = device_books[self._basic_info['book_id']].keys()
         try:
             for fmt in formats_on_device:
-                with open(device_books[self._book_id][fmt]['device_book'], 'r+b') as stream:
+                with open(device_books[self._basic_info['book_id']][fmt]['device_book'], 'r+b') as stream:
                     mobi_updater = ASINUpdater(stream)
-                    mobi_updater.update(self._asin)
+                    mobi_updater.update(self._basic_info['asin'])
         except MobiError:
             number_of_failed_asin_updates += 1
             if (self._settings['create_send_xray'] and self._settings['send_to_device'].has_key('xray') and
@@ -727,10 +741,10 @@ class Book(object):
 
     def _send_file(self, filetype, info):
         '''Send file to device and update status accordingly'''
-        device_filename = os.path.join(self._device_sdr, info['filename'])
+        device_filename = os.path.join(self._basic_info['device_sdr'], info['filename'])
         if os.path.exists(device_filename):
             os.rename(device_filename, '{0}.old'.format(device_filename))
-        copy(info['local'], self._device_sdr)
+        copy(info['local'], self._basic_info['device_sdr'])
 
         if os.path.exists(device_filename):
             if os.path.exists('{0}.old'.format(device_filename)):
