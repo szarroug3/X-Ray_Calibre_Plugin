@@ -3,7 +3,7 @@
 
 import os
 import re
-from struct import unpack
+from struct import unpack, error
 from random import randrange
 
 from calibre.ebooks.mobi import MobiError
@@ -53,49 +53,17 @@ class BookParser(object):
 
     def parse(self):
         '''Parses book'''
-
-        escaped_word_list = [re.escape(word) for word in self._aliases.keys() + self._entity_data.keys()]
-        word_pat = re.compile(r'(\b' + r'\b|\b'.join(escaped_word_list) + r'\b)', re.I)
         erl, codec = self.find_erl_and_encoding()
-        paragraph_data = self._get_paragraph_data(codec)
+        notable_clips, excerpt_data = self._parse_paragraph_data(codec)
 
-        # get db data
-        excerpt_id = 0
-        excerpt_data = {}
-        notable_clips = []
-        for word_loc, para_start in paragraph_data:
-            rel_ent = []
-            if len(self._entity_data.keys()) > 0:
-            # for each match found, fill in entity_data and excerpt_data information
-                for match in re.finditer(word_pat, word_loc['words']):
-                    matched_word = match.group(1).decode(codec).lower()
-                    if matched_word in self._entity_data.keys():
-                        term = self._entity_data[matched_word]
-                    elif matched_word in self._aliases.keys():
-                        term = self._entity_data[self._aliases[matched_word]]
-                    entity_id = term['entity_id']
-                    term['mentions'] += 1
-                    term['excerpt_ids'].append(excerpt_id)
-                    word_start = self._find_start(match.start(0), word_loc['words'])
-                    word_len = self._find_len_word(match.start(0), match.end(0), word_loc)
-                    term['occurrence'].append({'loc': word_loc['locs'][word_start],
-                                               'len': word_len})
-                    if entity_id not in rel_ent:
-                        rel_ent.append(entity_id)
-            for quote in self._quotes:
-                if quote.lower() in word_loc['words'].lower() and excerpt_id not in notable_clips:
-                    notable_clips.append(excerpt_id)
-            excerpt_data[excerpt_id] = {'loc': para_start, 'len': self._find_len_excerpt(word_loc),
-                                        'related_entities': rel_ent}
-            excerpt_id += 1
-
+        num_excerpts = len(excerpt_data)
         # add random excerpts to make sure notable clips has at least 20 excerpts
-        if len(notable_clips) + excerpt_id >= 20:
+        if len(notable_clips) + num_excerpts >= 20:
             num_of_notable_clips = 20
         else:
-            num_of_notable_clips = len(notable_clips) + excerpt_id
+            num_of_notable_clips = len(notable_clips) + num_excerpts
         while len(notable_clips) < num_of_notable_clips:
-            rand_excerpt = randrange(0, excerpt_id - 1)
+            rand_excerpt = randrange(0, num_excerpts - 1)
             if rand_excerpt not in notable_clips:
                 notable_clips.append(rand_excerpt)
 
@@ -105,7 +73,34 @@ class BookParser(object):
                              'entity_data': self._entity_data,
                              'codec': codec}
 
+    def _parse_paragraph_data(self, codec):
+        '''Parses paragraph data in book'''
+        escaped_word_list = [re.escape(word) for word in self._aliases.keys() + self._entity_data.keys()]
+        word_pat = re.compile(r'(\b' + r'\b|\b'.join(escaped_word_list) + r'\b)', re.I)
+
+        # get db data
+        excerpt_id = 0
+        excerpt_data = {}
+        notable_clips = []
+        for word_loc, para_start in self._get_paragraph_data(codec):
+            related_entities = []
+            if len(self._entity_data.keys()) > 0:
+            # for each match found, fill in entity_data and excerpt_data information
+                for match in re.finditer(word_pat, word_loc['words']):
+                    entity_id = self._process_match(match, codec, excerpt_id, word_loc)
+                    if entity_id not in related_entities:
+                        related_entities.append(entity_id)
+            for quote in self._quotes:
+                if quote.lower() in word_loc['words'].lower() and excerpt_id not in notable_clips:
+                    notable_clips.append(excerpt_id)
+            excerpt_data[excerpt_id] = {'loc': para_start, 'len': self._find_len_excerpt(word_loc),
+                                        'related_entities': related_entities}
+            excerpt_id += 1
+
+        return notable_clips, excerpt_data
+
     def _get_paragraph_data(self, codec):
+        '''Gets paragraphs from book'''
         paragraph_data = []
         book_html = MobiExtractor(self._book_path, open(os.devnull, 'w')).extract_text()
 
@@ -127,6 +122,19 @@ class BookParser(object):
 
         return paragraph_data
 
+    def _process_match(self, match, codec, excerpt_id, word_loc):
+        matched_word = match.group(1).decode(codec).lower()
+        if matched_word in self._entity_data.keys():
+            term = self._entity_data[matched_word]
+        elif matched_word in self._aliases.keys():
+            term = self._entity_data[self._aliases[matched_word]]
+        entity_id = term['entity_id']
+        term['mentions'] += 1
+        term['excerpt_ids'].append(excerpt_id)
+        word_start = self._find_start(match.start(0), word_loc['words'])
+        term['occurrence'].append({'loc': word_loc['locs'][word_start],
+                                   'len': self._find_len_word(match.start(0), match.end(0), word_loc)})
+        return entity_id
 
     @staticmethod
     def _find_start(start, string):
@@ -179,11 +187,14 @@ class BookParser(object):
         with open(self._book_path, 'rb') as fname:
             book_data = fname.read()
 
-        nrecs, = unpack('>H', book_data[76:78])
-        recs_start = 78 + (nrecs * 8) + 2
-        erl, = unpack('>L', book_data[recs_start + 4:recs_start + 8])
-        codec = 'latin-1' if unpack('>L', book_data[recs_start + 28:recs_start + 32])[0] == 1252 else 'utf8'
-        return erl, codec
+        try:
+            nrecs, = unpack('>H', book_data[76:78])
+            recs_start = 78 + (nrecs * 8) + 2
+            erl, = unpack('>L', book_data[recs_start + 4:recs_start + 8])
+            codec = 'latin-1' if unpack('>L', book_data[recs_start + 28:recs_start + 32])[0] == 1252 else 'utf8'
+            return erl, codec
+        except error:
+            raise MobiError
 
 class MobiExtractor(MobiReader):
     '''Reads MOBI file'''

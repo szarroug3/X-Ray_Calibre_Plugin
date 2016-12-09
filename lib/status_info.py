@@ -14,6 +14,7 @@ class StatusInfo(object):
     F_COULD_NOT_FIND_ASIN = 'Could not find ASIN.'
     F_COULD_NOT_FIND_GOODREADS_PAGE = 'Could not find Goodreads page.'
     F_LOCAL_BOOK_NOT_FOUND = 'Local book not found.'
+    F_NO_APPROPRIATE_LOCAL_BOOK_FOUND = 'No local book of the chosen formats was found.'
     F_COULD_NOT_PARSE_GOODREADS_DATA = 'Could not parse Goodreads data.'
     F_UNABLE_TO_PARSE_BOOK = 'Unable to parse book.'
     F_REMOVE_LOCAL_XRAY = 'Unable to remove local x-ray.'

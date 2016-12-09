@@ -32,25 +32,37 @@ __prefs__.defaults['mobi'] = True
 __prefs__.defaults['azw3'] = True
 __prefs__.defaults['tld'] = None
 
+if __prefs__.has_key('mobi') and __prefs__.has_key('azw3'):
+    __prefs__['formats'] = [ftype for ftype in ['mobi', 'azw3'] if __prefs__[ftype]]
+else:
+    __prefs__['formats'] = ['mobi', 'azw3']
+
 class ConfigWidget(QWidget):
     '''Creates general preferences dialog'''
     def __init__(self):
         QWidget.__init__(self)
 
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
+        layout = QVBoxLayout()
+        self.setLayout(layout)
 
-        self.send_to_device = QCheckBox('Send x-ray to device if connected')
-        self.send_to_device.setChecked(__prefs__['send_to_device'])
-        self.layout.addWidget(self.send_to_device)
+        self._initialize_general(layout)
+        self._intialize_file_settings(layout)
+        self._initialize_file_type_settings(layout)
 
-        self.create_files_when_sending = QCheckBox('Create x-ray for files that don\'t '
-                                                   'already have them when sending to device')
-        self.create_files_when_sending.setChecked(__prefs__['create_files_when_sending'])
-        self.layout.addWidget(self.create_files_when_sending)
+    def _initialize_general(self, layout):
+        '''Initialize general settings'''
+        self._settings = {}
+        self._settings['send_to_device'] = QCheckBox('Send x-ray to device if connected')
+        self._settings['send_to_device'].setChecked(__prefs__['send_to_device'])
+        layout.addWidget(self._settings['send_to_device'])
 
-        self.expand_aliases = QCheckBox('Auto associate split aliases [?]')
-        self.expand_aliases.setChecked(__prefs__['expand_aliases'])
+        self._settings['create_files_when_sending'] = QCheckBox('Create files for books that don\'t '
+                                                                'already have them when sending to device')
+        self._settings['create_files_when_sending'].setChecked(__prefs__['create_files_when_sending'])
+        layout.addWidget(self._settings['create_files_when_sending'])
+
+        self._settings['expand_aliases'] = QCheckBox('Auto associate split aliases [?]')
+        self._settings['expand_aliases'].setChecked(__prefs__['expand_aliases'])
         expand_alias_explanation = ('When enabled, this will split aliases up further.\n\n'
                                     'Example: If a character on goodreads named "Vin" has a'
                                     'Goodreads alias of "Valette\nRenoux",  this option will '
@@ -58,104 +70,106 @@ class ConfigWidget(QWidget):
                                     'this in cases such as "Timothy Cratchit" who has a '
                                     'Goodreads alias of "Tiny Tim".\nHaving this feature on '
                                     'would add "Tiny", and "Tim" as aliases which is not valid.')
-        self.expand_aliases.setWhatsThis(expand_alias_explanation)
-        self.expand_aliases.setToolTip(expand_alias_explanation)
-        self.layout.addWidget(self.expand_aliases)
+        self._settings['expand_aliases'].setWhatsThis(expand_alias_explanation)
+        self._settings['expand_aliases'].setToolTip(expand_alias_explanation)
+        layout.addWidget(self._settings['expand_aliases'])
 
-        self.overwrite_when_creating = QCheckBox('Overwrite local files that already exist when creating files')
-        self.overwrite_when_creating.setChecked(__prefs__['overwrite_when_creating'])
-        self.layout.addWidget(self.overwrite_when_creating)
+        self._settings['overwrite_when_creating'] = QCheckBox('Overwrite local files when creating files')
+        self._settings['overwrite_when_creating'].setChecked(__prefs__['overwrite_when_creating'])
+        layout.addWidget(self._settings['overwrite_when_creating'])
 
-        self.overwrite_when_sending = QCheckBox('Overwrite files on device that already exist when sending files')
-        self.overwrite_when_sending.setChecked(__prefs__['overwrite_when_sending'])
-        self.layout.addWidget(self.overwrite_when_sending)
+        self._settings['overwrite_when_sending'] = QCheckBox('Overwrite files on device when sending files')
+        self._settings['overwrite_when_sending'].setChecked(__prefs__['overwrite_when_sending'])
+        layout.addWidget(self._settings['overwrite_when_sending'])
 
-        self.separator_a = QFrame()
-        self.separator_a.setFrameStyle(QFrame.HLine)
-        self.separator_a.setFrameShadow(QFrame.Sunken)
-        self.layout.addWidget(self.separator_a)
+    def _intialize_file_settings(self, layout):
+        '''Initialize file creation/sending settings'''
+        separator_a = QFrame()
+        separator_a.setFrameStyle(QFrame.HLine)
+        separator_a.setFrameShadow(QFrame.Sunken)
+        layout.addWidget(separator_a)
 
-        self.files_to_create = QGroupBox()
-        self.files_to_create.setTitle('Files to create/send')
-        self.files_to_create.setLayout(QGridLayout(self.files_to_create))
+        files_to_create = QGroupBox()
+        files_to_create.setTitle('Files to create/send')
+        files_to_create.setLayout(QGridLayout(files_to_create))
 
-        self.create_send_xray = QCheckBox('X-Ray')
-        self.create_send_xray.setChecked(__prefs__['create_send_xray'])
-        self.files_to_create.layout().addWidget(self.create_send_xray, 0, 0)
+        self._settings['create_send_xray'] = QCheckBox('X-Ray')
+        self._settings['create_send_xray'].setChecked(__prefs__['create_send_xray'])
+        files_to_create.layout().addWidget(self._settings['create_send_xray'], 0, 0)
 
-        self.create_send_author_profile = QCheckBox('Author Profile')
-        self.create_send_author_profile.setChecked(__prefs__['create_send_author_profile'])
-        self.files_to_create.layout().addWidget(self.create_send_author_profile, 1, 0)
+        self._settings['create_send_author_profile'] = QCheckBox('Author Profile')
+        self._settings['create_send_author_profile'].setChecked(__prefs__['create_send_author_profile'])
+        files_to_create.layout().addWidget(self._settings['create_send_author_profile'], 1, 0)
 
-        self.create_send_start_actions = QCheckBox('Start Actions')
-        self.create_send_start_actions.setChecked(__prefs__['create_send_start_actions'])
-        self.files_to_create.layout().addWidget(self.create_send_start_actions, 0, 1)
+        self._settings['create_send_start_actions'] = QCheckBox('Start Actions')
+        self._settings['create_send_start_actions'].setChecked(__prefs__['create_send_start_actions'])
+        files_to_create.layout().addWidget(self._settings['create_send_start_actions'], 0, 1)
 
-        self.create_send_end_actions = QCheckBox('End Actions')
-        self.create_send_end_actions.setChecked(__prefs__['create_send_end_actions'])
-        self.files_to_create.layout().addWidget(self.create_send_end_actions, 1, 1)
-        self.layout.addWidget(self.files_to_create)
+        self._settings['create_send_end_actions'] = QCheckBox('End Actions')
+        self._settings['create_send_end_actions'].setChecked(__prefs__['create_send_end_actions'])
+        files_to_create.layout().addWidget(self._settings['create_send_end_actions'], 1, 1)
+        layout.addWidget(files_to_create)
 
-        self.separator_b = QFrame()
-        self.separator_b.setFrameStyle(QFrame.HLine)
-        self.separator_b.setFrameShadow(QFrame.Sunken)
-        self.layout.addWidget(self.separator_b)
+    def _initialize_file_type_settings(self, layout):
+        '''Initialize file creation/sending type settings'''
+        separator_b = QFrame()
+        separator_b.setFrameStyle(QFrame.HLine)
+        separator_b.setFrameShadow(QFrame.Sunken)
+        layout.addWidget(separator_b)
 
-        self.book_types_to_create = QGroupBox()
-        self.book_types_to_create.setTitle('Book types to create files for:')
-        self.book_types_to_create.setLayout(QHBoxLayout(self.book_types_to_create))
+        book_types_to_create = QGroupBox()
+        book_types_to_create.setTitle('Book types to create files for:')
+        book_types_to_create.setLayout(QHBoxLayout(book_types_to_create))
 
-        self.mobi = QCheckBox('MOBI')
-        self.mobi.setChecked(__prefs__['mobi'])
-        self.book_types_to_create.layout().addWidget(self.mobi)
+        self._settings['mobi'] = QCheckBox('MOBI')
+        self._settings['mobi'].setChecked('mobi' in __prefs__['formats'])
+        book_types_to_create.layout().addWidget(self._settings['mobi'])
 
-        self.azw3 = QCheckBox('AZW3')
-        self.azw3.setChecked(__prefs__['azw3'])
-        self.book_types_to_create.layout().addWidget(self.azw3)
-        self.layout.addWidget(self.book_types_to_create)
+        self._settings['azw3'] = QCheckBox('AZW3')
+        self._settings['azw3'].setChecked('azw3' in __prefs__['formats'])
+        book_types_to_create.layout().addWidget(self._settings['azw3'])
+        layout.addWidget(book_types_to_create)
 
-        self.file_preference_layout = QGroupBox()
-        self.file_preference_layout.setTitle('If device has both (mobi and azw3) formats, prefer:')
-        self.file_preference_layout.setLayout(QHBoxLayout(self.file_preference_layout))
+        file_preference_layout = QGroupBox()
+        file_preference_layout.setTitle('If device has both (mobi and azw3) formats, prefer:')
+        file_preference_layout.setLayout(QHBoxLayout(file_preference_layout))
 
-        self.file_preference_group = QButtonGroup()
-        self.file_preference_mobi = QRadioButton('MOBI')
-        self.file_preference_mobi.setChecked(__prefs__['file_preference'] == 'mobi')
-        self.file_preference_group.addButton(self.file_preference_mobi)
-        self.file_preference_layout.layout().addWidget(self.file_preference_mobi)
+        file_preference_group = QButtonGroup()
+        self._settings['file_preference_mobi'] = QRadioButton('MOBI')
+        self._settings['file_preference_mobi'].setChecked(__prefs__['file_preference'] == 'mobi')
+        file_preference_group.addButton(self._settings['file_preference_mobi'])
+        file_preference_layout.layout().addWidget(self._settings['file_preference_mobi'])
 
-        self.file_preference_azw3 = QRadioButton('AZW3')
-        self.file_preference_azw3.setChecked(__prefs__['file_preference'] == 'azw3')
-        self.file_preference_group.addButton(self.file_preference_azw3)
-        self.file_preference_layout.layout().addWidget(self.file_preference_azw3)
-        self.layout.addWidget(self.file_preference_layout)
+        self._settings['file_preference_azw3'] = QRadioButton('AZW3')
+        self._settings['file_preference_azw3'].setChecked(__prefs__['file_preference'] == 'azw3')
+        file_preference_group.addButton(self._settings['file_preference_azw3'])
+        file_preference_layout.layout().addWidget(self._settings['file_preference_azw3'])
+        layout.addWidget(file_preference_layout)
 
     def validate(self):
         '''Validates current settings; Errors if there's a problem'''
-        if (not self.create_send_xray.isChecked() and not self.create_send_author_profile.isChecked()
-                and not self.create_send_start_actions.isChecked() and not self.create_send_end_actions.isChecked()):
+        if (not self._settings['create_send_xray'].isChecked()
+                and not self._settings['create_send_author_profile'].isChecked()
+                and not self._settings['create_send_start_actions'].isChecked()
+                and not self._settings['create_send_end_actions'].isChecked()):
             error_dialog(self, 'Invalid preferences.', 'You have chosen no files to create/send.', show=True)
             return False
 
-        if not self.mobi.isChecked() and not self.azw3.isChecked():
+        if not self._settings['mobi'].isChecked() and not self._settings['azw3'].isChecked():
             error_dialog(self, 'Invalid preferences.', 'You have chosen no book formats to create files for.', show=True)
             return False
         return True
 
     def save_settings(self):
         '''Saves current settings into preferences json file'''
-        __prefs__['send_to_device'] = self.send_to_device.isChecked()
-        __prefs__['create_files_when_sending'] = self.create_files_when_sending.isChecked()
-        __prefs__['expand_aliases'] = self.expand_aliases.isChecked()
-        __prefs__['overwrite_when_creating'] = self.overwrite_when_creating.isChecked()
-        __prefs__['overwrite_when_sending'] = self.overwrite_when_sending.isChecked()
-        __prefs__['create_send_xray'] = self.create_send_xray.isChecked()
-        __prefs__['create_send_author_profile'] = self.create_send_author_profile.isChecked()
-        __prefs__['create_send_start_actions'] = self.create_send_start_actions.isChecked()
-        __prefs__['create_send_end_actions'] = self.create_send_end_actions.isChecked()
-        if self.file_preference_mobi.isChecked():
+        special = ['file_preference_azw3', 'file_preference_mobi', 'mobi', 'azw3']
+        for setting, value in self._settings.items():
+            if setting not in special:
+                __prefs__[setting] = value.isChecked()
+
+        if self._settings['file_preference_mobi'].isChecked():
             __prefs__['file_preference'] = 'mobi'
-        elif self.file_preference_azw3.isChecked():
+        elif self._settings['file_preference_azw3'].isChecked():
             __prefs__['file_preference'] = 'azw3'
-        __prefs__['mobi'] = self.mobi.isChecked()
-        __prefs__['azw3'] = self.azw3.isChecked()
+
+        __prefs__['formats'] = [fmt for fmt in ['mobi', 'azw3'] if self._settings[fmt].isChecked()]
