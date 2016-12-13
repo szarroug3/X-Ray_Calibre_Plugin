@@ -23,11 +23,10 @@ class Book(object):
     '''Class to hold book information and creates/sends files depending on user settings'''
 
     def __init__(self, database, book_id, connections, settings):
-        self._basic_info = {'book_id': book_id}
+        self._basic_info = {'book_id': book_id, 'xray_send_fmt': None}
         self._goodreads_conn = connections['goodreads']
         self._settings = settings
         self._xray_format_information = None
-        self._xray_send_fmt = None
         self._statuses = {'general': StatusInfo(status=StatusInfo.IN_PROGRESS),
                           'xray': StatusInfo(), 'xray_send': StatusInfo(),
                           'author_profile': StatusInfo(), 'author_profile_send': StatusInfo(),
@@ -55,7 +54,7 @@ class Book(object):
 
     @property
     def xray_send_fmt(self):
-        return self._xray_send_fmt
+        return self._basic_info['xray_send_fmt']
 
     @property
     def author_profile_status(self):
@@ -182,9 +181,10 @@ class Book(object):
         if self._settings['create_send_end_actions']:
             self._statuses['end_actions'].status = StatusInfo.IN_PROGRESS
 
-    def create_files_event(self, device_books, perc, total, log, notifications, abort):
+    def create_files_event(self, create_file_params, log, notifications, abort):
         '''Creates and sends files depending on user's settings'''
         title_and_author = self.title_and_author
+        device_books, perc, total = create_file_params
 
         # Prep
         if not self._settings['overwrite_when_creating']:
@@ -289,8 +289,10 @@ class Book(object):
             perc += 1
         return files_to_send
 
-    def send_files_event(self, device_books, log, notifications, abort, book_num=None, total=None):
+    def send_files_event(self, send_file_params, log, notifications, abort):
         '''Sends files to device depending on user's settings'''
+        device_books, book_num, total = send_file_params
+
         if abort.isSet():
             return
 
@@ -719,7 +721,7 @@ class Book(object):
             if (self._settings['create_send_xray'] and self._settings['send_to_device'].has_key('xray') and
                     fmt == self._settings['send_to_device']['xray']['format']):
                 self._statuses['xray_send'].set(StatusInfo.FAIL, StatusInfo.F_UNABLE_TO_UPDATE_ASIN)
-                self._xray_send_fmt = files_to_send['xray']['format']
+                self._basic_info['xray_send_fmt'] = files_to_send['xray']['format']
                 if files_to_send.has_key('xray'):
                     del files_to_send['xray']
             if number_of_failed_asin_updates == len(formats_on_device):
@@ -747,7 +749,7 @@ class Book(object):
                 os.remove('{0}.old'.format(device_filename))
             if filetype == 'xray':
                 self._statuses['xray_send'].status = StatusInfo.SUCCESS
-                self._xray_send_fmt = info['format']
+                self._basic_info['xray_send_fmt'] = info['format']
             elif filetype == 'author_profile':
                 self._statuses['author_profile_send'].status = StatusInfo.SUCCESS
             elif filetype == 'start_actions':
@@ -758,7 +760,7 @@ class Book(object):
             os.rename('{0}.old'.format(device_filename), device_filename)
             if filetype == 'xray':
                 self._statuses['xray_send'].set(StatusInfo.FAIL, StatusInfo.F_UNABLE_TO_SEND_XRAY)
-                self._xray_send_fmt = self._xray_send_fmt
+                self._basic_info['xray_send_fmt'] = self._basic_info['xray_send_fmt']
             elif filetype == 'author_profile':
                 self._statuses['author_profile_send'].set(StatusInfo.FAIL, StatusInfo.F_UNABLE_TO_SEND_AUTHOR_PROFILE)
             elif filetype == 'start_actions':
