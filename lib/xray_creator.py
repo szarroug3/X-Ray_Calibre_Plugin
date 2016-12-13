@@ -280,7 +280,7 @@ class XRayCreator(object):
             if abort.isSet():
                 return
             log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
-            book.create_files_event(device_books, book_num * actions, total_not_failing_actions, log,
+            book.create_files_event((device_books, book_num * actions, total_not_failing_actions), log,
                                     notifications, abort)
 
         self.print_create_results(log, device_books)
@@ -336,8 +336,7 @@ class XRayCreator(object):
             if abort.isSet():
                 return
             log('%s %s' % (datetime.now().strftime('%m-%d-%Y %H:%M:%S'), book.title_and_author))
-            book.send_files_event(device_books, log, notifications, abort, book_num=float(book_num),
-                                  total=self._total_not_failing)
+            book.send_files_event((device_books, float(book_num), self._total_not_failing), log, notifications, abort)
 
         send_completed, send_failed = self.get_results_send()
         if len(send_completed) > 0:
