@@ -62,9 +62,8 @@ class GoodreadsParser(object):
 
     def _get_xray(self):
         '''Gets x-ray data from goodreads and creates x-ray dict'''
-        entity_id = 1
-        characters = self.get_characters(entity_id)
-        settings = self.get_settings(entity_id)
+        characters = self.get_characters(1)
+        settings = self.get_settings(len(characters)+1)
         quotes = self._get_quotes()
         return self._compile_xray(characters, settings, quotes)
 
