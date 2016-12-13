@@ -62,9 +62,8 @@ class GoodreadsParser(object):
 
     def _get_xray(self):
         '''Gets x-ray data from goodreads and creates x-ray dict'''
-        entity_id = 1
-        characters = self.get_characters(entity_id)
-        settings = self.get_settings(entity_id)
+        characters = self.get_characters(1)
+        settings = self.get_settings(len(characters)+1)
         quotes = self._get_quotes()
         return self._compile_xray(characters, settings, quotes)
 
@@ -197,13 +196,15 @@ class GoodreadsParser(object):
 
             desc = char_page.xpath('//div[@class="workCharacterAboutClear"]/text()')
             if len(desc) > 0 and re.sub(r'\s+', ' ', desc[0]).strip():
-                desc = re.sub(r'\s+', ' ', desc[0]).strip()
+                desc = re.sub(r'\s+', ' ', desc[0]).strip().decode('utf-8').encode('latin-1')
             else:
                 desc = 'No description found on Goodreads.'
-
+            print char.text.decode('utf-8').encode('latin-1'), desc
             alias_list = [re.sub(r'\s+', ' ', x).strip() for x in char_page.xpath('//div[@class="grey500BoxContent" and contains(.,"aliases")]/text()') if re.sub(r'\s+', ' ', x).strip()]
             alias_list = [alias for aliases in alias_list for alias in aliases.split(',')]
-            character_data[entity_id] = {'label': char.text, 'description': desc, 'aliases': alias_list}
+            character_data[entity_id] = {'label': char.text.decode('utf-8').encode('latin-1'),
+                                         'description': desc,
+                                         'aliases': alias_list}
             entity_id += 1
 
         if self._expand_aliases:
@@ -317,8 +318,13 @@ class GoodreadsParser(object):
             if setting_page is None:
                 continue
             desc = setting_page.xpath('//div[@class="mainContentContainer "]/div[@class="mainContent"]/div[@class="mainContentFloat"]/div[@class="leftContainer"]/span/text()')
-            desc = desc[0] if len(desc) > 0 and desc[0].strip() else 'No description found on Goodreads.'
-            settings_data[entity_id] = {'label': label, 'description': desc, 'aliases': []}
+            if len(desc) > 0 and re.sub(r'\s+', ' ', desc[0]).strip():
+                desc = re.sub(r'\s+', ' ', desc[0]).strip().decode('utf-8').encode('latin-1')
+            else:
+                desc = 'No description found on Goodreads.'
+            settings_data[entity_id] = {'label': label.decode('utf-8').encode('latin-1'),
+                                        'description': desc,
+                                        'aliases': []}
             entity_id += 1
 
         return settings_data

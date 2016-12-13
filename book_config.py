@@ -159,6 +159,7 @@ class BookConfigWidget(QDialog):
 
     def edit_goodreads_url(self, val, goodreads_browser_button):
         '''Sets book's goodreads_url to val and warns if the url is invalid; update goodreads browser button accordingly'''
+        self.book.goodreads_url = val
         if val == '':
             goodreads_browser_button.setEnabled(False)
             if self._status.text() == 'Warning: Invalid Goodreads URL. URL must have goodreads as the domain.':
@@ -236,7 +237,7 @@ class BookConfigWidget(QDialog):
 
         try:
             self.set_status_and_repaint('Updating aliases...')
-            self.book.update_aliases(self.goodreads_url_edit.text(), prefs['expand_aliases'])
+            self.book.update_aliases(self._goodreads_url_edit.text(), prefs['expand_aliases'])
             self.update_aliases_on_gui()
             self._status.setText('Aliases updated.')
         except PageDoesNotExist:
