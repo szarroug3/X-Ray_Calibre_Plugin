@@ -150,10 +150,14 @@ class GoodreadsParser(object):
 
         data['grokShelfInfo']['asin'] = self._asin
 
-        data['readingPages']['pagesInBook'] = reading_info['num_pages']
-        for locale, formatted_time in data['readingTime']['formattedTime'].items():
-            data['readingTime']['formattedTime'][locale] = formatted_time.format(str(reading_info['hours']),
-                                                                                 str(reading_info['minutes']))
+        if reading_info:
+            data['readingPages']['pagesInBook'] = reading_info['num_pages']
+            for locale, formatted_time in data['readingTime']['formattedTime'].items():
+                data['readingTime']['formattedTime'][locale] = formatted_time.format(str(reading_info['hours']),
+                                                                                     str(reading_info['minutes']))
+        else:
+            data['readingPages'] = None
+            data['readingTime'] = None
 
         return start_actions
 
@@ -523,11 +527,14 @@ class GoodreadsParser(object):
     def _get_num_pages_and_reading_time(self):
         '''Gets book's number of pages and time to read'''
         if self._page_source is None:
-            return
+            return None
 
-        num_pages = int(self._page_source.xpath('//span[@itemprop="numberOfPages"]')[0].text.split()[0])
-        total_minutes = num_pages * 2
-        hours = total_minutes / 60
-        reading_info = {'num_pages': num_pages, 'hours': hours, 'minutes': total_minutes - (hours * 60)}
+        num_pages = self._page_source.xpath('//span[@itemprop="numberOfPages"]')
+        if len(num_pages) > 0:
+            num_pages = int(num_pages[0].text.split()[0])
+            total_minutes = num_pages * 2
+            hours = total_minutes / 60
+            reading_info = {'num_pages': num_pages, 'hours': hours, 'minutes': total_minutes - (hours * 60)}
 
-        return reading_info
+            return reading_info
+        return None

@@ -3,6 +3,8 @@
 
 import re
 import os
+import time
+import socket
 from httplib import HTTPException
 from calibre.library import current_library_path
 from calibre_plugins.xray_creator.lib.exceptions import PageDoesNotExist
@@ -30,9 +32,8 @@ def open_url(connection, url, return_redirect_url=False):
             response = open_url(connection, response.msg['location'])
         else:
             response = response.read()
-    except PageDoesNotExist as e:
-        raise e
-    except HTTPException:
+    except (HTTPException, socket.error):
+        time.sleep(1)
         connection.close()
         connection.connect()
         connection.request('GET', url, headers=HEADERS)
@@ -43,6 +44,7 @@ def open_url(connection, url, return_redirect_url=False):
             response = open_url(connection, response.msg['location'])
         else:
             response = response.read()
+
 
     if 'Page Not Found' in response:
         raise PageDoesNotExist('Page not found.')
