@@ -143,8 +143,10 @@ class GoodreadsParser(object):
             for rec in data['authorRecs']['recommendations']:
                 rec['class'] = 'recommendation'
 
-        data['bookDescription'] = self._get_book_info_from_tooltips((self._goodreads_book_id, book_image_url))[0]
-        data['currentBook'] = data['bookDescription']
+        desc = self._get_book_info_from_tooltips((self._goodreads_book_id, book_image_url))
+        if len(desc) > 0:
+            data['bookDescription'] = desc[0]
+            data['currentBook'] = data['bookDescription']
 
         data['grokShelfInfo']['asin'] = self._asin
 
@@ -196,12 +198,12 @@ class GoodreadsParser(object):
 
             desc = char_page.xpath('//div[@class="workCharacterAboutClear"]/text()')
             if len(desc) > 0 and re.sub(r'\s+', ' ', desc[0]).strip():
-                desc = re.sub(r'\s+', ' ', desc[0]).strip().decode('utf-8').encode('latin-1')
+                desc = unicode(re.sub(r'\s+', ' ', desc[0]).strip().decode('utf-8').encode('latin-1'))
             else:
-                desc = 'No description found on Goodreads.'
+                desc = u'No description found on Goodreads.'
             alias_list = [re.sub(r'\s+', ' ', x).strip() for x in char_page.xpath('//div[@class="grey500BoxContent" and contains(.,"aliases")]/text()') if re.sub(r'\s+', ' ', x).strip()]
             alias_list = [alias for aliases in alias_list for alias in aliases.split(',')]
-            character_data[entity_id] = {'label': char.text.decode('utf-8').encode('latin-1'),
+            character_data[entity_id] = {'label': unicode(char.text.decode('utf-8').encode('latin-1')),
                                          'description': desc,
                                          'aliases': alias_list}
             entity_id += 1
@@ -318,10 +320,10 @@ class GoodreadsParser(object):
                 continue
             desc = setting_page.xpath('//div[@class="mainContentContainer "]/div[@class="mainContent"]/div[@class="mainContentFloat"]/div[@class="leftContainer"]/span/text()')
             if len(desc) > 0 and re.sub(r'\s+', ' ', desc[0]).strip():
-                desc = re.sub(r'\s+', ' ', desc[0]).strip().decode('utf-8').encode('latin-1')
+                desc = unicode(re.sub(r'\s+', ' ', desc[0]).strip().decode('utf-8').encode('latin-1'))
             else:
-                desc = 'No description found on Goodreads.'
-            settings_data[entity_id] = {'label': label.decode('utf-8').encode('latin-1'),
+                desc = u'No description found on Goodreads.'
+            settings_data[entity_id] = {'label': unicode(label.decode('utf-8').encode('latin-1')),
                                         'description': desc,
                                         'aliases': []}
             entity_id += 1
@@ -389,7 +391,7 @@ class GoodreadsParser(object):
 
         author_bio = author_bio[1] if len(author_bio) > 1 else author_bio[0]
 
-        return re.sub(r'\s+', ' ', author_bio.text_content()).strip().decode('utf-8').encode('latin-1')
+        return unicode(re.sub(r'\s+', ' ', author_bio.text_content()).strip().decode('utf-8').encode('latin-1'))
 
     @staticmethod
     def _get_author_image(author_page, encode_image=False):
@@ -469,8 +471,10 @@ class GoodreadsParser(object):
 
     def _parse_tooltip_info(self, book_data, book_id, image_url):
         '''Takes information retried from goodreads tooltips link and parses it'''
-        title = book_data.xpath('//a[contains(@class, "readable")]')[0].text
-        authors = [book_data.xpath('//a[contains(@class, "authorName")]')[0].text]
+        title = book_data.xpath('//a[contains(@class, "readable")]')
+        title = title[0].text if len(title) > 0 else None
+        authors = book_data.xpath('//a[contains(@class, "authorName")]')
+        authors = [authors[0].text] if len(authors) > 0 else None
         rating_info = book_data.xpath('//div[@class="bookRatingAndPublishing"]/span[@class="minirating"]')
         if len(rating_info) > 0:
             rating_string = rating_info[0].text_content().strip().replace(',', '').split()

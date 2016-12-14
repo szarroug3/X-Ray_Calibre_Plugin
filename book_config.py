@@ -26,8 +26,7 @@ class BookConfigWidget(QDialog):
     # i.e the lord ruler would become The Lord Ruler but john the great would become John the Great
     ARTICLES = ['The', 'For', 'De', 'And', 'Or', 'Of', 'La']
     TITLE_CASE = lambda self, words: ' '.join([word.lower() if word in self.ARTICLES and index != 0
-                                               else word
-                                               for index, word in enumerate(words.title().split())])
+                                               else word for index, word in enumerate(words.title().split())])
     def __init__(self, parent, book_settings):
         QDialog.__init__(self, parent)
         self.resize(500, 500)
@@ -304,7 +303,6 @@ class BookConfigWidget(QDialog):
             label = QLabel(character + ':')
             label.setFixedWidth(150)
             aliases_layout.addWidget(label, index, 0)
-
             line_edit = QLineEdit(', '.join([self.TITLE_CASE(alias) for alias in aliases]))
             line_edit.setFixedWidth(350)
             line_edit.textEdited.connect(functools.partial(self.edit_aliases, character))
