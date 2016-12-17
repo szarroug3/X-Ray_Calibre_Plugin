@@ -52,7 +52,7 @@ class ConfigWidget(QWidget):
     def _initialize_general(self, layout):
         '''Initialize general settings'''
         self._settings = {}
-        self._settings['send_to_device'] = QCheckBox('Send x-ray to device if connected')
+        self._settings['send_to_device'] = QCheckBox('Send files to device if connected')
         self._settings['send_to_device'].setChecked(__prefs__['send_to_device'])
         layout.addWidget(self._settings['send_to_device'])
 
