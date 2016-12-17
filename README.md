@@ -38,7 +38,7 @@ Github Page: https://github.com/szarroug3/X-Ray_Calibre_Plugin
 
 Preferences:
 ----------------------------------------------------------------------------------------------------------------------------------
-	1. Send x-ray to device if connected
+	1. Send files to device if connected
 		- After creating x-ray file, file will automatically be sent to device
 	2. Create x-ray for files that don't already have them when sending to device
 		- When sending previously generated x-ray files, x-ray files will be generated for selected books that don't already have
