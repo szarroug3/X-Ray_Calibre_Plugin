@@ -39,8 +39,6 @@ connected for this to work. There will be a pop-up showing you this information 
 Note: These files work only work on Amazon products such as the Kindle PW. For more information on X-Ray files, see here:
 	http://www.amazon.com/gp/help/customer/display.html?nodeId=200729910#GUID-A867D8C3-365D-417F-BBD7-239A35EB4119
 
-Github Page: https://github.com/szarroug3/X-Ray_Calibre_Plugin
-
 ----------------------------------------------------------------------------------------------------------------------------------
 	1. Book specific preferences
 		- Use "," or ", " as a separator for words in aliases list
