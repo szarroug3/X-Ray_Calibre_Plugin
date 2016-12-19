@@ -13,7 +13,7 @@ Mobileread Page: http://www.mobileread.com/forums/showthread.php?p=3301947#post3
 
 Some background information on X-Ray and other Kindle Files:
 ----------------------------------------------------------------------------------------------------------------------------------
-X-Ray files allow you to get information on key characters and terms from Goodreads. You can do this in one of a few ways.
+X-Ray allows you to get information on key characters and terms from Goodreads. You can do this in one of a few ways.
 
 1. You can highlight the word in question and if the x-ray file has information on it, a popup with a brief description will
 	show. It will also show you where this character has been mentioned in the past (will show page number and excerpt where
