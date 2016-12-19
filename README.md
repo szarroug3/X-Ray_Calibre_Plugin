@@ -21,7 +21,7 @@ X-Ray files allow you to get information on key characters and terms from Goodre
 2. You can click X-Ray and search for the word either by looking through the list or using the search bar. Clicking on the word
 	will show you the same popup from #1.
 	
-X-Ray files also have a notable clips section which show quotes from Goodreads. If there are not enough Goodreads quotes found, the
+X-Ray also has a notable clips section which show quotes from Goodreads. If there are not enough Goodreads quotes found, the
 	plugin will add more random excerpts so there are least 20 notable clips.
 
 Author profiles allow you to see information on the author such as a bio, other books by the other, etc. You can see this by going
