@@ -18,6 +18,7 @@ from calibre.gui2 import error_dialog
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2.threaded_jobs import ThreadedJob
 
+from calibre.customize.zipplugin import get_icons
 from calibre_plugins.xray_creator.lib.book import Book
 from calibre_plugins.xray_creator.config import __prefs__ as settings
 from calibre_plugins.xray_creator.book_config import BookConfigWidget
@@ -53,7 +54,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
     def genesis(self):
         '''Initial setup'''
-        icon = get_icons('images/icon.png') # pylint: disable=undefined-variable
+        icon = get_icons(self.plugin_path, 'images/icon.png')
 
         self.create_menu_action(self.menu, 'Book Specific Preferences',
                                 'Book Specific Preferences', None, 'CTRL+SHIFT+ALT+Z',
