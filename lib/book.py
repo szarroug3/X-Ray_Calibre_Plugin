@@ -366,7 +366,7 @@ class Book(object):
 
         try:
             goodreads_data = GoodreadsParser(self._basic_info['goodreads_url'], self._goodreads_conn,
-                                             self._basic_info['asin'], expand_aliases=self._settings['expand_aliases'])
+                                             self._basic_info['asin'])
             results = goodreads_data.parse(create_xray=create_xray, create_author_profile=create_author_profile,
                                            create_start_actions=create_start_actions, create_end_actions=create_end_actions)
             compiled_xray, compiled_author_profile, compiled_start_actions, compiled_end_actions = results

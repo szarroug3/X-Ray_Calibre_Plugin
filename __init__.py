@@ -2,8 +2,8 @@
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 '''Creates plugin for Calibre to allow users to create x-ray, author profile, start actions, and end actions for devices'''
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from __future__ import (unicode_literals, division, absolute_import, print_function)
+from calibre_plugins.xray_creator.config import __prefs__ as settings
 
 __license__ = 'GPL v3'
 __copyright__ = '2016, Samreen Zarroug, Anthony Toole, & Alex Mayer'
@@ -18,9 +18,13 @@ class XRayCreatorPlugin(InterfaceActionBase):
     description = 'A plugin to create X-Ray files for Kindle books'
     supported_platforms = ['windows', 'osx', 'linux']
     author = 'Samreen Zarroug, Anthony Toole, & Alex Mayer'
-    version = (3, 0, 1)
+    version = (3, 0, 2)
     minimum_calibre_version = (2, 0, 0)
     actual_plugin = 'calibre_plugins.xray_creator.ui:XRayCreatorInterfacePlugin'
+
+    def __init__(self, *args, **kwargs):
+        InterfaceActionBase.__init__(self, *args, **kwargs)
+        settings['plugin_path'] = self.plugin_path
 
     @staticmethod
     def is_customizable():

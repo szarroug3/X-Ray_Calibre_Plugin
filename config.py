@@ -9,11 +9,11 @@ __license__ = 'GPL v3'
 __copyright__ = '2016, Samreen Zarroug, Anthony Toole, & Alex Mayer'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox, QFrame
 from PyQt5.Qt import QButtonGroup, QRadioButton, QCheckBox
+from PyQt5.Qt import QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox, QFrame
 
-from calibre.utils.config import JSONConfig
 from calibre.gui2 import error_dialog
+from calibre.utils.config import JSONConfig
 
 __prefs__ = JSONConfig('plugins/xray_creator')
 

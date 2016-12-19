@@ -1,15 +1,16 @@
 # goodreads_parser.py
 '''Parses goodreads data depending on user settings'''
 
-import os
 import re
 import json
 import base64
+import zipfile
 import datetime
 import urlparse
 from urllib2 import urlopen
 from lxml import html
 
+from calibre_plugins.xray_creator.config import __prefs__ as prefs
 from calibre_plugins.xray_creator.lib.utilities import open_url, BOOK_ID_PAT, GOODREADS_ASIN_PAT
 
 class GoodreadsParser(object):
@@ -32,10 +33,9 @@ class GoodreadsParser(object):
 
     COMMON_WORDS = 'the of de'.split()
 
-    def __init__(self, url, connection, asin, expand_aliases=True):
+    def __init__(self, url, connection, asin):
         self._connection = connection
         self._asin = asin
-        self._expand_aliases = expand_aliases
 
         book_id_search = BOOK_ID_PAT.search(url)
         self._goodreads_book_id = book_id_search.group(1) if book_id_search else None
@@ -86,8 +86,8 @@ class GoodreadsParser(object):
             compiled_author_profile = self._compile_author_profile(author_info)
 
         if create_start_actions or create_end_actions:
-            with open(os.path.join(os.path.join(os.getcwd(), 'templates'), 'goodreads_data_template.json'), 'r') as template:
-                goodreads_templates = json.load(template)
+            with zipfile.ZipFile(prefs['plugin_path'], 'r') as template_file:
+                goodreads_templates = json.loads(template_file.read('templates/goodreads_data_template.json'))
 
             self._read_secondary_author_pages(author_info)
             book_image_url = self._get_book_image_url()
@@ -212,7 +212,7 @@ class GoodreadsParser(object):
                                          'aliases': alias_list}
             entity_id += 1
 
-        if self._expand_aliases:
+        if prefs['expand_aliases']:
             characters = {}
             for char, char_data in character_data.items():
                 characters[char] = [char_data['label']] + char_data['aliases']

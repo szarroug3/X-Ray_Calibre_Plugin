@@ -3,7 +3,9 @@
 
 import os
 import json
+import zipfile
 from sqlite3 import connect, Binary
+from calibre_plugins.xray_creator.config import __prefs__ as prefs
 
 class DBWriter(object):
     '''Writes x-ray data into file using given information'''
@@ -47,9 +49,8 @@ class DBWriter(object):
                              'num_terms INTEGER, num_images INTEGER, preview_images TEXT)')
 
         # insert base data
-        dir_path = os.path.join(os.getcwd(), 'templates')
-        with open(os.path.join(dir_path, 'xray_data_template.json'), 'r') as template:
-            xray_templates = json.load(template)
+        with zipfile.ZipFile(prefs['plugin_path'], 'r') as template_file:
+            xray_templates = json.loads(template_file.read('templates/xray_data_template.json'))
 
         self._insert_into_table('type', xray_templates['BASE_DB_TYPE'])
         self._insert_into_table('source', xray_templates['BASE_DB_SOURCE'])

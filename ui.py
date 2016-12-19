@@ -13,7 +13,6 @@ from httplib import HTTPSConnection
 from PyQt5.Qt import QMenu, QToolButton
 
 from calibre import get_proxies
-
 from calibre.gui2 import Dispatcher
 from calibre.gui2 import error_dialog
 from calibre.gui2.actions import InterfaceAction
@@ -30,8 +29,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
     name = 'X-Ray Creator'
 
     # Set main action and keyboard shortcut
-    action_spec = ('X-Ray Creator', None,
-                   'Run X-Ray Creator', 'Ctrl+Shift+Alt+X')
+    action_spec = ('X-Ray Creator', None, 'Run X-Ray Creator', 'Ctrl+Shift+Alt+X')
     popup_type = QToolButton.InstantPopup
     action_type = 'current'
 
@@ -106,7 +104,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         for book_id in book_ids:
             book_settings = BookSettings(database, book_id, self._connections)
             if len(book_settings.aliases) == 0 and book_settings.goodreads_url != '':
-                book_settings.update_aliases(book_settings.goodreads_url, settings['expand_aliases'])
+                book_settings.update_aliases(book_settings.goodreads_url)
                 book_settings.save()
             book_settings_list.append(book_settings)
 
