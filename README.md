@@ -11,7 +11,7 @@ Github Page: https://github.com/szarroug3/X-Ray_Calibre_Plugin
 
 Mobileread Page: http://www.mobileread.com/forums/showthread.php?p=3301947#post3301947
 
-Some background information on X-Ray:
+Some background information on X-Ray and other Kindle Files:
 ----------------------------------------------------------------------------------------------------------------------------------
 X-Ray files allow you to get information on key characters and terms from Goodreads. You can do this in one of a few ways.
 1. You can highlight the word in question and if the x-ray file has information on it, a popup with a brief description will
@@ -19,11 +19,23 @@ X-Ray files allow you to get information on key characters and terms from Goodre
 	mention occurred).
 2. You can click X-Ray and search for the word either by looking through the list or using the search bar. Clicking on the word
 	will show you the same popup from #1.
+	It also has a notable clips section which show quotes from Goodreads. If there are not enough Goodreads quotes found, the
+	plugin will add more random excerpts so there are least 20 notable clips.
 
-Note: X-Ray files work only work on Amazon products such as the Kindle PW. For more information on X-Ray files, see here:
-	http://www.amazon.com/gp/help/custom...7-239A35EB4119
-It also has a notable clips section which show quotes from Goodreads. If there are not enough Goodreads quotes found, the plugin
-	will add more random excerpts so there are least 20 notable clips.
+Author profiles allow you to see information on the author such as a bio, other books by the other, etc. You can see this by going
+to "About the author" on the menu while the book is open.
+
+Start actions show you a description of the book along with other information such as the reading time and the rating (retrieved
+from Goodreads). It will also allow you to mark the book as currently-reading on Goodreads but you need to be signed into Goodreads
+on the device and you need to have wifi enabled and connected for this to work. There will be a pop-up showing you this information
+when you open a new book but you can also see it by going to "About this book" on the menu while the book is open.
+
+End actions show you recommendations for other books based on the current book (retrieved from Goodreads). It will also allow you
+to mark the book as read on Goodreads but you need to be signed into Goodreads on the device and you need to have wifi enabled and
+connected for this to work. There will be a pop-up showing you this information when you reach the end of the book.
+
+Note: These files work only work on Amazon products such as the Kindle PW. For more information on X-Ray files, see here:
+	http://www.amazon.com/gp/help/customer/display.html?nodeId=200729910#GUID-A867D8C3-365D-417F-BBD7-239A35EB4119
 Github Page: https://github.com/szarroug3/X-Ray_Calibre_Plugin
 
 ----------------------------------------------------------------------------------------------------------------------------------
