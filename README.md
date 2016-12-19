@@ -29,20 +29,19 @@ Github Page: https://github.com/szarroug3/X-Ray_Calibre_Plugin
 ----------------------------------------------------------------------------------------------------------------------------------
 	1. Book specific preferences
 		- Use "," or ", " as a separator for words in aliases list
-	2. Create/Update x-ray files for selected books
-	3. Send previously generated x-ray files to device
+	2. Create/Update files for selected books
+	3. Send previously generated files to device
 	4. General Preferences
 
-	Note: Creating an x-ray file using this plugin will use the ASIN already in the book so you don't need to update it.
+	Note: Creating files using this plugin will use the ASIN already in the book so you don't need to update it.
 	Note: Highlighting words should work but I have not tested with a book that has DRM so I don't know if it will work for them.
 
 Preferences:
 ----------------------------------------------------------------------------------------------------------------------------------
 	1. Send files to device if connected
-		- After creating x-ray file, file will automatically be sent to device
-	2. Create x-ray for files that don't already have them when sending to device
-		- When sending previously generated x-ray files, x-ray files will be generated for selected books that don't already have
-			a file created
+		- After creating files, files will automatically be sent to device
+	2. Create files that don't already exist when sending to device
+		- When sending previously generated files, files will be generated for selected books that haven't already been created
 	3. Auto associate split aliases, when enabled, will split aliases retrieved from Goodreads up
 		- i.e If a character on goodreads named "Vin" has a Goodreads alias of "Valette Renoux", this option will add
 			"Valette" and "Renoux" as aliases. You may not want this in cases such as "Timothy Cratchit" who has a
@@ -55,11 +54,11 @@ Preferences:
 	6. Files to create/send
 		- This will let you choose what type of files to create and/or send
 		- You must choose at least one.
-	7. Book types to create x-ray files for
-		- Selection of formats to consider when creating and sending x-ray files.
+	7. Book types to create files for
+		- Selection of formats to consider when creating and sending files.
 		- You must choose at least one.
 	8. If device has both (mobi and azw3) formats, prefer
-		- This will choose which format to send x-ray files for if your device has both file formats
+		- This will choose which format to send files for if your device has both file formats
 		- This matters because there are offsets in the x-ray file that determine whether something that is highlighted is
 			part of the x-ray
 		- If you are sure you only have one format of the book type on the device, this does not matter.
