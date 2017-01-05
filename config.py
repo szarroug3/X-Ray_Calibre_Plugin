@@ -13,29 +13,7 @@ from PyQt5.Qt import QButtonGroup, QRadioButton, QCheckBox
 from PyQt5.Qt import QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox, QFrame
 
 from calibre.gui2 import error_dialog
-from calibre.utils.config import JSONConfig
-
-__prefs__ = JSONConfig('plugins/xray_creator')
-
-# Set defaults
-__prefs__.defaults['send_to_device'] = True
-__prefs__.defaults['create_files_when_sending'] = True
-__prefs__.defaults['expand_aliases'] = True
-__prefs__.defaults['overwrite_when_creating'] = False
-__prefs__.defaults['overwrite_when_sending'] = False
-__prefs__.defaults['create_send_xray'] = True
-__prefs__.defaults['create_send_author_profile'] = False
-__prefs__.defaults['create_send_start_actions'] = False
-__prefs__.defaults['create_send_end_actions'] = False
-__prefs__.defaults['file_preference'] = 'mobi'
-__prefs__.defaults['mobi'] = True
-__prefs__.defaults['azw3'] = True
-__prefs__.defaults['tld'] = None
-
-if __prefs__.has_key('mobi') and __prefs__.has_key('azw3'):
-    __prefs__['formats'] = [ftype for ftype in ['mobi', 'azw3'] if __prefs__[ftype]]
-else:
-    __prefs__['formats'] = ['mobi', 'azw3']
+from calibre_plugins.xray_creator import __prefs__
 
 class ConfigWidget(QWidget):
     '''Creates general preferences dialog'''
