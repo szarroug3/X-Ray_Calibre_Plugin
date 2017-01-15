@@ -205,8 +205,9 @@ class GoodreadsParser(object):
                 desc = unicode(re.sub(r'\s+', ' ', desc[0]).strip().decode('utf-8').encode('latin-1'))
             else:
                 desc = u'No description found on Goodreads.'
-            alias_list = [re.sub(r'\s+', ' ', x).strip() for x in char_page.xpath('//div[@class="grey500BoxContent" and contains(.,"aliases")]/text()') if re.sub(r'\s+', ' ', x).strip()]
-            alias_list = [alias for aliases in alias_list for alias in aliases.split(',')]
+            alias_list = [x for x in char_page.xpath('//div[@class="grey500BoxContent" and contains(.,"aliases")]/text()')]
+            alias_list = [re.sub(r'\s+', ' ', x).strip() for aliases in alias_list for x in aliases.split(',')
+                          if re.sub(r'\s+', ' ', x).strip()]
             character_data[entity_id] = {'label': unicode(char.text.decode('utf-8').encode('latin-1')),
                                          'description': desc,
                                          'aliases': alias_list}
@@ -289,9 +290,8 @@ class GoodreadsParser(object):
                     aliases.append("%s %s" % (title, surname))
             # Don't want the formats {ChristianName}, {Surname} and {ChristianName} {Lastname} in special cases
             # i.e. The Lord Ruler should never have "The Ruler", "Lord" or "Ruler" as aliases
-            if christian_name in self.COMMON_WORDS:
-                aliases.append('{0} {1}'.format(' '.join(parts), surname))
-            else:
+            # Same for John the Great
+            if christian_name not in self.COMMON_WORDS and (len(parts) == 0 or parts[0] not in self.COMMON_WORDS):
                 aliases.append(christian_name)
                 aliases.append(surname)
                 aliases.append("%s %s" % (christian_name, surname))
