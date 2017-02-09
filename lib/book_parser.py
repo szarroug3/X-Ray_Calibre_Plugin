@@ -12,7 +12,6 @@ from calibre.ebooks.mobi.reader.mobi6 import MobiReader
 from calibre.ebooks.compression.palmdoc import decompress_doc
 
 PARAGRAPH_PAT = re.compile(r'<p.*?>.+?(?:<\/p>)', re.I)
-PLAIN_TEXT_PAT = re.compile(r'>([^<]+?)<', re.I)
 
 class BookParser(object):
     '''Class to parse book using information from user and goodreads'''
@@ -82,7 +81,7 @@ class BookParser(object):
         excerpt_id = 0
         excerpt_data = {}
         notable_clips = []
-        for word_loc, para_start in self._get_paragraph_data(codec):
+        for word_loc, para_start, para_len in self._get_paragraph_data(codec):
             related_entities = []
             if len(self._entity_data.keys()) > 0:
             # for each match found, fill in entity_data and excerpt_data information
@@ -93,8 +92,7 @@ class BookParser(object):
             for quote in self._quotes:
                 if quote.lower() in word_loc['words'].lower() and excerpt_id not in notable_clips:
                     notable_clips.append(excerpt_id)
-            excerpt_data[excerpt_id] = {'loc': para_start, 'len': self._find_len_excerpt(word_loc),
-                                        'related_entities': related_entities}
+            excerpt_data[excerpt_id] = {'loc': para_start, 'len': para_len, 'related_entities': related_entities}
             excerpt_id += 1
 
         return notable_clips, excerpt_data
@@ -106,19 +104,26 @@ class BookParser(object):
 
         # find all paragraphs (sections enclosed in html p tags) and their starting offset
         for node in re.finditer(PARAGRAPH_PAT, book_html):
-            # get plain text from paragraph and locations of letters from beginning of file
-            results = [(word.group(0)[1:-1].decode(codec), word.start(0))
-                       for word in re.finditer(PLAIN_TEXT_PAT, node.group(0))]
             word_loc = {'words': '', 'locs': [], 'char_sizes': []}
-            for group, loc in results:
-                start = node.start(0) + loc + 1 + self._offset
-                for char in group:
+
+            skip = False
+            loc = node.start(0)+self._offset
+            for i, char in enumerate(node.group(0).decode(codec)):
+                word_loc['char_sizes'].append(len(char.encode(codec)))
+                if char == '<' and not skip:
+                    skip = True
+                    if node.group(0)[i:i+3] == '<br':
+                        word_loc['words'] += ' '
+                        word_loc['locs'].append(loc)
+                if not skip:
                     word_loc['words'] += char
-                    word_loc['locs'].append(start)
-                    start += len(char.encode(codec))
-                    word_loc['char_sizes'].append(len(char.encode(codec)))
+                    word_loc['locs'].append(loc)
+                if char == '>' and skip:
+                    skip = False
+                loc += len(char.encode(codec))
+
             if len(word_loc['locs']) > 0:
-                paragraph_data.append((word_loc, word_loc['locs'][0]))
+                paragraph_data.append((word_loc, node.start(0)+self._offset, len(node.group(0))))
 
         return paragraph_data
 
@@ -164,22 +169,7 @@ class BookParser(object):
         else:
             last_char -= 1
 
-        total_len = 0
-        for char in range(first_char, last_char + 1):
-            total_len += char_sizes[char]
-
-        return total_len
-
-    @staticmethod
-    def _find_len_excerpt(word_loc):
-        '''Finds length of excerpt'''
-        string = word_loc['words']
-        char_sizes = word_loc['char_sizes']
-
-        total_len = 0
-        for char in range(0, len(string)):
-            total_len += char_sizes[char]
-
+        total_len = sum(char_sizes[start:last_char+1])
         return total_len
 
     def find_erl_and_encoding(self):
@@ -191,7 +181,7 @@ class BookParser(object):
             nrecs, = unpack('>H', book_data[76:78])
             recs_start = 78 + (nrecs * 8) + 2
             erl, = unpack('>L', book_data[recs_start + 4:recs_start + 8])
-            codec = 'latin-1' if unpack('>L', book_data[recs_start + 28:recs_start + 32])[0] == 1252 else 'utf8'
+            codec = 'cp1252' if unpack('>L', book_data[recs_start + 28:recs_start + 32])[0] == 1252 else 'utf8'
             return erl, codec
         except error:
             raise MobiError
