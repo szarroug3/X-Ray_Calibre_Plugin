@@ -522,7 +522,9 @@ class GoodreadsParser(object):
 
     def _get_book_image_url(self):
         '''Gets book's image url'''
-        return self._page_source.xpath('//div[contains(concat(" ", @class, " "), " mainContent ")]//div[@id="imagecol"]//img[@id="coverImage"]')[0].get('src')
+        if len(self._page_source.xpath('//div[contains(concat(" ", @class, " "), " mainContent ")]//div[@id="imagecol"]//img[@id="coverImage"]')) > 0:
+            return self._page_source.xpath('//div[contains(concat(" ", @class, " "), " mainContent ")]//div[@id="imagecol"]//img[@id="coverImage"]')[0].get('src')
+        return None
 
     def _get_num_pages_and_reading_time(self):
         '''Gets book's number of pages and time to read'''

@@ -61,10 +61,12 @@ class BookParser(object):
             num_of_notable_clips = 20
         else:
             num_of_notable_clips = len(notable_clips) + num_excerpts
-        while len(notable_clips) < num_of_notable_clips:
-            rand_excerpt = randrange(0, num_excerpts - 1)
-            if rand_excerpt not in notable_clips:
-                notable_clips.append(rand_excerpt)
+
+        if num_of_notable_clips > 0:
+            while len(notable_clips) < num_of_notable_clips:
+                rand_excerpt = randrange(0, num_excerpts - 1) if num_excerpts > 1 else 1
+                if rand_excerpt not in notable_clips:
+                    notable_clips.append(rand_excerpt)
 
         self._parsed_data = {'erl': erl,
                              'excerpt_data': excerpt_data,
