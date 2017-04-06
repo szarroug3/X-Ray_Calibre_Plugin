@@ -503,10 +503,12 @@ class GoodreadsParser(object):
                 return None
             book_asin = book_asin.group(1)
 
-        if len(book_data.xpath('//div[@class="addBookTipDescription"]//span[not(contains(@id, "freeTextContainer"))]')) > 0:
-            desc = re.sub(r'\s+', ' ', book_data.xpath('//div[@class="addBookTipDescription"]//span[not(contains(@id, "freeTextContainer"))]')[0].text).strip()
-        elif len(book_data.xpath('//div[@class="addBookTipDescription"]//span[contains(@id, "freeTextContainer")]')) > 0:
-            desc = re.sub(r'\s+', ' ', book_data.xpath('//div[@class="addBookTipDescription"]//span[contains(@id, "freeTextContainer")]')[0].text).strip()
+        desc = book_data.xpath('//div[@class="addBookTipDescription"]//span[not(contains(@id, "freeTextContainer"))]')
+        desc_backup = book_data.xpath('//div[@class="addBookTipDescription"]//span[contains(@id, "freeTextContainer")]')
+        if len(desc) > 0:
+            desc = re.sub(r'\s+', ' ', desc[0].text).strip()
+        elif len(desc_backup) > 0:
+            desc = re.sub(r'\s+', ' ', desc_backup[0].text).strip()
         else:
             return None
 
@@ -522,8 +524,9 @@ class GoodreadsParser(object):
 
     def _get_book_image_url(self):
         '''Gets book's image url'''
-        if len(self._page_source.xpath('//div[contains(concat(" ", @class, " "), " mainContent ")]//div[@id="imagecol"]//img[@id="coverImage"]')) > 0:
-            return self._page_source.xpath('//div[contains(concat(" ", @class, " "), " mainContent ")]//div[@id="imagecol"]//img[@id="coverImage"]')[0].get('src')
+        image_url = self._page_source.xpath('//div[contains(concat(" ", @class, " "), " mainContent ")]//div[@id="imagecol"]//img[@id="coverImage"]')
+        if len(image_url) > 0:
+            return image_url[0].get('src')
         return None
 
     def _get_num_pages_and_reading_time(self):
