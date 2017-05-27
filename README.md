@@ -1,7 +1,7 @@
 # X-Ray Calibre Plugin
 Downloads:
 ----------------------------------------------------------------------------------------------------------------------------------
-[3.0.5](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_3_0_5.zip?raw=true)
+[3.0.6](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_3_0_6.zip?raw=true)
 
 [Older Versions](https://github.com/szarroug3/X-Ray_Calibre_Plugin/releases)
 
@@ -75,6 +75,12 @@ Preferences:
 		- This matters because there are offsets in the x-ray file that determine whether something that is highlighted is
 			part of the x-ray
 		- If you are sure you only have one format of the book type on the device, this does not matter.
+
+Theming:
+----------------------------------------------------------------------------------------------------------------------------------
+    You can place a file at "calibre\resources\images\X-Ray Creator\icon.png" (in your calibre application directory) to
+    change the plugin's icon.
+    
 
 Testing:
 ----------------------------------------------------------------------------------------------------------------------------------
