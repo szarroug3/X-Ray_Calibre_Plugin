@@ -78,7 +78,7 @@ Preferences:
 
 Theming:
 ----------------------------------------------------------------------------------------------------------------------------------
-    You can place a file at "calibre\resources\images\X-Ray Creator\icon.png" (in your calibre application directory) to
+    You can place a file at "\calibre\resources\images\X-Ray Creator\icon.png" (in your calibre application directory) to
     change the plugin's icon.
     
 
