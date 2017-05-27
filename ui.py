@@ -9,12 +9,14 @@ __license__ = 'GPL v3'
 __copyright__ = '2016, Samreen Zarroug, Anthony Toole, & Alex Mayer'
 __docformat__ = 'restructuredtext en'
 
+import os
 from httplib import HTTPSConnection
-from PyQt5.Qt import QMenu, QToolButton
+from PyQt5.Qt import QMenu, QToolButton, QIcon, QPixmap
 
 from calibre import get_proxies
 from calibre.gui2 import Dispatcher
 from calibre.gui2 import error_dialog
+from calibre.utils.config import config_dir
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2.threaded_jobs import ThreadedJob
 
@@ -24,6 +26,7 @@ from calibre_plugins.xray_creator.config import __prefs__ as settings
 from calibre_plugins.xray_creator.book_config import BookConfigWidget
 from calibre_plugins.xray_creator.lib.xray_creator import XRayCreator
 from calibre_plugins.xray_creator.lib.book_settings import BookSettings
+
 
 class XRayCreatorInterfacePlugin(InterfaceAction):
     '''Initializes plugin's interface'''
@@ -54,7 +57,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
 
     def genesis(self):
         '''Initial setup'''
-        icon = get_icons(self.plugin_path, 'images/icon.png')
+        icon = self.get_icon('icon.png')
 
         self.create_menu_action(self.menu, 'Book Specific Preferences',
                                 'Book Specific Preferences', None, 'CTRL+SHIFT+ALT+Z',
@@ -140,3 +143,16 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
     def config(self):
         '''Opens up a dialog that allows user to set general preferences'''
         self.interface_action_base_plugin.do_user_config(parent=self.gui)
+
+    def get_icon(self, icon_name):
+        """
+        Check to see whether the icon exists as a Calibre resource
+        This will enable skinning if the user stores icons within a folder like:
+        ...\AppData\Roaming\calibre\resources\images\Plugin Name\
+        """
+        icon_path = os.path.join(config_dir, 'resources', 'images', self.name, icon_name)
+        if not os.path.exists(icon_path):
+            return get_icons(self.plugin_path, 'images/{0}'.format(icon_name))
+        pixmap = QPixmap()
+        pixmap.load(icon_path)
+        return QIcon(pixmap)

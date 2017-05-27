@@ -76,6 +76,12 @@ Preferences:
 			part of the x-ray
 		- If you are sure you only have one format of the book type on the device, this does not matter.
 
+Theming:
+----------------------------------------------------------------------------------------------------------------------------------
+    You can place a file at "calibre\resources\images\X-Ray Creator\icon.png" (in your calibre application directory) to
+    change the plugin's icon.
+    
+
 Testing:
 ----------------------------------------------------------------------------------------------------------------------------------
 	This plugin has been tested using a Kindle PW2 on Windows 10 and Linux.
