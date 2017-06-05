@@ -11,27 +11,10 @@ from urllib2 import urlopen
 from lxml import html
 
 from calibre_plugins.xray_creator.config import __prefs__ as prefs
-from calibre_plugins.xray_creator.lib.utilities import open_url, BOOK_ID_PAT, GOODREADS_ASIN_PAT
+from calibre_plugins.xray_creator.lib.utilities import open_url, BOOK_ID_PAT, GOODREADS_ASIN_PAT, auto_expand_aliases
 
 class GoodreadsParser(object):
     '''Parses Goodreads page for x-ray, author profile, start actions, and end actions as needed'''
-    HONORIFICS = 'mr mrs ms esq prof dr fr rev pr atty adv hon pres gov sen ofc pvt cpl sgt maj capt cmdr lt col gen'
-    HONORIFICS = HONORIFICS.split()
-    HONORIFICS.extend([x + '.' for x in HONORIFICS])
-    HONORIFICS += 'miss master sir madam lord dame lady esquire professor doctor father mother brother sister'.split()
-    HONORIFICS += 'reverend pastor elder rabbi sheikh attorney advocate honorable president governor senator'.split()
-    HONORIFICS += 'officer private corporal sargent major captain commander lieutenant colonel general'.split()
-    RELIGIOUS_HONORIFICS = 'fr br sr rev pr'
-    RELIGIOUS_HONORIFICS = RELIGIOUS_HONORIFICS.split()
-    RELIGIOUS_HONORIFICS.extend([x + '.' for x in RELIGIOUS_HONORIFICS])
-    RELIGIOUS_HONORIFICS += 'father mother brother sister reverend pastor elder rabbi sheikh'.split()
-    DOUBLE_HONORIFICS = 'lord'
-    # We want all the honorifics to be in the general honorifics list so when we're
-    # checking if a word is an honorifics, we only need to search in one list
-    HONORIFICS += RELIGIOUS_HONORIFICS
-    HONORIFICS += DOUBLE_HONORIFICS
-
-    COMMON_WORDS = 'the of de'.split()
 
     def __init__(self, url, connection, asin):
         self._connection = connection
@@ -63,7 +46,7 @@ class GoodreadsParser(object):
     def _get_xray(self):
         '''Gets x-ray data from goodreads and creates x-ray dict'''
         characters = self.get_characters(1)
-        settings = self.get_settings(len(characters)+1)
+        settings = self.get_settings(len(characters) + 1)
         quotes = self._get_quotes()
         return self._compile_xray(characters, settings, quotes)
 
@@ -77,7 +60,7 @@ class GoodreadsParser(object):
             return compiled_author_profile, compiled_start_actions, compiled_end_actions
 
         author_info = self._get_author_info()
-        if len(author_info) == 0:
+        if not author_info:
             return
         self._read_primary_author_page(author_info)
         self._get_author_other_books(author_info)
@@ -201,7 +184,7 @@ class GoodreadsParser(object):
                 continue
 
             desc = char_page.xpath('//div[@class="workCharacterAboutClear"]/text()')
-            if len(desc) > 0 and re.sub(r'\s+', ' ', desc[0]).strip():
+            if desc and re.sub(r'\s+', ' ', desc[0]).strip():
                 desc = unicode(re.sub(r'\s+', ' ', desc[0]).strip().decode('utf-8').encode('latin-1'))
             else:
                 desc = u'No description found on Goodreads.'
@@ -218,92 +201,11 @@ class GoodreadsParser(object):
             for char, char_data in character_data.items():
                 characters[char] = [char_data['label']] + char_data['aliases']
 
-            expanded_aliases = self.auto_expand_aliases(characters)
+            expanded_aliases = auto_expand_aliases(characters)
             for alias, ent_id in expanded_aliases.items():
                 character_data[ent_id]['aliases'].append(alias)
 
         return character_data
-
-    def auto_expand_aliases(self, characters):
-        '''Goes through each character and expands them using fullname_to_possible_aliases without adding duplicates'''
-        actual_aliases = {}
-        duplicates = [alias.lower() for aliases in characters.values() for alias in aliases]
-        for entity_id, aliases in characters.items():
-            # get all expansions for original name and aliases retrieved from goodreads
-            expanded_aliases = []
-            for alias in aliases:
-                new_aliases = self.fullname_to_possible_aliases(alias.lower())
-                expanded_aliases += [new_alias for new_alias in new_aliases if new_alias not in expanded_aliases]
-
-            for alias in expanded_aliases:
-                # if this alias has already been flagged as a duplicate or is a common word, skip it
-                if alias in duplicates or alias in self.COMMON_WORDS:
-                    continue
-
-                # check if this alias is a duplicate but isn't in the duplicates list
-                if actual_aliases.has_key(alias):
-                    duplicates.append(alias)
-                    actual_aliases.pop(alias)
-                    continue
-
-                # at this point, the alias is new -- add it to the dict with the alias as the key and fullname as the value
-                actual_aliases[alias] = entity_id
-
-        return actual_aliases
-
-    def fullname_to_possible_aliases(self, fullname):
-        '''
-        Given a full name ("{Title} ChristianName {Middle Names} {Surname}"), return a list of possible aliases
-
-        ie. Title Surname, ChristianName Surname, Title ChristianName, {the full name}
-
-        The returned aliases are in the order they should match
-        '''
-        aliases = []
-        parts = fullname.split()
-        title = None
-
-        if parts[0].lower() in self.HONORIFICS:
-            title_list = []
-            while len(parts) > 0 and parts[0].lower() in self.HONORIFICS:
-                title_list.append(parts.pop(0))
-            title = ' '.join(title_list)
-
-        if len(parts) >= 2:
-            # Assume: {Title} Firstname {Middlenames} Lastname
-            # Already added the full form, also add Title Lastname, and for some Title Firstname
-            surname = parts.pop() # This will cover double barrel surnames, we split on whitespace only
-            christian_name = parts.pop(0)
-            if title:
-                # Religious Honorifics usually only use {Title} {ChristianName}
-                # ie. John Doe could be Father John but usually not Father Doe
-                if title in self.RELIGIOUS_HONORIFICS:
-                    aliases.append("%s %s" % (title, christian_name))
-                # Some titles work as both {Title} {ChristianName} and {Title} {Lastname}
-                # ie. John Doe could be Lord John or Lord Doe
-                elif title in self.DOUBLE_HONORIFICS:
-                    aliases.append("%s %s" % (title, christian_name))
-                    aliases.append("%s %s" % (title, surname))
-                # Everything else usually goes {Title} {Lastname}
-                # ie. John Doe could be Captain Doe but usually not Captain John
-                else:
-                    aliases.append("%s %s" % (title, surname))
-            # Don't want the formats {ChristianName}, {Surname} and {ChristianName} {Lastname} in special cases
-            # i.e. The Lord Ruler should never have "The Ruler", "Lord" or "Ruler" as aliases
-            # Same for John the Great
-            if christian_name not in self.COMMON_WORDS and (len(parts) == 0 or parts[0] not in self.COMMON_WORDS):
-                aliases.append(christian_name)
-                aliases.append(surname)
-                aliases.append("%s %s" % (christian_name, surname))
-
-        elif title:
-            # Odd, but got Title Name (eg. Lord Buttsworth), so see if we can alias
-            if len(parts) > 0:
-                aliases.append(parts[0])
-        else:
-            # We've got no title, so just a single word name.  No alias needed
-            pass
-        return aliases
 
     def get_settings(self, entity_id):
         '''Gets book's setting data'''

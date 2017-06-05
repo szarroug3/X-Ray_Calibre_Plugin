@@ -2,6 +2,7 @@
 '''Holds book specific settings and runs functions to get book specific data'''
 
 import os
+from sqlite3 import connect
 from urllib import urlencode
 from urllib2 import urlparse
 
@@ -9,6 +10,7 @@ from calibre_plugins.xray_creator.lib.exceptions import PageDoesNotExist
 from calibre_plugins.xray_creator.lib.goodreads_parser import GoodreadsParser
 from calibre_plugins.xray_creator.lib.utilities import GOODREADS_URL_PAT, GOODREADS_ASIN_PAT
 from calibre_plugins.xray_creator.lib.utilities import open_url, LIBRARY, BOOK_ID_PAT, AMAZON_ASIN_PAT
+from calibre_plugins.xray_creator.lib.utilities import auto_expand_aliases
 
 from calibre.utils.config import JSONConfig
 from calibre.ebooks.BeautifulSoup import BeautifulSoup
@@ -25,6 +27,7 @@ class BookSettings(object):
         self._prefs.setdefault('asin', '')
         self._prefs.setdefault('goodreads_url', '')
         self._prefs.setdefault('aliases', {})
+        self._prefs.setdefault('sample_xray', '')
         self._prefs.commit()
 
         self._title = database.field_for('title', book_id)
@@ -32,6 +35,7 @@ class BookSettings(object):
 
         self._asin = self._prefs['asin'] if self._prefs['asin'] != '' else None
         self._goodreads_url = self._prefs['goodreads_url']
+        self._sample_xray = self._prefs['sample_xray']
 
         if not self._asin:
             identifiers = database.field_for('identifiers', book_id)
@@ -85,6 +89,14 @@ class BookSettings(object):
         self._asin = val
 
     @property
+    def sample_xray(self):
+        return self._sample_xray
+
+    @sample_xray.setter
+    def sample_xray(self, value):
+        self._sample_xray = value
+
+    @property
     def title(self):
         return self._title
 
@@ -125,6 +137,7 @@ class BookSettings(object):
         self._prefs['asin'] = self._asin
         self._prefs['goodreads_url'] = self._goodreads_url
         self._prefs['aliases'] = self._aliases
+        self._prefs['sample_xray'] = self._sample_xray
 
     def search_for_asin_on_amazon(self, query):
         '''Search for book's asin on amazon using given query'''
@@ -136,14 +149,14 @@ class BookSettings(object):
             return None
 
         # check to make sure there are results
-        if ('did not match any products' in response and not 'Did you mean:' in response
-                and not 'so we searched in All Departments' in response):
+        if ('did not match any products' in response and 'Did you mean:' not in response and
+                'so we searched in All Departments' not in response):
             return None
 
         soup = BeautifulSoup(response)
         results = soup.findAll('div', {'id': 'resultsCol'})
 
-        if not results or len(results) == 0:
+        if not results:
             return None
 
         for result in results:
@@ -193,7 +206,31 @@ class BookSettings(object):
 
         return book_asin_search.group(1)
 
-    def update_aliases(self, url):
+    def update_aliases(self, source, source_type='url'):
+        if source_type == 'url':
+            self.update_aliases_from_url(source)
+            return
+        if source_type == 'asc':
+            self.update_aliases_from_asc(source)
+
+    def update_aliases_from_asc(self, filename):
+        '''Gets aliases from sample x-ray file and expands them if users settings say to do so'''
+        cursor = connect(filename).cursor()
+
+        entity_description = {}
+        for entity in cursor.execute('SELECT * FROM entity_description').fetchall():
+            entity_description[entity[1]] = entity[0]
+
+        characters = {x[1]: [x[1]] for x in cursor.execute('SELECT * FROM entity').fetchall() if x[3] == 1}
+
+        self._aliases = {}
+        for alias, fullname in auto_expand_aliases(characters).items():
+            if fullname not in self._aliases.keys():
+                self._aliases[fullname] = [alias]
+                continue
+            self._aliases[fullname].append(alias)
+
+    def update_aliases_from_url(self, url):
         '''Gets aliases from Goodreads and expands them if users settings say to do so'''
         try:
             goodreads_parser = GoodreadsParser(url, self._connections['goodreads'], self._asin)
