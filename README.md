@@ -102,3 +102,7 @@ Testing:
 	This plugin has been tested using a Kindle PW2 on Windows 10 and Linux.
 	We are still actively developing the plugin so if you do find a bug or want to request a feature, please let me know via
 		Github or Mobileread.
+
+Donations:
+----------------------------------------------------------------------------------------------------------------------------------
+[Paypal](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=szarroug3%40gmail%2ecom&lc=US&item_name=X%2dRay%20Calibre%20Plugin&no_note=0&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHostedGuest)
