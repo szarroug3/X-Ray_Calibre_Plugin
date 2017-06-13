@@ -1,7 +1,7 @@
 # X-Ray Calibre Plugin
 Downloads:
 ----------------------------------------------------------------------------------------------------------------------------------
-[3.0.6](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_3_0_6.zip?raw=true)
+[3.1.0](https://github.com/szarroug3/X-Ray_Calibre_Plugin/blob/master/Versions/xray_creator_calibre_plugin_3_1_0.zip?raw=true)
 
 [Older Versions](https://github.com/szarroug3/X-Ray_Calibre_Plugin/releases)
 
@@ -42,12 +42,24 @@ Note: These files work only work on Amazon products such as the Kindle PW. For m
 ----------------------------------------------------------------------------------------------------------------------------------
 	1. Book specific preferences
 		- Use "," or ", " as a separator for words in aliases list
+		- Input JSON must have format shown in "JSON Template" section below
 	2. Create/Update files for selected books
 	3. Send previously generated files to device
 	4. General Preferences
 
 	Note: Creating files using this plugin will use the ASIN already in the book so you don't need to update it.
 	Note: Highlighting words should work but I have not tested with a book that has DRM so I don't know if it will work for them.
+
+JSON Template:
+----------------------------------------------------------------------------------------------------------------------------------
+{"characters":	{"Character1 Name":	{"description": "Character1 Description",
+                          		     "aliases": ["Character1 Alias1", ...]},
+                 "Character2 Name":	{"description": "Character2 Description",
+                          		     "aliases": ["Character1 Alias2", ...]}},
+ "settings": 	{"Setting1 Name":	{"description": "Setting1 Description",
+                           		    "aliases": ["Setting1 Alias1", ...]}},
+  "quotes":		["Quote1",
+            	 "Quote2"]}
 
 Preferences:
 ----------------------------------------------------------------------------------------------------------------------------------

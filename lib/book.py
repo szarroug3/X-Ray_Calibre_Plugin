@@ -210,9 +210,9 @@ class Book(object):
         if create_xray or author_profile or start_actions or end_actions:
             if self._basic_info['sample_xray'] and create_xray:
                 notifications.put((self._calculate_percentage(perc, total),
-                                   'Parsing {0} Goodreads data'.format(title_and_author)))
-                log('{0}    Parsing sample x-ray data...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
-                self._parse_sample_data()
+                                   'Parsing {0} given data'.format(title_and_author)))
+                log('{0}    Parsing given data...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
+                self._parse_input_file()
                 self._parse_goodreads_data(create_xray=False, create_author_profile=author_profile,
                                            create_start_actions=start_actions, create_end_actions=end_actions)
             else:
@@ -318,7 +318,7 @@ class Book(object):
                                                               self.title_and_author))
             create_xray = True if create_xray_format_info != None else False
             if create_xray and self._basic_info['sample_xray']:
-                self._parse_sample_data()
+                self._parse_input_file()
             else:
                 self._parse_goodreads_data(create_xray=create_xray, create_author_profile=create_author_profile,
                                            create_start_actions=create_start_actions, create_end_actions=create_end_actions)
@@ -369,7 +369,18 @@ class Book(object):
         '''Calculates percentage of amt_completed compared to total; Minimum returned is .01'''
         return amt_completed/total if amt_completed/total >= .01 else .01
 
-    def _parse_sample_data(self):
+    def _parse_input_file(self):
+        '''Checks input file type and calls appropriate parsing function'''
+        filetype = os.path.splitext(self._basic_info['sample_xray'])[1][1:].lower()
+        if filetype == 'asc':
+            characters, settings, quotes = self._parse_input_asc()
+        elif filetype == 'json':
+            characters, settings, quotes = self._parse_input_json()
+        else:
+            return
+        self._process_goodreads_xray_results({'characters': characters, 'settings': settings, 'quotes': quotes})
+
+    def _parse_input_asc(self):
         '''Gets character and setting information from sample x-ray file'''
         cursor = connect(self._basic_info['sample_xray']).cursor()
 
@@ -383,7 +394,28 @@ class Book(object):
                                          'aliases': aliases}
             elif entity_type == 2:
                 settings[entity[3]] = {'label': entity[1], 'description': entity[0], 'aliases': []}
-        self._process_goodreads_xray_results({'characters': characters, 'settings': settings, 'quotes': []})
+        return characters, settings, []
+
+    def _parse_input_json(self):
+        '''Gets characters, setting, and quote data from json file'''
+        entity_num = 1
+        characters = {}
+        settings = {}
+        data = json.load(open(self._basic_info['sample_xray']))
+        if 'characters' in data:
+            for name, char_data in data['characters'].items():
+                description = char_data['description'] if 'description' in char_data else 'No description found.'
+                aliases = self._basic_info['aliases'][name] if name in self._basic_info['aliases'] else []
+                characters[entity_num] = {'label': name, 'description': description, 'aliases': aliases}
+                entity_num += 1
+        if 'settings' in data:
+            for setting, char_data in data['settings'].items():
+                description = char_data['description'] if 'description' in char_data else 'No description found.'
+                aliases = self._basic_info['aliases'][setting] if setting in self._basic_info['aliases'] else []
+                settings[entity_num] = {'label': setting, 'description': description, 'aliases': aliases}
+                entity_num += 1
+        quotes = data['quotes'] if 'quotes' in data else []
+        return characters, settings, quotes
 
     def _parse_goodreads_data(self, create_xray=None, create_author_profile=None,
                               create_start_actions=None, create_end_actions=None):

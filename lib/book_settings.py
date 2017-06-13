@@ -2,6 +2,7 @@
 '''Holds book specific settings and runs functions to get book specific data'''
 
 import os
+import json
 from sqlite3 import connect
 from urllib import urlencode
 from urllib2 import urlparse
@@ -207,11 +208,14 @@ class BookSettings(object):
         return book_asin_search.group(1)
 
     def update_aliases(self, source, source_type='url'):
-        if source_type == 'url':
+        if source_type.lower() == 'url':
             self.update_aliases_from_url(source)
             return
-        if source_type == 'asc':
+        if source_type.lower() == 'asc':
             self.update_aliases_from_asc(source)
+            return
+        if source_type.lower() == 'json':
+            self.update_aliases_from_json(source)
 
     def update_aliases_from_asc(self, filename):
         '''Gets aliases from sample x-ray file and expands them if users settings say to do so'''
@@ -224,6 +228,13 @@ class BookSettings(object):
                 self._aliases[fullname] = [alias]
                 continue
             self._aliases[fullname].append(alias)
+
+    def update_aliases_from_json(self, filename):
+        '''Gets aliases from json file'''
+        data = json.load(open(filename))
+        self._aliases = {name: char['aliases'] for name, char in data['characters'].items()} if 'characters' in data else {}
+        if 'settings' in data:
+            self._aliases.update({name: setting['aliases'] for name, setting in data['settings'].items()})
 
     def update_aliases_from_url(self, url):
         '''Gets aliases from Goodreads and expands them if users settings say to do so'''
