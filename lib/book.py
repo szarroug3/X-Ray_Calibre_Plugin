@@ -4,6 +4,7 @@
 import os
 import json
 import struct
+from sqlite3 import connect
 from datetime import datetime
 from cStringIO import StringIO
 from shutil import copy
@@ -131,6 +132,10 @@ class Book(object):
 
         self._basic_info['goodreads_url'] = self._book_settings.prefs['goodreads_url']
         self._basic_info['asin'] = self._book_settings.prefs['asin']
+        if os.path.isfile(self._book_settings.prefs['sample_xray']):
+            self._basic_info['sample_xray'] = self._book_settings.prefs['sample_xray']
+        else:
+            self._basic_info['sample_xray'] = None
 
         if self._settings['create_send_xray']:
             self._get_basic_xray_information(database, formats)
@@ -203,11 +208,19 @@ class Book(object):
                          self._statuses['start_actions'].status != StatusInfo.FAIL)
         end_actions = self._settings['create_send_end_actions'] and self._statuses['end_actions'].status != StatusInfo.FAIL
         if create_xray or author_profile or start_actions or end_actions:
-            notifications.put((self._calculate_percentage(perc, total),
-                               'Parsing {0} Goodreads data'.format(title_and_author)))
-            log('{0}    Parsing Goodreads data...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
-            self._parse_goodreads_data(create_xray=create_xray, create_author_profile=author_profile,
-                                       create_start_actions=start_actions, create_end_actions=end_actions)
+            if self._basic_info['sample_xray'] and create_xray:
+                notifications.put((self._calculate_percentage(perc, total),
+                                   'Parsing {0} Goodreads data'.format(title_and_author)))
+                log('{0}    Parsing sample x-ray data...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
+                self._parse_sample_data()
+                self._parse_goodreads_data(create_xray=False, create_author_profile=author_profile,
+                                           create_start_actions=start_actions, create_end_actions=end_actions)
+            else:
+                notifications.put((self._calculate_percentage(perc, total),
+                                   'Parsing {0} Goodreads data'.format(title_and_author)))
+                log('{0}    Parsing Goodreads data...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S')))
+                self._parse_goodreads_data(create_xray=create_xray, create_author_profile=author_profile,
+                                           create_start_actions=start_actions, create_end_actions=end_actions)
             perc += 1
             if self._statuses['general'].status is StatusInfo.FAIL:
                 return
@@ -304,8 +317,11 @@ class Book(object):
             log('{0}    Parsing {1} Goodreads data...'.format(datetime.now().strftime('%m-%d-%Y %H:%M:%S'),
                                                               self.title_and_author))
             create_xray = True if create_xray_format_info != None else False
-            self._parse_goodreads_data(create_xray=create_xray, create_author_profile=create_author_profile,
-                                       create_start_actions=create_start_actions, create_end_actions=create_end_actions)
+            if create_xray and self._basic_info['sample_xray']:
+                self._parse_sample_data()
+            else:
+                self._parse_goodreads_data(create_xray=create_xray, create_author_profile=create_author_profile,
+                                           create_start_actions=create_start_actions, create_end_actions=create_end_actions)
             if self._statuses['general'].status is StatusInfo.FAIL:
                 return
             if create_xray and self._statuses['xray'].status != StatusInfo.FAIL:
@@ -352,6 +368,22 @@ class Book(object):
     def _calculate_percentage(amt_completed, total):
         '''Calculates percentage of amt_completed compared to total; Minimum returned is .01'''
         return amt_completed/total if amt_completed/total >= .01 else .01
+
+    def _parse_sample_data(self):
+        '''Gets character and setting information from sample x-ray file'''
+        cursor = connect(self._basic_info['sample_xray']).cursor()
+
+        characters = {}
+        settings = {}
+        for entity in cursor.execute('SELECT * FROM entity_description').fetchall():
+            entity_type = cursor.execute('SELECT * FROM entity WHERE label = "{0}"'.format(entity[1])).fetchall()[0][3]
+            if entity_type == 1:
+                aliases = self._basic_info['aliases'][entity[1]] if entity[1] in self._basic_info['aliases'] else []
+                characters[entity[3]] = {'label': entity[1], 'description': entity[0],
+                                         'aliases': aliases}
+            elif entity_type == 2:
+                settings[entity[3]] = {'label': entity[1], 'description': entity[0], 'aliases': []}
+        self._process_goodreads_xray_results({'characters': characters, 'settings': settings, 'quotes': []})
 
     def _parse_goodreads_data(self, create_xray=None, create_author_profile=None,
                               create_start_actions=None, create_end_actions=None):

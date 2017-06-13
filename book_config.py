@@ -9,12 +9,13 @@ __license__ = 'GPL v3'
 __copyright__ = '2016, Samreen Zarroug, Anthony Toole, & Alex Mayer'
 __docformat__ = 'restructuredtext en'
 
+import os
 import functools
 import webbrowser
 
 from PyQt5.QtCore import Qt
 from PyQt5.Qt import QDialog, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout
-from PyQt5.Qt import QLabel, QLineEdit, QPushButton, QScrollArea
+from PyQt5.Qt import QLabel, QLineEdit, QPushButton, QScrollArea, QFileDialog
 
 from calibre_plugins.xray_creator.config import __prefs__ as prefs
 from calibre_plugins.xray_creator.lib.exceptions import PageDoesNotExist
@@ -97,6 +98,20 @@ class BookConfigWidget(QDialog):
         goodreads_layout.addWidget(goodreads_browser_button)
         v_layout.addLayout(goodreads_layout)
 
+        # Add the sample xray label, line edit, and button to dialog
+        self._sample_xray_edit = QLineEdit('')
+        self._sample_xray_edit.textEdited.connect(lambda: self.edit_sample_xray(self._sample_xray_edit.text()))
+        sample_xray_layout = QHBoxLayout(None)
+        sample_xray_label = QLabel('Sample X-Ray:')
+        sample_xray_label.setFixedWidth(100)
+        sample_xray_button = QPushButton('Browse...')
+        sample_xray_button.clicked.connect(self.browse_sample_xray)
+        sample_xray_button.setToolTip('Browse for a sample x-ray file to be used')
+        sample_xray_layout.addWidget(sample_xray_label)
+        sample_xray_layout.addWidget(self._sample_xray_edit)
+        sample_xray_layout.addWidget(sample_xray_button)
+        v_layout.addLayout(sample_xray_layout)
+
         # Add the update buttons to dialog
         self._update_aliases_button = QPushButton('Update Aliases from URL')
         self._update_aliases_button.setFixedWidth(175)
@@ -168,6 +183,18 @@ class BookConfigWidget(QDialog):
             if 'goodreads.com' not in val:
                 self._status.setText('Warning: Invalid Goodreads URL. URL must have goodreads as the domain.')
 
+    def edit_sample_xray(self, val):
+        '''Sets book's goodreads_url to val and warns if the url is invalid; update goodreads browser button accordingly'''
+        self.book.sample_xray = val
+        if val == '':
+            if self._status.text() == 'Warning: Invalid input file.':
+                self._status.setText('')
+        else:
+            if not os.path.isfile(val):
+                self._status.setText('Warning: Invalid input file.')
+                return
+            self.update_aliases()
+
     def search_for_asin_clicked(self, asin_browser_button):
         '''Searches for current book's ASIN on amazon'''
         asin = None
@@ -208,6 +235,16 @@ class BookConfigWidget(QDialog):
         '''Opens url for current book's goodreads url'''
         webbrowser.open(self._goodreads_url_edit.text())
 
+    def browse_sample_xray(self):
+        """Browse for a sample xray file to use during x-ray creation"""
+        file_dialog = QFileDialog(self)
+        sample_file = file_dialog.getOpenFileName(caption='Choose sample x-ray to use:',
+                                                  filter='X-Ray (*.asc)')[0]
+        self.book.sample_xray = sample_file
+        self._sample_xray_edit.setText(sample_file)
+        if sample_file:
+            self.update_aliases()
+
     def search_for_goodreads_url(self, goodreads_browser_button):
         '''Searches for goodreads url using asin first then title and author if asin doesn't exist'''
         url = None
@@ -229,11 +266,27 @@ class BookConfigWidget(QDialog):
             self._goodreads_url_edit.setText('')
 
     def update_aliases(self):
-        '''Updates aliases on the preferences dialog using the information on the current goodreads url'''
+        '''Update aliases using given file or goodreads'''
+        if self.book.sample_xray:
+            if os.path.exists(self.book.sample_xray):
+                self.update_aliases_from_file()
+                return
+            else:
+                self._status.setText('Error: Sample x-ray file doesn\'t exist.')
         if 'goodreads.com' not in self._goodreads_url_edit.text():
             self._status.setText('Error: Invalid Goodreads URL. URL must have goodreads as the domain.')
             return
+        self.update_aliases_from_goodreads()
 
+    def update_aliases_from_file(self):
+        '''Update aliases on the preferences dailog using the information in the specified file'''
+        self.set_status_and_repaint('Updating aliases...')
+        self.book.update_aliases(self.book.sample_xray, source_type='asc')
+        self.update_aliases_on_gui()
+        self._status.setText('Aliases updated.')
+
+    def update_aliases_from_goodreads(self):
+        '''Updates aliases on the preferences dialog using the information on the current goodreads url'''
         try:
             self.set_status_and_repaint('Updating aliases...')
             self.book.update_aliases(self._goodreads_url_edit.text())
@@ -265,7 +318,8 @@ class BookConfigWidget(QDialog):
         '''Closes dialog without saving settings'''
         self.close()
 
-    def next_clicked(self, previous_button, next_button, asin_browser_button, goodreads_browser_button):
+    def next_clicked(self, previous_button, next_button, asin_browser_button,
+                     goodreads_browser_button):
         '''Goes to next book'''
         self._status.setText('')
         self._index += 1
@@ -289,6 +343,8 @@ class BookConfigWidget(QDialog):
             goodreads_browser_button.setEnabled(False)
         else:
             goodreads_browser_button.setEnabled(True)
+
+        self._sample_xray_edit.setText(self.book.sample_xray)
 
         self.update_aliases_on_gui()
 
