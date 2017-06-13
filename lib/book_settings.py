@@ -216,11 +216,6 @@ class BookSettings(object):
     def update_aliases_from_asc(self, filename):
         '''Gets aliases from sample x-ray file and expands them if users settings say to do so'''
         cursor = connect(filename).cursor()
-
-        entity_description = {}
-        for entity in cursor.execute('SELECT * FROM entity_description').fetchall():
-            entity_description[entity[1]] = entity[0]
-
         characters = {x[1]: [x[1]] for x in cursor.execute('SELECT * FROM entity').fetchall() if x[3] == 1}
 
         self._aliases = {}

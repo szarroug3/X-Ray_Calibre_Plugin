@@ -242,7 +242,8 @@ class BookConfigWidget(QDialog):
                                                   filter='X-Ray (*.asc)')[0]
         self.book.sample_xray = sample_file
         self._sample_xray_edit.setText(sample_file)
-        self.update_aliases()
+        if sample_file:
+            self.update_aliases()
 
     def search_for_goodreads_url(self, goodreads_browser_button):
         '''Searches for goodreads url using asin first then title and author if asin doesn't exist'''
