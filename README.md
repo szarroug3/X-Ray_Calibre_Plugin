@@ -52,14 +52,17 @@ Note: These files work only work on Amazon products such as the Kindle PW. For m
 
 JSON Template:
 ----------------------------------------------------------------------------------------------------------------------------------
-{"characters":	{"Character1 Name":	{"description": "Character1 Description",
-                          		     "aliases": ["Character1 Alias1", ...]},
-                 "Character2 Name":	{"description": "Character2 Description",
-                          		     "aliases": ["Character1 Alias2", ...]}},
- "settings": 	{"Setting1 Name":	{"description": "Setting1 Description",
-                           		    "aliases": ["Setting1 Alias1", ...]}},
-  "quotes":		["Quote1",
-            	 "Quote2"]}
+	{"characters":	{"Character1 Name":	{"description": "Character1 Description",
+	                          		     "aliases": ["Character1 Alias1", ...]},
+	                 "Character2 Name":	{"description": "Character2 Description",
+	                          		     "aliases": ["Character1 Alias2", ...]},
+			 ...},
+ 	"settings": 	{"Setting1 Name":	{"description": "Setting1 Description",
+	                           		    "aliases": ["Setting1 Alias1", ...]}
+			 ...},
+  	"quotes":	["Quote1",
+	            	 "Quote2",
+			 ...]}
 
 Preferences:
 ----------------------------------------------------------------------------------------------------------------------------------
