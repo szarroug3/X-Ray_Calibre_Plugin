@@ -10,6 +10,7 @@ __copyright__ = '2016, Samreen Zarroug, Anthony Toole, & Alex Mayer'
 __docformat__ = 'restructuredtext en'
 
 import os
+import webbrowser
 from httplib import HTTPSConnection
 from PyQt5.Qt import QMenu, QToolButton, QIcon, QPixmap
 
@@ -74,6 +75,11 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         self.create_menu_action(self.menu, 'X-Ray Creator Preferences Button',
                                 'Preferences', None, None,
                                 'Create X-Rays for Chosen Books', self.config)
+
+        self.menu.addSeparator()
+
+        self.create_menu_action(self.menu, 'Donate', 'Donate', None, None, 'Donate', self.donate)
+
         self.qaction.setIcon(icon)
         self.qaction.setMenu(self.menu)
 
@@ -92,6 +98,10 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
             job = ThreadedJob('send_files', 'Sending Files to Device', xray_creator.send_files_event,
                               ((self.gui.current_db.new_api,)), {}, Dispatcher(self.sent_files))
             self.gui.job_manager.run_threaded_job(job)
+
+    @staticmethod
+    def donate():
+        webbrowser.open('https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=szarroug3%40gmail%2ecom&lc=US&item_name=X%2dRay%20Calibre%20Plugin&no_note=0&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHostedGuest')
 
     def book_config(self):
         '''Opens up a dialog that allows user to set book specific preferences'''
