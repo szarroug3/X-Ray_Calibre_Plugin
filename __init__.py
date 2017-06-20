@@ -51,11 +51,12 @@ class XRayCreatorPlugin(InterfaceActionBase):
         __prefs__.defaults['expand_aliases'] = True
         __prefs__.defaults['overwrite_when_creating'] = False
         __prefs__.defaults['overwrite_when_sending'] = False
+        __prefs__.defaults['fake_asin'] = False
         __prefs__.defaults['create_send_xray'] = True
         __prefs__.defaults['create_send_author_profile'] = False
         __prefs__.defaults['create_send_start_actions'] = False
         __prefs__.defaults['create_send_end_actions'] = False
-        __prefs__.defaults['file_preference'] = 'mobi'
+        __prefs__.defaults['file_preference'] = 'azw3'
         __prefs__.defaults['tld'] = None
         __prefs__['plugin_path'] = self.plugin_path
 

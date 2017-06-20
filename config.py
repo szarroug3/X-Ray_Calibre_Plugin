@@ -60,6 +60,10 @@ class ConfigWidget(QWidget):
         self._settings['overwrite_when_sending'].setChecked(__prefs__['overwrite_when_sending'])
         layout.addWidget(self._settings['overwrite_when_sending'])
 
+        self._settings['fake_asin'] = QCheckBox('Use fake ASIN when sending files')
+        self._settings['fake_asin'].setChecked(__prefs__['fake_asin'])
+        layout.addWidget(self._settings['fake_asin'])
+
     def _intialize_file_settings(self, layout):
         '''Initialize file creation/sending settings'''
         separator_a = QFrame()
@@ -126,10 +130,10 @@ class ConfigWidget(QWidget):
 
     def validate(self):
         '''Validates current settings; Errors if there's a problem'''
-        if (not self._settings['create_send_xray'].isChecked()
-                and not self._settings['create_send_author_profile'].isChecked()
-                and not self._settings['create_send_start_actions'].isChecked()
-                and not self._settings['create_send_end_actions'].isChecked()):
+        if (not self._settings['create_send_xray'].isChecked() and
+                not self._settings['create_send_author_profile'].isChecked() and
+                not self._settings['create_send_start_actions'].isChecked() and
+                not self._settings['create_send_end_actions'].isChecked()):
             error_dialog(self, 'Invalid preferences.', 'You have chosen no files to create/send.', show=True)
             return False
 

@@ -136,7 +136,7 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         '''Gets selected books'''
         database = self.gui.current_db.new_api
         rows = self.gui.library_view.selectionModel().selectedRows()
-        if not rows or len(rows) == 0:
+        if not rows:
             error_dialog(self.gui, error_msg,
                          'No books selected', show=True)
             return None

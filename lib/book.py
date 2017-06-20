@@ -775,11 +775,12 @@ class Book(object):
         '''Sends files to device depending on list compiled in files_to_send'''
         number_of_failed_asin_updates = 0
         formats_on_device = device_books[self._basic_info['book_id']].keys()
+        asin = '{0}{1}'.format(self._basic_info['asin'], '_FAKE' if self._settings['fake_asin'] else '')
         try:
             for fmt in formats_on_device:
                 with open(device_books[self._basic_info['book_id']][fmt]['device_book'], 'r+b') as stream:
                     mobi_updater = ASINUpdater(stream)
-                    mobi_updater.update(self._basic_info['asin'])
+                    mobi_updater.update(asin)
         except MobiError:
             number_of_failed_asin_updates += 1
             if (self._settings['create_send_xray'] and self._settings['send_to_device'].has_key('xray') and
@@ -803,10 +804,15 @@ class Book(object):
 
     def _send_file(self, filetype, info):
         '''Send file to device and update status accordingly'''
+        if self._settings['fake_asin']:
+            split_filename = info['filename'].split('.')
+            split_filename[2] += '_FAKE'
+            info['filename'] = '.'.join(split_filename)
         device_filename = os.path.join(self._basic_info['device_sdr'], info['filename'])
+
         if os.path.exists(device_filename):
             os.rename(device_filename, '{0}.old'.format(device_filename))
-        copy(info['local'], self._basic_info['device_sdr'])
+        copy(info['local'], device_filename)
 
         if os.path.exists(device_filename):
             if os.path.exists('{0}.old'.format(device_filename)):
