@@ -23,6 +23,7 @@ from calibre.gui2.threaded_jobs import ThreadedJob
 
 from calibre.customize.zipplugin import get_icons
 from calibre_plugins.xray_creator.lib.book import Book
+from calibre_plugins.xray_creator.lib.book_refactored import Book as BookRefactored
 from calibre_plugins.xray_creator.config import __prefs__ as settings
 from calibre_plugins.xray_creator.book_config import BookConfigWidget
 from calibre_plugins.xray_creator.lib.xray_creator import XRayCreator
@@ -147,7 +148,9 @@ class XRayCreatorInterfacePlugin(InterfaceAction):
         books = []
         for book_id in book_ids:
             books.append(Book(database, book_id, self._connections, settings))
-
+            BookRefactored(database, book_id)
+        # TODO: remove this
+        return None
         return XRayCreator(books, settings)
 
     def config(self):
