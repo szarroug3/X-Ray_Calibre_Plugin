@@ -241,7 +241,7 @@ class BookConfigWidget(QDialog):
         """Browse for a sample xray file to use during x-ray creation"""
         file_dialog = QFileDialog(self)
         sample_file = file_dialog.getOpenFileName(caption='Choose sample x-ray to use:',
-                                                  filter='X-Ray (*.asc), JSON (*.json)')[0]
+                                                  filter='X-Ray or JSON (*.asc *.json)')[0]
         self.book.sample_xray = sample_file
         self._sample_xray_edit.setText(sample_file)
         if sample_file:
