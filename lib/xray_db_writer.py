@@ -63,7 +63,7 @@ class XRayDBWriter(object):
             original_label = self._entity_data[entity]['original_label']
             entity_id = str(self._entity_data[entity]['entity_id'])
             text = str(self._entity_data[entity]['description'])
-            source = '2'
+            source = str(self._entity_data[entity]['type'])
             entity_description_data.append((text, original_label, source, entity_id))
         self._db_writer.insert_into_entity_description(entity_description_data)
 

@@ -373,7 +373,8 @@ class Book(object):
         '''Checks input file type and calls appropriate parsing function'''
         filetype = os.path.splitext(self._basic_info['sample_xray'])[1][1:].lower()
         if filetype == 'asc':
-            characters, settings, quotes = self._parse_input_asc()
+            characters, settings = self._parse_input_asc()
+            quotes = []
         elif filetype == 'json':
             characters, settings, quotes = self._parse_input_json()
         else:
@@ -386,15 +387,22 @@ class Book(object):
 
         characters = {}
         settings = {}
-        for entity in cursor.execute('SELECT * FROM entity_description').fetchall():
-            entity_type = cursor.execute('SELECT * FROM entity WHERE label = "{0}"'.format(entity[1])).fetchall()[0][3]
+        for entity_desc in cursor.execute('SELECT * FROM entity_description').fetchall():
+            entity_id = entity_desc[3]
+            description = entity_desc[0]
+            entity = cursor.execute('SELECT * FROM entity WHERE id = "{0}"'.format(entity_id)).fetchall()[0]
+            if not entity:
+                continue
+
+            entity_label = entity[1]
+            entity_type = entity[3]
+
             if entity_type == 1:
-                aliases = self._basic_info['aliases'][entity[1]] if entity[1] in self._basic_info['aliases'] else []
-                characters[entity[3]] = {'label': entity[1], 'description': entity[0],
-                                         'aliases': aliases}
+                aliases = self._basic_info['aliases'][entity_label] if entity_label in self._basic_info['aliases'] else []
+                characters[entity_id] = {'label': entity_label, 'description': description, 'aliases': aliases}
             elif entity_type == 2:
-                settings[entity[3]] = {'label': entity[1], 'description': entity[0], 'aliases': []}
-        return characters, settings, []
+                settings[entity_id] = {'label': entity_label, 'description': description, 'aliases': []}
+        return characters, settings
 
     def _parse_input_json(self):
         '''Gets characters, setting, and quote data from json file'''
@@ -448,7 +456,7 @@ class Book(object):
             self._process_goodreads_end_actions_results(compiled_end_actions)
 
     def _process_goodreads_xray_results(self, compiled_xray):
-        '''Checks if goodreads sucessfully retrieved xray data; Updates status if not'''
+        '''Sets aliases in book settings and basic info if compiled xray has data; sets status to fail if it doesn't'''
         if compiled_xray:
             self._goodreads_data['xray'] = compiled_xray
             for char in self._goodreads_data['xray']['characters'].values():
@@ -460,21 +468,21 @@ class Book(object):
             self._statuses['xray'].set(StatusInfo.FAIL, StatusInfo.F_UNABLE_TO_CREATE_XRAY)
 
     def _process_goodreads_author_profile_results(self, compiled_author_profile):
-        '''Checks if goodreads sucessfully created author profile; Updates status if not'''
+        '''Sets author profile in goodreads data if compiled author profile has data; sets status to fail if it doesn't'''
         if compiled_author_profile:
             self._goodreads_data['author_profile'] = compiled_author_profile
         else:
             self._statuses['author_profile'].set(StatusInfo.FAIL, StatusInfo.F_UNABLE_TO_CREATE_AUTHOR_PROFILE)
 
     def _process_goodreads_start_actions_results(self, compiled_start_actions):
-        '''Checks if goodreads sucessfully created start actions; Updates status if not'''
+        '''Sets start actions in goodreads data if compiled start actions has data; sets status to fail if it doesn't'''
         if compiled_start_actions:
             self._goodreads_data['start_actions'] = compiled_start_actions
         else:
             self._statuses['start_actions'].set(StatusInfo.FAIL, StatusInfo.F_UNABLE_TO_CREATE_START_ACTIONS)
 
     def _process_goodreads_end_actions_results(self, compiled_end_actions):
-        '''Checks if goodreads sucessfully created start actions; Updates status if not'''
+        '''Sets end actions in goodreads data if compiled end actions has data; sets status to fail if it doesn't'''
         if compiled_end_actions:
             self._goodreads_data['end_actions'] = compiled_end_actions
         else:
