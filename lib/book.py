@@ -390,12 +390,12 @@ class Book(object):
         for entity_desc in cursor.execute('SELECT * FROM entity_description').fetchall():
             entity_id = entity_desc[3]
             description = entity_desc[0]
-            entity = cursor.execute('SELECT * FROM entity WHERE id = "{0}"'.format(entity_id)).fetchall()[0]
+            entity = cursor.execute('SELECT * FROM entity WHERE id = "{0}"'.format(entity_id)).fetchall()
             if not entity:
                 continue
 
-            entity_label = entity[1]
-            entity_type = entity[3]
+            entity_label = entity[0][1]
+            entity_type = entity[0][3]
 
             if entity_type == 1:
                 aliases = self._basic_info['aliases'][entity_label] if entity_label in self._basic_info['aliases'] else []
