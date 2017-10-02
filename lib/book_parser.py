@@ -110,11 +110,20 @@ class BookParser(object):
 
             skip = False
             loc = node.start(0)+self._offset
-            for i, char in enumerate(node.group(0).decode(codec)):
-                word_loc['char_sizes'].append(len(char.encode(codec)))
+            decoded = False
+            try:
+                decoded_node = node.group(0).decode(codec)
+                decoded = True
+            except UnicodeDecodeError:
+                decoded_node = node.group(0)
+            for i, char in enumerate(decoded_node):
+                if decoded:
+                    word_loc['char_sizes'].append(len(char.encode(codec)))
+                else:
+                    word_loc['char_sizes'].append(len(char))
                 if char == '<' and not skip:
                     skip = True
-                    if node.group(0)[i:i+3] == '<br':
+                    if decoded_node[i:i+3] == '<br':
                         word_loc['words'] += ' '
                         word_loc['locs'].append(loc)
                 if not skip:
@@ -122,10 +131,13 @@ class BookParser(object):
                     word_loc['locs'].append(loc)
                 if char == '>' and skip:
                     skip = False
-                loc += len(char.encode(codec))
+                if decoded:
+                    loc += len(char.encode(codec))
+                else:
+                    loc += len(char)
 
             if len(word_loc['locs']) > 0:
-                paragraph_data.append((word_loc, node.start(0)+self._offset, len(node.group(0))))
+                paragraph_data.append((word_loc, node.start(0)+self._offset, len(decoded_node)))
 
         return paragraph_data
 
