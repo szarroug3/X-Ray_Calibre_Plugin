@@ -11,7 +11,7 @@ from calibre.ebooks.mobi.huffcdic import HuffReader
 from calibre.ebooks.mobi.reader.mobi6 import MobiReader
 from calibre.ebooks.compression.palmdoc import decompress_doc
 
-PARAGRAPH_PAT = re.compile(r'<p.*?>.+?(?:<\/p>)', re.I)
+PARAGRAPH_PAT = re.compile(r'<(p|i|h\d) .*?>.+?(?:<\/\1)', re.I)
 
 class BookParser(object):
     '''Class to parse book using information from user and goodreads'''
@@ -171,8 +171,7 @@ class BookParser(object):
         else:
             last_char -= 1
 
-        total_len = sum(char_sizes[start:last_char+1])
-        return total_len
+        return sum(char_sizes[start:last_char+1])
 
     def find_erl_and_encoding(self):
         '''Finds book's erl and codec'''
