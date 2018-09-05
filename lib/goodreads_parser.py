@@ -61,7 +61,7 @@ class GoodreadsParser(object):
 
         author_info = self._get_author_info()
         if not author_info:
-            return
+            return compiled_author_profile, compiled_start_actions, compiled_end_actions
         self._read_primary_author_page(author_info)
         self._get_author_other_books(author_info)
 
@@ -265,7 +265,10 @@ class GoodreadsParser(object):
             return
 
         for author in self._page_source.xpath('//div[@id="bookAuthors"]/span[@itemprop="author"]//a'):
-            author_name = author.find('span[@itemprop="name"]').text.strip()
+            author_span = author.find('span[@itemprop="name"]')
+            if author_span is None:
+                continue
+            author_name = author_span.text.strip()
             author_page = author.get('href')
             if author_name and author_page:
                 author_info.append({'name': author_name, 'url': author_page})

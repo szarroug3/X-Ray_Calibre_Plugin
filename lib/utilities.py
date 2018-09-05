@@ -64,7 +64,6 @@ def open_url(connection, url, return_redirect_url=False):
         else:
             response = response.read()
 
-
     if 'Page Not Found' in response:
         raise PageDoesNotExist('Page not found.')
 

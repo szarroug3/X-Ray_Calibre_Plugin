@@ -102,6 +102,7 @@ class BookParser(object):
             if occurrence_excerpt_id not in excerpt_ids:
                 occurrences.append({'loc': word_start, 'len': word_len})
                 excerpt_ids.append(occurrence_excerpt_id)
+                entity_data['mentions'] += 1
 
     def _get_notable_clips(self):
         """
