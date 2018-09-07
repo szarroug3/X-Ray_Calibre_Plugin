@@ -12,6 +12,12 @@ from calibre.ebooks.mobi.reader.mobi6 import MobiReader
 from calibre.ebooks.compression.palmdoc import decompress_doc
 
 
+PATTERNS = [r'(<)(p|i|h\d).*?>([^a-zA-Z0-9\s]*{}(?:[^a-zA-Z0-9\s]*?|[^a-zA-Z0-9\s]+\S*?))<\/\2.*?(>)', # word is the paragraph
+            r'(<)(p|i|h\d).*?>([^a-zA-Z0-9\s]*{}(?:[^a-zA-Z0-9\s]*?|[^a-zA-Z0-9\s]+\S*?))\s.*?<\/\2.*?(>)', # beginning of paragraph
+            r'(<)(p|i|h\d).*?>.*?\s([^a-zA-Z0-9\s]*{}(?:[^a-zA-Z0-9\s]*?|[^a-zA-Z0-9\s]+\S*?))<\/\2.*?(>)', # end of paragraph
+            r'(<)(p|i|h\d).*?>.*?\s([^a-zA-Z0-9\s]*{}(?:[^a-zA-Z0-9\s]*?|[^a-zA-Z0-9\s]+\S*?))\s.*?<\/\2.*?(>)'] # middle of paragraph
+
+
 class BookParser(object):
     '''Class to parse book using information from user and goodreads'''
 
@@ -52,13 +58,13 @@ class BookParser(object):
         erl, codec = self.find_erl_and_encoding()
         book_html = MobiExtractor(self._book_path, open(os.devnull, 'w')).extract_text()
 
-
+        occurrence_start = []
         for word, entity_data in self._entity_data.items():
-            self._get_occurrences(book_html, word, entity_data)
+            self._get_occurrences(book_html, word, entity_data, occurrence_start)
 
         for alias, original in self._aliases.items():
             entity_data = self._entity_data[original]
-            self._get_occurrences(book_html, alias, entity_data)
+            self._get_occurrences(book_html, alias, entity_data, occurrence_start)
 
         return {'erl': erl,
                 'excerpt_data': self._excerpts,
@@ -66,43 +72,49 @@ class BookParser(object):
                 'entity_data': self._entity_data,
                 'codec': codec}
 
-    def _get_occurrences(self, book_html, word, entity_data):
+    def _get_occurrences(self, book_html, word, entity_data, occurrence_start):
         """
         Get the occurences of the word in the book html
 
         Args:
+            :str book_html: the book's text
             :str word: the word we're looking for
+            :dict entity_data: dictionary of entity data
+            :list occurrence_start: list of occurrence start locations we've come across
         """
         entity_id = entity_data['entity_id']
         occurrences = entity_data['occurrence']
         excerpt_ids = entity_data['excerpt_ids']
 
-        word_re = r'\b' + re.escape(word) + r'\b'
-        re_pat = re.compile(r'(<)(p|i|h\d).*?>.*?(\S*{}\S*).*?<\/\2.*?(>)'.format(word_re), re.I)
+        for pattern in PATTERNS:
+            re_pat = re.compile(pattern.format(word), re.I)
+            for node in re.finditer(re_pat, book_html):
+                excerpt = node.group(0)
+                excerpt_start = node.start(1) + self._offset
+                excerpt_len = node.start(4) - node.start(1)
+                word_start = node.start(3) + self._offset
+                word_len = node.end(3) - node.start(3)
 
-        for node in re.finditer(re_pat, book_html):
-            excerpt = node.group(0)
-            excerpt_start = node.start(1) + self._offset
-            excerpt_len = node.start(4) - node.start(1)
-            word_start = node.start(3) + self._offset
-            word_len = node.end(3) - node.start(3)
+                if word_start in occurrence_start:
+                    continue
+                occurrence_start.append(word_start)
 
-            if excerpt in self._excerpt_to_id.keys():
-                occurrence_excerpt_id = self._excerpt_to_id[excerpt]
-                if entity_id not in self._excerpts[occurrence_excerpt_id]['related_entities']:
-                    self._excerpts[occurrence_excerpt_id]['related_entities'].append(entity_id)
-            else:
-                occurrence_excerpt_id = self._excerpt_id
-                self._excerpts[occurrence_excerpt_id] = {'loc': excerpt_start,
-                                                         'len': excerpt_len,
-                                                         'related_entities': [entity_id]}
-                self._excerpt_to_id[excerpt] = occurrence_excerpt_id
-                self._excerpt_id += 1
+                if excerpt in self._excerpt_to_id.keys():
+                    occurrence_excerpt_id = self._excerpt_to_id[excerpt]
+                    if entity_id not in self._excerpts[occurrence_excerpt_id]['related_entities']:
+                        self._excerpts[occurrence_excerpt_id]['related_entities'].append(entity_id)
+                else:
+                    occurrence_excerpt_id = self._excerpt_id
+                    self._excerpts[occurrence_excerpt_id] = {'loc': excerpt_start,
+                                                             'len': excerpt_len,
+                                                             'related_entities': [entity_id]}
+                    self._excerpt_to_id[excerpt] = occurrence_excerpt_id
+                    self._excerpt_id += 1
 
-            if occurrence_excerpt_id not in excerpt_ids:
-                occurrences.append({'loc': word_start, 'len': word_len})
-                excerpt_ids.append(occurrence_excerpt_id)
-                entity_data['mentions'] += 1
+                if occurrence_excerpt_id not in excerpt_ids:
+                    occurrences.append({'loc': word_start, 'len': word_len})
+                    excerpt_ids.append(occurrence_excerpt_id)
+                    entity_data['mentions'] += 1
 
     def _get_notable_clips(self):
         """
