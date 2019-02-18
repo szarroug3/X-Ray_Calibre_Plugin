@@ -332,7 +332,7 @@ class GoodreadsParser(object):
             if book_id == self._goodreads_book_id:
                 continue
 
-            image_url = book.find('td//img[@class="bookSmallImg"]').get('src').split('/')
+            image_url = book.find('td//img[@class="bookCover"]').get('src').split('/')
             image_url = '{0}/{1}l/{2}'.format('/'.join(image_url[:-2]), image_url[-2][:-1], image_url[-1])
 
             book_info.append((book_id, image_url))
